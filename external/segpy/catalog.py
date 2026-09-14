@@ -8,13 +8,19 @@ Rather than constructing Catalog subtypes directly, prefer to use
 the CatalogBuilder class which will analyse the contents of the
 mapping to find a space and time efficient representation.
 """
+
 from collections import Mapping, Sequence, OrderedDict, Iterable
 from fractions import Fraction
 from itertools import product
 
 from segpy.sorted_frozen_set import SortedFrozenSet
-from segpy.util import (contains_duplicates, measure_stride, make_sorted_distinct_sequence,
-                        is_sorted, first)
+from segpy.util import (
+    contains_duplicates,
+    measure_stride,
+    make_sorted_distinct_sequence,
+    is_sorted,
+    first,
+)
 
 
 class CatalogBuilder(object):
@@ -47,12 +53,16 @@ class CatalogBuilder(object):
             self._catalog = []
             for pair in mapping:
                 if len(pair) != 2:
-                    raise ValueError("{!r} is not a pair. Catalogs can only be constructed "
-                                     "from iterable series of 2-tuples.")
+                    raise ValueError(
+                        "{!r} is not a pair. Catalogs can only be constructed "
+                        "from iterable series of 2-tuples."
+                    )
                 self._catalog.append(pair)
         else:
-            raise TypeError("Mapping must be either a mapping (e.g. dict), or an iterable "
-                            "series of 2-tuples. {!r} does not qualify.")
+            raise TypeError(
+                "Mapping must be either a mapping (e.g. dict), or an iterable "
+                "series of 2-tuples. {!r} does not qualify."
+            )
 
     def add(self, index, value):
         """Add an item.
@@ -86,15 +96,16 @@ class CatalogBuilder(object):
         if contains_duplicates(index for index, value in self._catalog):
             return None
 
-        if all(isinstance(index, Sequence) and (len(index) == 2)
-               for index, value in self._catalog):
+        if all(
+            isinstance(index, Sequence) and (len(index) == 2)
+            for index, value in self._catalog
+        ):
             return self._create_catalog_2()
 
         return self._create_catalog_1()
 
     def _create_catalog_1(self):
-        """Create a catalog for one-dimensional integer keys (i.e. scalars)
-        """
+        """Create a catalog for one-dimensional integer keys (i.e. scalars)"""
         if len(self._catalog) <= 1:
             return DictionaryCatalog(self._catalog)
 
@@ -109,32 +120,35 @@ class CatalogBuilder(object):
 
         if index_stride is not None and value_stride == 0:
             assert value_start == value_stop
-            return RegularConstantCatalog(index_min,
-                                          index_max,
-                                          index_stride,
-                                          value_start)
+            return RegularConstantCatalog(
+                index_min, index_max, index_stride, value_start
+            )
 
         if index_stride is None and value_stride == 0:
             assert value_start == value_stop
             return ConstantCatalog(
-                    (index for index, value in self._catalog),
-                    value_start)
+                (index for index, value in self._catalog), value_start
+            )
 
         if index_stride is not None and value_stride is None:
             # Regular index - regular keys and arbitrary values
-            return RegularCatalog(index_min,
-                                  index_max,
-                                  index_stride,
-                                  (value for index, value in self._catalog))
+            return RegularCatalog(
+                index_min,
+                index_max,
+                index_stride,
+                (value for index, value in self._catalog),
+            )
 
         if (index_stride is not None) and (value_stride is not None):
             assert value_stride != 0
-            return LinearRegularCatalog(index_min,
-                                        index_max,
-                                        index_stride,
-                                        value_start,
-                                        value_stop,
-                                        value_stride)
+            return LinearRegularCatalog(
+                index_min,
+                index_max,
+                index_stride,
+                value_start,
+                value_stop,
+                value_stride,
+            )
 
         return DictionaryCatalog(self._catalog)
 
@@ -143,9 +157,11 @@ class CatalogBuilder(object):
 
         Each key must be a two-element sequence.
         """
-        return (self.make_last_index_varies_quickest_catalog_2d()
-             or self.make_first_index_varies_quickest_catalog_2d()
-             or self.make_dictionary_catalog_2d())
+        return (
+            self.make_last_index_varies_quickest_catalog_2d()
+            or self.make_first_index_varies_quickest_catalog_2d()
+            or self.make_dictionary_catalog_2d()
+        )
 
     def make_last_index_varies_quickest_catalog_2d(self):
         self._catalog.sort(key=_first_then_second_index)
@@ -175,7 +191,10 @@ class CatalogBuilder(object):
             return None
         vs = [v for (_, _), v in self._catalog]
         # Are the values unique and in ascending or descending order?
-        if not (is_sorted(vs, reverse=False, distinct=True) or is_sorted(vs, reverse=True, distinct=True)):
+        if not (
+            is_sorted(vs, reverse=False, distinct=True)
+            or is_sorted(vs, reverse=True, distinct=True)
+        ):
             # The values are not both unique and sorted, so use a dictionary-based mapping
             return None
         v_sorted = make_sorted_distinct_sequence(vs, sense=None)
@@ -189,8 +208,7 @@ class CatalogBuilder(object):
 
 
 class Catalog2D(Mapping):
-    """An abstract base class for 2D catalogs.
-    """
+    """An abstract base class for 2D catalogs."""
 
     def __init__(self, i_range, j_range):
         """Initialize a Catalog2D.
@@ -257,7 +275,6 @@ class Catalog2D(Mapping):
 
 
 class LastIndexVariesQuickestCatalog2D(Catalog2D):
-
     def __init__(self, i_range, j_range, v_range):
         """
         Args:
@@ -272,8 +289,12 @@ class LastIndexVariesQuickestCatalog2D(Catalog2D):
         """
         num_indices = len(i_range) * len(j_range)
         if num_indices != len(v_range):
-            raise ValueError("i_range={} and j_range={} totalling {} indices are incompatible with "
-                             "v_range={} with length {}".format(i_range, j_range, num_indices, v_range, len(v_range)))
+            raise ValueError(
+                "i_range={} and j_range={} totalling {} indices are incompatible with "
+                "v_range={} with length {}".format(
+                    i_range, j_range, num_indices, v_range, len(v_range)
+                )
+            )
         super().__init__(i_range, j_range)
         self._v_range = v_range
 
@@ -305,9 +326,9 @@ class LastIndexVariesQuickestCatalog2D(Catalog2D):
         return product(self.i_range, self.j_range)
 
     def __repr__(self):
-        return '{}(i_range={}, j_range={}, v_range={})'.format(
-            self.__class__.__name__,
-            self.i_range, self.j_range, self._v_range)
+        return "{}(i_range={}, j_range={}, v_range={})".format(
+            self.__class__.__name__, self.i_range, self.j_range, self._v_range
+        )
 
     def key(self, value):
         """Given a value, get the corresponding key.
@@ -334,7 +355,6 @@ class LastIndexVariesQuickestCatalog2D(Catalog2D):
 
 
 class FirstIndexVariesQuickestCatalog2D(Catalog2D):
-
     def __init__(self, i_range, j_range, v_range):
         """
         Args:
@@ -349,8 +369,12 @@ class FirstIndexVariesQuickestCatalog2D(Catalog2D):
         """
         num_indices = len(i_range) * len(j_range)
         if num_indices != len(v_range):
-            raise ValueError("i_range={} and j_range={} totalling {} indices are incompatible with "
-                             "v_range={} with length {}".format(i_range, j_range, num_indices, v_range, len(v_range)))
+            raise ValueError(
+                "i_range={} and j_range={} totalling {} indices are incompatible with "
+                "v_range={} with length {}".format(
+                    i_range, j_range, num_indices, v_range, len(v_range)
+                )
+            )
         super().__init__(i_range, j_range)
         self._v_range = v_range
 
@@ -382,9 +406,9 @@ class FirstIndexVariesQuickestCatalog2D(Catalog2D):
         return ((i, j) for (j, i) in product(self.j_range, self.i_range))
 
     def __repr__(self):
-        return '{}(i_range={}, j_range={}, v_range={})'.format(
-            self.__class__.__name__,
-            self.i_range, self.j_range, self._v_range)
+        return "{}(i_range={}, j_range={}, v_range={})".format(
+            self.__class__.__name__, self.i_range, self.j_range, self._v_range
+        )
 
     def key(self, value):
         """Given a value, get the corresponding key.
@@ -411,8 +435,7 @@ class FirstIndexVariesQuickestCatalog2D(Catalog2D):
 
 
 class DictionaryCatalog(Mapping):
-    """An immutable, ordered, dictionary mapping.
-    """
+    """An immutable, ordered, dictionary mapping."""
 
     def __init__(self, items):
         self._items = OrderedDict(items)
@@ -430,13 +453,13 @@ class DictionaryCatalog(Mapping):
         return item in self._items
 
     def __repr__(self):
-        return '{}(items=[<{} items>])'.format(
-            self.__class__.__name__, len(self._items))
+        return "{}(items=[<{} items>])".format(
+            self.__class__.__name__, len(self._items)
+        )
 
 
 class DictionaryCatalog2D(Catalog2D):
-    """An immutable, ordered, dictionary mapping for 2D keys.
-    """
+    """An immutable, ordered, dictionary mapping for 2D keys."""
 
     def __init__(self, i_range, j_range, items):
         """Initialize a DictionaryCatalog2D.
@@ -464,8 +487,10 @@ class DictionaryCatalog2D(Catalog2D):
         elif isinstance(items, Iterable):
             mapping = items
         else:
-            raise TypeError("{} must be constructed from a mapping or an iterable of ((i, j), v) tuples, "
-                            "not {}".format(self.__class__.__name__, items))
+            raise TypeError(
+                "{} must be constructed from a mapping or an iterable of ((i, j), v) tuples, "
+                "not {}".format(self.__class__.__name__, items)
+            )
 
         for key, value in mapping:
             i, j = key
@@ -488,10 +513,9 @@ class DictionaryCatalog2D(Catalog2D):
         return item in self._items
 
     def __repr__(self):
-        return '{}(i_range={}, j_range={}, items=[<{} items>])'.format(
-            self.__class__.__name__,
-            self.i_range, self.j_range,
-            len(self._items))
+        return "{}(i_range={}, j_range={}, items=[<{} items>])".format(
+            self.__class__.__name__, self.i_range, self.j_range, len(self._items)
+        )
 
 
 class RegularConstantCatalog(Mapping):
@@ -514,14 +538,19 @@ class RegularConstantCatalog(Mapping):
             value: A value associated with all keys.
         """
         if key_min > key_max:
-            raise ValueError("key_min {} is greater than key_max {}, but key_min must be equal or less-than key_max."
-                             .format(key_min, key_max))
+            raise ValueError(
+                "key_min {} is greater than key_max {}, but key_min must be equal or less-than key_max.".format(
+                    key_min, key_max
+                )
+            )
 
         key_range = key_max - key_min
         if key_range % key_stride != 0:
-            raise ValueError("RegularIndex key range {!r} is not "
-                             "a multiple of stride {!r}".format(
-                                 key_stride, key_range))
+            raise ValueError(
+                "RegularIndex key range {!r} is not a multiple of stride {!r}".format(
+                    key_stride, key_range
+                )
+            )
 
         self._key_min = key_min
         self._key_max = key_max
@@ -537,26 +566,25 @@ class RegularConstantCatalog(Mapping):
         return 1 + (self._key_max - self._key_min) // self._key_stride
 
     def __contains__(self, key):
-        return (self._key_min <= key <= self._key_max) and \
-               ((key - self._key_min) % self._key_stride == 0)
+        return (self._key_min <= key <= self._key_max) and (
+            (key - self._key_min) % self._key_stride == 0
+        )
 
     def __iter__(self):
-        return iter(range(self._key_min,
-                          self._key_max + 1,
-                          self._key_stride))
+        return iter(range(self._key_min, self._key_max + 1, self._key_stride))
 
     def __repr__(self):
-        return '{}(key_min={}, key_max={}, key_stride={}, value={})'.format(
+        return "{}(key_min={}, key_max={}, key_stride={}, value={})".format(
             self.__class__.__name__,
             self._key_min,
             self._key_max,
             self._key_stride,
-            self._value)
+            self._value,
+        )
 
 
 class ConstantCatalog(Mapping):
-    """Mapping with arbitrary keys and a single constant value.
-    """
+    """Mapping with arbitrary keys and a single constant value."""
 
     def __init__(self, keys, value):
         """Initialize a ConstantCatalog.
@@ -586,10 +614,9 @@ class ConstantCatalog(Mapping):
         return iter(self._keys)
 
     def __repr__(self):
-        return '{}(keys=[{} items], value={})'.format(
-            self.__class__.__name__,
-            len(self._keys),
-            self._value)
+        return "{}(keys=[{} items], value={})".format(
+            self.__class__.__name__, len(self._keys), self._value
+        )
 
 
 class RegularCatalog(Mapping):
@@ -616,22 +643,30 @@ class RegularCatalog(Mapping):
                 and/or values.
         """
         if key_min > key_max:
-            raise ValueError("key_min {} is greater than key_max {}, but key_min must be equal or less-than key_max."
-                             .format(key_min, key_max))
+            raise ValueError(
+                "key_min {} is greater than key_max {}, but key_min must be equal or less-than key_max.".format(
+                    key_min, key_max
+                )
+            )
 
         key_range = key_max - key_min
         if key_range % key_stride != 0:
-            raise ValueError("{} key range {!r} is not "
-                             "a multiple of stride {!r}".format(self.__class__.__name__,
-                                                                key_stride, key_range))
+            raise ValueError(
+                "{} key range {!r} is not a multiple of stride {!r}".format(
+                    self.__class__.__name__, key_stride, key_range
+                )
+            )
         self._key_min = key_min
         self._key_max = key_max
         self._key_stride = key_stride
         self._values = list(values)
         num_keys = 1 + key_range // key_stride
         if num_keys != len(self._values):
-            raise ValueError("{} key range with length {} and values with length {} are inconsistent"
-                             .format(self.__class__.__name__, num_keys, len(self._values)))
+            raise ValueError(
+                "{} key range with length {} and values with length {} are inconsistent".format(
+                    self.__class__.__name__, num_keys, len(self._values)
+                )
+            )
 
     def __getitem__(self, key):
         if not (self._key_min <= key <= self._key_max):
@@ -646,21 +681,21 @@ class RegularCatalog(Mapping):
         return len(self._values)
 
     def __contains__(self, key):
-        return (self._key_min <= key <= self._key_max) and \
-               ((key - self._key_min) % self._key_stride == 0)
+        return (self._key_min <= key <= self._key_max) and (
+            (key - self._key_min) % self._key_stride == 0
+        )
 
     def __iter__(self):
-        return iter(range(self._key_min,
-                          self._key_max + 1,
-                          self._key_stride))
+        return iter(range(self._key_min, self._key_max + 1, self._key_stride))
 
     def __repr__(self):
-        return '{}(key_min={}, key_max={}, key_stride={}, values=[{} items])'.format(
+        return "{}(key_min={}, key_max={}, key_stride={}, values=[{} items])".format(
             self.__class__.__name__,
             self._key_min,
             self._key_max,
             self._key_stride,
-            len(self._values))
+            len(self._values),
+        )
 
 
 class LinearRegularCatalog(Mapping):
@@ -672,13 +707,9 @@ class LinearRegularCatalog(Mapping):
         v = (value_max - value_min) / (key_max - key_min) * (key - key_min) + value_min
     """
 
-    def __init__(self,
-                 key_min,
-                 key_max,
-                 key_stride,
-                 value_start,
-                 value_stop,
-                 value_stride):
+    def __init__(
+        self, key_min, key_max, key_stride, value_start, value_stop, value_stride
+    ):
         """Initialize a LinearRegularCatalog.
 
         The catalog must contain at least two items.
@@ -696,19 +727,22 @@ class LinearRegularCatalog(Mapping):
                 and/or values.
         """
         if key_min >= key_max:
-            raise ValueError("key_min {} is greater-than or equal-to key_max {}, but key_min must be less-than key_max."
-                             .format(key_min, key_max))
+            raise ValueError(
+                "key_min {} is greater-than or equal-to key_max {}, but key_min must be less-than key_max.".format(
+                    key_min, key_max
+                )
+            )
 
         if key_stride <= 0:
             raise ValueError("key_stride {} is not positive".format(key_stride))
 
         key_range = key_max - key_min
         if key_range % key_stride != 0:
-            raise ValueError("{} key range {!r} is not "
-                             "a multiple of key stride {!r}".format(
-                                 self.__class__.__name__,
-                                 key_stride,
-                                 key_range))
+            raise ValueError(
+                "{} key range {!r} is not a multiple of key stride {!r}".format(
+                    self.__class__.__name__, key_stride, key_range
+                )
+            )
         self._key_stride = key_stride
 
         if value_stride == 0:
@@ -716,11 +750,11 @@ class LinearRegularCatalog(Mapping):
 
         value_range = value_stop - value_start
         if value_range % value_stride != 0:
-            raise ValueError("{} value range {!r} is not "
-                             "a multiple of value stride {!r}".format(
-                                 self.__class__.__name__,
-                                 value_stride,
-                                 value_range))
+            raise ValueError(
+                "{} value range {!r} is not a multiple of value stride {!r}".format(
+                    self.__class__.__name__, value_stride, value_range
+                )
+            )
         self._value_stride = value_stride
 
         self._key_min = key_min
@@ -731,14 +765,15 @@ class LinearRegularCatalog(Mapping):
         num_keys = 1 + (self._key_max - self._key_min) // self._key_stride
         num_values = 1 + (self._value_stop - self._value_start) // self._value_stride
         if num_keys != num_values:
-            raise ValueError("{} inconsistent number of "
-                             "keys {} and values {}".format(
-                                 self.__class__.__name__,
-                                 num_keys,
-                                 num_values))
+            raise ValueError(
+                "{} inconsistent number of keys {} and values {}".format(
+                    self.__class__.__name__, num_keys, num_values
+                )
+            )
 
-        self._m = Fraction(self._value_stop - self._value_start,
-                           self._key_max - self._key_min)
+        self._m = Fraction(
+            self._value_stop - self._value_start, self._key_max - self._key_min
+        )
 
     def __getitem__(self, key):
         if not (self._key_min <= key <= self._key_max):
@@ -755,21 +790,23 @@ class LinearRegularCatalog(Mapping):
         return 1 + (self._key_max - self._key_min) // self._key_stride
 
     def __contains__(self, key):
-        return (self._key_min <= key <= self._key_max) and \
-               ((key - self._key_min) % self._key_stride == 0)
+        return (self._key_min <= key <= self._key_max) and (
+            (key - self._key_min) % self._key_stride == 0
+        )
 
     def __iter__(self):
         return iter(range(self._key_min, self._key_max + 1, self._key_stride))
 
     def __repr__(self):
-        return '{}(key_min={}, key_max={}, key_stride={}, value_first={}, value_last={}, value_stride={})'.format(
+        return "{}(key_min={}, key_max={}, key_stride={}, value_first={}, value_last={}, value_stride={})".format(
             self.__class__.__name__,
             self._key_min,
             self._key_max,
             self._key_stride,
             self._value_start,
             self._value_stop,
-            self._value_stride)
+            self._value_stride,
+        )
 
 
 def _first_then_second_index(key):

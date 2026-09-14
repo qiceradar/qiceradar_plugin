@@ -25,11 +25,11 @@ def register_retry_handler(client):
         clock=clock,
     )
     client.meta.events.register(
-        'before-send',
+        "before-send",
         limiter.on_sending_request,
     )
     client.meta.events.register(
-        'needs-retry',
+        "needs-retry",
         limiter.on_receiving_response,
     )
     return limiter
@@ -69,12 +69,8 @@ class ClientRateLimiter:
                 if not self._enabled:
                     rate_to_use = measured_rate
                 else:
-                    rate_to_use = min(
-                        measured_rate, self._token_bucket.max_rate
-                    )
-                new_rate = self._rate_adjustor.error_received(
-                    rate_to_use, timestamp
-                )
+                    rate_to_use = min(measured_rate, self._token_bucket.max_rate)
+                new_rate = self._rate_adjustor.error_received(rate_to_use, timestamp)
                 logger.debug(
                     "Throttling response received, new send rate: %s "
                     "measured rate: %s, token bucket capacity "
@@ -113,10 +109,7 @@ class RateClocker:
     def record(self, amount=1):
         with self._lock:
             t = self._clock.current_time()
-            bucket = (
-                math.floor(t * self._time_bucket_scale)
-                / self._time_bucket_scale
-            )
+            bucket = math.floor(t * self._time_bucket_scale) / self._time_bucket_scale
             self._count += amount
             if bucket > self._last_bucket:
                 current_rate = self._count / float(bucket - self._last_bucket)

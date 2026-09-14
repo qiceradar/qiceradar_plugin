@@ -196,10 +196,7 @@ def _should_use_crt(config):
     is_optimized_instance = has_min_crt and awscrt.s3.is_optimized_for_system()
     pref_transfer_client = config.preferred_transfer_client.lower()
 
-    if (
-        pref_transfer_client == constants.CRT_TRANSFER_CLIENT
-        and not has_min_crt
-    ):
+    if pref_transfer_client == constants.CRT_TRANSFER_CLIENT and not has_min_crt:
         msg = (
             "CRT transfer client is configured but is missing minimum CRT "
             f"version. CRT installed: {HAS_CRT}"
@@ -252,21 +249,21 @@ def _create_default_transfer_manager(client, config, osutil):
 
 class TransferConfig(S3TransferConfig):
     ALIAS = {
-        'max_concurrency': 'max_request_concurrency',
-        'max_io_queue': 'max_io_queue_size',
+        "max_concurrency": "max_request_concurrency",
+        "max_io_queue": "max_io_queue_size",
     }
     DEFAULTS = {
-        'multipart_threshold': 8 * MB,
-        'max_concurrency': 10,
-        'max_request_concurrency': 10,
-        'multipart_chunksize': 8 * MB,
-        'num_download_attempts': 5,
-        'max_io_queue': 100,
-        'max_io_queue_size': 100,
-        'io_chunksize': 256 * KB,
-        'use_threads': True,
-        'max_bandwidth': None,
-        'preferred_transfer_client': constants.AUTO_RESOLVE_TRANSFER_CLIENT,
+        "multipart_threshold": 8 * MB,
+        "max_concurrency": 10,
+        "max_request_concurrency": 10,
+        "multipart_chunksize": 8 * MB,
+        "num_download_attempts": 5,
+        "max_io_queue": 100,
+        "max_io_queue_size": 100,
+        "io_chunksize": 256 * KB,
+        "use_threads": True,
+        "max_bandwidth": None,
+        "preferred_transfer_client": constants.AUTO_RESOLVE_TRANSFER_CLIENT,
     }
 
     def __init__(
@@ -339,25 +336,25 @@ class TransferConfig(S3TransferConfig):
               * crt - Only use the CRTTransferManager with requests.
         """
         init_args = {
-            'multipart_threshold': multipart_threshold,
-            'max_concurrency': max_concurrency,
-            'multipart_chunksize': multipart_chunksize,
-            'num_download_attempts': num_download_attempts,
-            'max_io_queue': max_io_queue,
-            'io_chunksize': io_chunksize,
-            'use_threads': use_threads,
-            'max_bandwidth': max_bandwidth,
-            'preferred_transfer_client': preferred_transfer_client,
+            "multipart_threshold": multipart_threshold,
+            "max_concurrency": max_concurrency,
+            "multipart_chunksize": multipart_chunksize,
+            "num_download_attempts": num_download_attempts,
+            "max_io_queue": max_io_queue,
+            "io_chunksize": io_chunksize,
+            "use_threads": use_threads,
+            "max_bandwidth": max_bandwidth,
+            "preferred_transfer_client": preferred_transfer_client,
         }
         resolved = self._resolve_init_args(init_args)
         super().__init__(
-            multipart_threshold=resolved['multipart_threshold'],
-            max_request_concurrency=resolved['max_concurrency'],
-            multipart_chunksize=resolved['multipart_chunksize'],
-            num_download_attempts=resolved['num_download_attempts'],
-            max_io_queue_size=resolved['max_io_queue'],
-            io_chunksize=resolved['io_chunksize'],
-            max_bandwidth=resolved['max_bandwidth'],
+            multipart_threshold=resolved["multipart_threshold"],
+            max_request_concurrency=resolved["max_concurrency"],
+            multipart_chunksize=resolved["multipart_chunksize"],
+            num_download_attempts=resolved["num_download_attempts"],
+            max_io_queue_size=resolved["max_io_queue"],
+            io_chunksize=resolved["io_chunksize"],
+            max_bandwidth=resolved["max_bandwidth"],
         )
         # Some of the argument names are not the same as the inherited
         # S3TransferConfig so we add aliases so you can still access the
@@ -368,8 +365,8 @@ class TransferConfig(S3TransferConfig):
                 alias,
                 object.__getattribute__(self, self.ALIAS[alias]),
             )
-        self.use_threads = resolved['use_threads']
-        self.preferred_transfer_client = resolved['preferred_transfer_client']
+        self.use_threads = resolved["use_threads"]
+        self.preferred_transfer_client = resolved["preferred_transfer_client"]
 
     def __setattr__(self, name, value):
         # If the alias name is used, make sure we set the name that it points
@@ -383,7 +380,7 @@ class TransferConfig(S3TransferConfig):
         value = object.__getattribute__(self, item)
         if not TRANSFER_CONFIG_SUPPORTS_CRT:
             return value
-        defaults = object.__getattribute__(self, 'DEFAULTS')
+        defaults = object.__getattribute__(self, "DEFAULTS")
         if item not in defaults:
             return value
         if value is self.UNSET_DEFAULT:
@@ -410,13 +407,13 @@ class S3Transfer:
     def __init__(self, client=None, config=None, osutil=None, manager=None):
         if not client and not manager:
             raise ValueError(
-                'Either a boto3.Client or s3transfer.manager.TransferManager '
-                'must be provided'
+                "Either a boto3.Client or s3transfer.manager.TransferManager "
+                "must be provided"
             )
         if manager and any([client, config, osutil]):
             raise ValueError(
-                'Manager cannot be provided with client, config, '
-                'nor osutil. These parameters are mutually exclusive.'
+                "Manager cannot be provided with client, config, "
+                "nor osutil. These parameters are mutually exclusive."
             )
         if config is None:
             config = TransferConfig()
@@ -427,9 +424,7 @@ class S3Transfer:
         else:
             self._manager = create_transfer_manager(client, config, osutil)
 
-    def upload_file(
-        self, filename, bucket, key, callback=None, extra_args=None
-    ):
+    def upload_file(self, filename, bucket, key, callback=None, extra_args=None):
         """Upload a file to an S3 object.
 
         Variants have also been injected into S3 client, Bucket and Object.
@@ -442,12 +437,10 @@ class S3Transfer:
         if isinstance(filename, PathLike):
             filename = fspath(filename)
         if not isinstance(filename, str):
-            raise ValueError('Filename must be a string or a path-like object')
+            raise ValueError("Filename must be a string or a path-like object")
 
         subscribers = self._get_subscribers(callback)
-        future = self._manager.upload(
-            filename, bucket, key, extra_args, subscribers
-        )
+        future = self._manager.upload(filename, bucket, key, extra_args, subscribers)
         try:
             future.result()
         # If a client error was raised, add the backwards compatibility layer
@@ -459,9 +452,7 @@ class S3Transfer:
                 f"Failed to upload {filename} to {bucket}/{key}: {e}"
             )
 
-    def download_file(
-        self, bucket, key, filename, extra_args=None, callback=None
-    ):
+    def download_file(self, bucket, key, filename, extra_args=None, callback=None):
         """Download an S3 object to a file.
 
         Variants have also been injected into S3 client, Bucket and Object.
@@ -474,12 +465,10 @@ class S3Transfer:
         if isinstance(filename, PathLike):
             filename = fspath(filename)
         if not isinstance(filename, str):
-            raise ValueError('Filename must be a string or a path-like object')
+            raise ValueError("Filename must be a string or a path-like object")
 
         subscribers = self._get_subscribers(callback)
-        future = self._manager.download(
-            bucket, key, filename, extra_args, subscribers
-        )
+        future = self._manager.download(bucket, key, filename, extra_args, subscribers)
         try:
             future.result()
         # This is for backwards compatibility where when retries are

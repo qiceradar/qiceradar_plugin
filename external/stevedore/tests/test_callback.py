@@ -27,7 +27,7 @@ class TestCallback(utils.TestCase):
             errors.append((manager, entrypoint, error))
 
         em = extension.ExtensionManager(
-            'stevedore.test.extension',
+            "stevedore.test.extension",
             invoke_on_load=True,
             on_load_failure_callback=failure_callback,
         )
@@ -38,7 +38,7 @@ class TestCallback(utils.TestCase):
             self.assertIs(manager, em)
             self.assertIsInstance(error, (IOError, ImportError))
 
-    @mock.patch('stevedore.extension.ExtensionManager._load_plugins')
+    @mock.patch("stevedore.extension.ExtensionManager._load_plugins")
     def test_missing_entrypoints_callback(self, load_fn):
         errors = set()
 
@@ -46,12 +46,12 @@ class TestCallback(utils.TestCase):
             errors.update(names)
 
         load_fn.return_value = [
-            extension.Extension('foo', None, None, None)  # type: ignore
+            extension.Extension("foo", None, None, None)  # type: ignore
         ]
         named.NamedExtensionManager(
-            'stevedore.test.extension',
-            names=['foo', 'bar'],
+            "stevedore.test.extension",
+            names=["foo", "bar"],
             invoke_on_load=True,
             on_missing_entrypoints_callback=callback,
         )
-        self.assertEqual(errors, {'bar'})
+        self.assertEqual(errors, {"bar"})

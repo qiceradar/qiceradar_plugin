@@ -5,6 +5,7 @@ datetimes.
 
 .. versionadded:: 2.7.0
 """
+
 from __future__ import unicode_literals
 
 from datetime import datetime, time

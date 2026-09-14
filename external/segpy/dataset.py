@@ -4,19 +4,16 @@ from segpy.datatypes import DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, SEG_Y_TYPE_DESCRIP
 
 
 class Dataset(metaclass=ABCMeta):
-
     @property
     @abstractmethod
     def textual_reel_header(self):
-        """The textual real header as an immutable sequence of forty Unicode strings each 80 characters long.
-        """
+        """The textual real header as an immutable sequence of forty Unicode strings each 80 characters long."""
         raise NotImplementedError
 
     @property
     @abstractmethod
     def binary_reel_header(self):
-        """The binary reel header.
-        """
+        """The binary reel header."""
         raise NotImplementedError
 
     @property
@@ -86,14 +83,14 @@ class Dataset(metaclass=ABCMeta):
 
     @property
     def data_sample_format(self):
-        """The data type of the samples in machine-readable form. One of the values from datatypes.DATA_SAMPLE_FORMAT.
-        """
-        return DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[self.binary_reel_header.data_sample_format]
+        """The data type of the samples in machine-readable form. One of the values from datatypes.DATA_SAMPLE_FORMAT."""
+        return DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE[
+            self.binary_reel_header.data_sample_format
+        ]
 
     @property
     def data_sample_format_description(self):
-        """A descriptive human-readable description of the data sample format
-        """
+        """A descriptive human-readable description of the data sample format"""
         return SEG_Y_TYPE_DESCRIPTION[self.data_sample_format]
 
 

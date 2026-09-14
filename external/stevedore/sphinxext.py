@@ -30,11 +30,11 @@ from stevedore import extension
 
 LOG = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def _get_docstring(plugin: Callable[..., T]) -> str:
-    return inspect.getdoc(plugin) or ''
+    return inspect.getdoc(plugin) or ""
 
 
 def _simple_list(
@@ -42,15 +42,15 @@ def _simple_list(
 ) -> Iterable[tuple[str, str]]:
     for name in sorted(mgr.names()):
         ext = mgr[name]
-        doc = _get_docstring(ext.plugin) or '\n'
+        doc = _get_docstring(ext.plugin) or "\n"
         summary = doc.splitlines()[0].strip()
-        yield (f'* {ext.name} -- {summary}', ext.module_name)
+        yield (f"* {ext.name} -- {summary}", ext.module_name)
 
 
 def _detailed_list(
     mgr: extension.ExtensionManager[T],
-    over: str = '',
-    under: str = '-',
+    over: str = "",
+    under: str = "-",
     titlecase: bool = False,
 ) -> Iterable[tuple[str, str]]:
     for name in sorted(mgr.names()):
@@ -63,44 +63,44 @@ def _detailed_list(
             yield (ext.name, ext.module_name)
         if under:
             yield (under * len(ext.name), ext.module_name)
-        yield ('\n', ext.module_name)
+        yield ("\n", ext.module_name)
         doc = _get_docstring(ext.plugin)
         if doc:
             yield (doc, ext.module_name)
         else:
             yield (
-                f'.. warning:: No documentation found for {ext.name} in '
-                f'{ext.entry_point_target}',
+                f".. warning:: No documentation found for {ext.name} in "
+                f"{ext.entry_point_target}",
                 ext.module_name,
             )
-        yield ('\n', ext.module_name)
+        yield ("\n", ext.module_name)
 
 
 class ListPluginsDirective(rst.Directive):
     """Present a simple list of the plugins in a namespace."""
 
     option_spec = {
-        'class': directives.class_option,
-        'detailed': directives.flag,
-        'titlecase': directives.flag,
-        'overline-style': directives.single_char_or_unicode,
-        'underline-style': directives.single_char_or_unicode,
+        "class": directives.class_option,
+        "detailed": directives.flag,
+        "titlecase": directives.flag,
+        "overline-style": directives.single_char_or_unicode,
+        "underline-style": directives.single_char_or_unicode,
     }
 
     has_content = True
 
     def run(self) -> Sequence[nodes.Node]:
-        namespace = ' '.join(self.content).strip()
-        LOG.info('documenting plugins from %r', namespace)
-        overline_style = self.options.get('overline-style', '')
-        underline_style = self.options.get('underline-style', '=')
+        namespace = " ".join(self.content).strip()
+        LOG.info("documenting plugins from %r", namespace)
+        overline_style = self.options.get("overline-style", "")
+        underline_style = self.options.get("underline-style", "=")
 
         def report_load_failure(
             mgr: extension.ExtensionManager[T],
             ep: importlib.metadata.EntryPoint,
             err: BaseException,
         ) -> None:
-            LOG.warning('Failed to load %s: %s', ep.module, err)
+            LOG.warning("Failed to load %s: %s", ep.module, err)
 
         mgr: extension.ExtensionManager[Any]
         mgr = extension.ExtensionManager(
@@ -109,9 +109,9 @@ class ListPluginsDirective(rst.Directive):
 
         result = StringList()
 
-        titlecase = 'titlecase' in self.options
+        titlecase = "titlecase" in self.options
 
-        if 'detailed' in self.options:
+        if "detailed" in self.options:
             data = _detailed_list(
                 mgr,
                 over=overline_style,
@@ -133,6 +133,6 @@ class ListPluginsDirective(rst.Directive):
 
 
 def setup(app: Sphinx) -> dict[str, Any]:
-    LOG.info('loading stevedore.sphinxext')
-    app.add_directive('list-plugins', ListPluginsDirective)
-    return {'parallel_read_safe': True, 'parallel_write_safe': True}
+    LOG.info("loading stevedore.sphinxext")
+    app.add_directive("list-plugins", ListPluginsDirective)
+    return {"parallel_read_safe": True, "parallel_write_safe": True}

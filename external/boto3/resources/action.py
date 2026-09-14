@@ -79,7 +79,7 @@ class ServiceAction:
         params.update(kwargs)
 
         logger.debug(
-            'Calling %s:%s with %r',
+            "Calling %s:%s with %r",
             parent.meta.service_name,
             operation_name,
             params,
@@ -87,7 +87,7 @@ class ServiceAction:
 
         response = getattr(parent.meta.client, operation_name)(*args, **params)
 
-        logger.debug('Response: %r', response)
+        logger.debug("Response: %r", response)
 
         return self._response_handler(parent, params, response)
 
@@ -155,13 +155,11 @@ class BatchAction(ServiceAction):
 
             params.update(kwargs)
 
-            logger.debug(
-                'Calling %s:%s with %r', service_name, operation_name, params
-            )
+            logger.debug("Calling %s:%s with %r", service_name, operation_name, params)
 
             response = getattr(client, operation_name)(*args, **params)
 
-            logger.debug('Response: %r', response)
+            logger.debug("Response: %r", response)
 
             responses.append(self._response_handler(parent, params, response))
 
@@ -204,7 +202,7 @@ class WaiterAction:
         params.update(kwargs)
 
         logger.debug(
-            'Calling %s:%s with %r',
+            "Calling %s:%s with %r",
             parent.meta.service_name,
             self._waiter_resource_name,
             params,
@@ -214,7 +212,7 @@ class WaiterAction:
         waiter = client.get_waiter(client_waiter_name)
         response = waiter.wait(**params)
 
-        logger.debug('Response: %r', response)
+        logger.debug("Response: %r", response)
 
 
 class CustomModeledAction:

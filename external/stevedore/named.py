@@ -24,12 +24,12 @@ from .extension import OnLoadFailureCallbackT
 
 LOG = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 OnMissingEntrypointsCallbackT = Callable[[Iterable[str]], None]
 
 
 def warning_on_missing_entrypoint(missing_names: Iterable[str]) -> None:
-    LOG.warning('Could not load %s', ', '.join(missing_names))
+    LOG.warning("Could not load %s", ", ".join(missing_names))
 
 
 class NamedExtensionManager(ExtensionManager[T]):
@@ -81,14 +81,14 @@ class NamedExtensionManager(ExtensionManager[T]):
         invoke_kwds: dict[str, Any] | None = None,
         name_order: bool = False,
         propagate_map_exceptions: bool = False,
-        on_load_failure_callback: 'OnLoadFailureCallbackT[T] | None' = None,
+        on_load_failure_callback: "OnLoadFailureCallbackT[T] | None" = None,
         on_missing_entrypoints_callback: (
             OnMissingEntrypointsCallbackT | None
         ) = warning_on_missing_entrypoint,
         verify_requirements: bool | None = None,
         warn_on_missing_entrypoint: bool | None = None,
         *,
-        conflict_resolver: 'ConflictResolverT[T]' = ignore_conflicts,
+        conflict_resolver: "ConflictResolverT[T]" = ignore_conflicts,
     ) -> None:
         self._names = names
         self._missing_names: set[str] = set()
@@ -121,12 +121,12 @@ class NamedExtensionManager(ExtensionManager[T]):
     def make_test_instance(
         cls,
         extensions: list[Extension[T]],
-        namespace: str = 'TESTING',
+        namespace: str = "TESTING",
         propagate_map_exceptions: bool = False,
-        on_load_failure_callback: 'OnLoadFailureCallbackT[T] | None' = None,
+        on_load_failure_callback: "OnLoadFailureCallbackT[T] | None" = None,
         verify_requirements: bool | None = None,
         *,
-        conflict_resolver: 'ConflictResolverT[T]' = ignore_conflicts,
+        conflict_resolver: "ConflictResolverT[T]" = ignore_conflicts,
     ) -> Self:
         """Construct a test NamedExtensionManager
 
@@ -153,8 +153,8 @@ class NamedExtensionManager(ExtensionManager[T]):
         """
         if verify_requirements is not None:
             warnings.warn(
-                'The verify_requirements argument is now a no-op and is '
-                'deprecated for removal. Remove the argument from calls.',
+                "The verify_requirements argument is now a no-op and is "
+                "deprecated for removal. Remove the argument from calls.",
                 DeprecationWarning,
             )
 
@@ -183,9 +183,7 @@ class NamedExtensionManager(ExtensionManager[T]):
         invoke_args: tuple[Any, ...],
         invoke_kwds: dict[str, Any],
     ) -> list[Extension[T]]:
-        extensions = super()._load_plugins(
-            invoke_on_load, invoke_args, invoke_kwds
-        )
+        extensions = super()._load_plugins(invoke_on_load, invoke_args, invoke_kwds)
 
         self._missing_names = set(self._names) - {e.name for e in extensions}
         if self._missing_names and self._on_missing_entrypoints_callback:
@@ -206,6 +204,4 @@ class NamedExtensionManager(ExtensionManager[T]):
         if ep.name not in self._names:
             return None
 
-        return super()._load_one_plugin(
-            ep, invoke_on_load, invoke_args, invoke_kwds
-        )
+        return super()._load_one_plugin(ep, invoke_on_load, invoke_args, invoke_kwds)

@@ -25,7 +25,7 @@ class TestCache(utils.TestCase):
         """Test caching is disabled if python interpreter is located under /tmp
         directory (Ansible)
         """
-        with mock.patch.object(sys, 'executable', '/tmp/fake'):
+        with mock.patch.object(sys, "executable", "/tmp/fake"):
             sot = _cache.Cache()
             self.assertTrue(sot._disable_caching)
 
@@ -35,23 +35,23 @@ class TestCache(utils.TestCase):
         """
         cache_dir = _cache._get_cache_dir()
 
-        with mock.patch('os.path.isfile') as mock_path:
+        with mock.patch("os.path.isfile") as mock_path:
             mock_path.return_value = True
             sot = _cache.Cache()
-            mock_path.assert_called_with(f'{cache_dir}/.disable')
+            mock_path.assert_called_with(f"{cache_dir}/.disable")
             self.assertTrue(sot._disable_caching)
 
             mock_path.return_value = False
             sot = _cache.Cache()
             self.assertFalse(sot._disable_caching)
 
-    @mock.patch('os.makedirs')
-    @mock.patch('builtins.open')
+    @mock.patch("os.makedirs")
+    @mock.patch("builtins.open")
     def test__get_data_for_path_no_write(self, mock_open, mock_mkdir):
         sot = _cache.Cache()
         sot._disable_caching = True
         mock_open.side_effect = IOError
-        sot._get_data_for_path(('fake',))
+        sot._get_data_for_path(("fake",))
         mock_mkdir.assert_not_called()
 
     def test__build_cacheable_data(self):
@@ -60,4 +60,4 @@ class TestCache(utils.TestCase):
         # dependent and mocking out the underlying calls would remove the value
         # of this test (we want to test those underlying API calls)
         ret = _cache._build_cacheable_data()
-        self.assertIsInstance(ret['groups'], dict)
+        self.assertIsInstance(ret["groups"], dict)

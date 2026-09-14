@@ -71,7 +71,6 @@ class DeflateDecoder(object):
 
 
 class GzipDecoderState(object):
-
     FIRST_MEMBER = 0
     OTHER_MEMBERS = 1
     SWALLOW_DATA = 2
@@ -499,7 +498,7 @@ class HTTPResponse(io.IOBase):
           * CPython < 3.10 only when `amt` does not fit 32-bit int.
         """
         assert self._fp
-        c_int_max = 2 ** 31 - 1
+        c_int_max = 2**31 - 1
         if (
             (
                 (amt and amt > c_int_max)
@@ -515,7 +514,7 @@ class HTTPResponse(io.IOBase):
             # `c_int_max` equal to 2 GiB - 1 byte is the actual maximum
             # chunk size that does not lead to an overflow error, but
             # 256 MiB is a compromise.
-            max_chunk_amt = 2 ** 28
+            max_chunk_amt = 2**28
             while amt is None or amt != 0:
                 if amt is not None:
                     chunk_amt = min(amt, max_chunk_amt)
@@ -604,7 +603,7 @@ class HTTPResponse(io.IOBase):
 
         return data
 
-    def stream(self, amt=2 ** 16, decode_content=None):
+    def stream(self, amt=2**16, decode_content=None):
         """
         A generator wrapper for the read() method. A call will block until
         ``amt`` bytes have been read from the connection or until the
@@ -658,7 +657,7 @@ class HTTPResponse(io.IOBase):
             reason=r.reason,
             strict=strict,
             original_response=r,
-            **response_kw
+            **response_kw,
         )
         return resp
 

@@ -34,8 +34,11 @@ class BaseHeader:
             try:
                 getattr(self, keyword)
             except AttributeError as e:
-                raise TypeError("{!r} is not a recognised field name for {!r}"
-                                .format(keyword, self.__class__.__name__)) from e
+                raise TypeError(
+                    "{!r} is not a recognised field name for {!r}".format(
+                        keyword, self.__class__.__name__
+                    )
+                ) from e
             else:
                 setattr(self, keyword, arg)
 
@@ -65,30 +68,40 @@ class BaseHeader:
         return self.copy()
 
     def __getattr__(self, name):
-        raise AttributeError("Object of type {!r} has no attribute {!r}".format(self.__class__.__name__, name))
+        raise AttributeError(
+            "Object of type {!r} has no attribute {!r}".format(
+                self.__class__.__name__, name
+            )
+        )
 
     def __repr__(self):
         return "{}({})".format(
             self.__class__.__name__,
-            ', '.join("{}={}".format(k, getattr(self, k)) for k in self.ordered_field_names()))
+            ", ".join(
+                "{}={}".format(k, getattr(self, k)) for k in self.ordered_field_names()
+            ),
+        )
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state['__version__'] = __version__
-        state['_all_attributes'] = OrderedDict((name, getattr(self, name)) for name in self._ordered_field_names)
+        state["__version__"] = __version__
+        state["_all_attributes"] = OrderedDict(
+            (name, getattr(self, name)) for name in self._ordered_field_names
+        )
         return state
 
     def __setstate__(self, state):
-        if state['__version__'] != __version__:
-            raise TypeError("Cannot unpickle {} version {} into version {}"
-                            .format(self.__class__.__name__,
-                                    state['__version__'],
-                                    __version__))
-        del state['__version__']
+        if state["__version__"] != __version__:
+            raise TypeError(
+                "Cannot unpickle {} version {} into version {}".format(
+                    self.__class__.__name__, state["__version__"], __version__
+                )
+            )
+        del state["__version__"]
 
-        for name, value in state['_all_attributes'].items():
+        for name, value in state["_all_attributes"].items():
             setattr(self, name, value)
-        del state['_all_attributes']
+        del state["_all_attributes"]
         self.__dict__.update(state)
 
 
@@ -100,12 +113,14 @@ def are_equal(header_a, header_b):
     """
     if type(header_a) != type(header_b):
         return False
-    return all(getattr(header_a, field_name) == getattr(header_b, field_name) for field_name in header_a.ordered_field_names())
+    return all(
+        getattr(header_a, field_name) == getattr(header_b, field_name)
+        for field_name in header_a.ordered_field_names()
+    )
 
 
 class FormatMeta(type):
-    """A metaclass for header format classes.
-    """
+    """A metaclass for header format classes."""
 
     @classmethod
     def __prepare__(mcs, name, bases, *args, **kwargs):
@@ -118,16 +133,20 @@ class FormatMeta(type):
 
         # TODO: Also validate existence of LENGTH_IN_BYTES
 
-        namespace['_ordered_field_names'] = tuple(name for name, attr in namespace.items()
-                                                  if isinstance(attr, HeaderFieldDescriptor))
+        namespace["_ordered_field_names"] = tuple(
+            name
+            for name, attr in namespace.items()
+            if isinstance(attr, HeaderFieldDescriptor)
+        )
 
-        transitive_bases = set(chain.from_iterable(type(base).mro(base) for base in bases))
+        transitive_bases = set(
+            chain.from_iterable(type(base).mro(base) for base in bases)
+        )
 
         if BaseHeader not in transitive_bases:
             bases = (BaseHeader,) + bases
 
         for attr_name, attr in namespace.items():
-
             # This shenanigans is necessary so we can have all the following work is a useful way
             # help(class), help(instance), help(class.property) and help(instance.property)
 
@@ -140,9 +159,10 @@ class FormatMeta(type):
 
 
 def is_public_non_field_attr(name, attr):
-    return ((not name.startswith('_'))
-            and (not isinstance(attr, HeaderFieldDescriptor)
-                 and (not isinstance(attr, classmethod))))
+    return (not name.startswith("_")) and (
+        not isinstance(attr, HeaderFieldDescriptor)
+        and (not isinstance(attr, classmethod))
+    )
 
 
 class SubFormatMeta(FormatMeta):
@@ -177,18 +197,22 @@ class SubFormatMeta(FormatMeta):
         for field_name in parent_field_names:
             named_field = getattr(parent_format, field_name)
             assert named_field.name == field_name
-            field_copy = field(named_field.value_type,
-                               named_field.offset,
-                               named_field.default,
-                               named_field.documentation)
+            field_copy = field(
+                named_field.value_type,
+                named_field.offset,
+                named_field.default,
+                named_field.documentation,
+            )
             namespace[field_name] = field_copy
 
         # Copy other non-field class attributes
-        non_field_attributes = list(collect_attributes(parent_format, BaseHeader, is_public_non_field_attr))
+        non_field_attributes = list(
+            collect_attributes(parent_format, BaseHeader, is_public_non_field_attr)
+        )
         namespace.update((name, value) for _, name, value in non_field_attributes)
 
         # Add a reference back to the original format
-        namespace['_parent_format'] = parent_format
+        namespace["_parent_format"] = parent_format
 
         return super().__new__(mcs, name, bases, namespace)
 
@@ -238,7 +262,8 @@ class NamedField:
             self.name,
             self.value_type.__name__,
             self.offset,
-            self.default)
+            self.default,
+        )
 
 
 def field(value_type, offset, default, documentation):
@@ -260,10 +285,13 @@ def field(value_type, offset, default, documentation):
 
 
 class HeaderFieldDescriptor:
-
     def __init__(self, value_type, offset, default, documentation):
-        SpecificNamedField = type('SpecificNamedField', (NamedField,), {'__doc__': documentation})
-        self._named_field = SpecificNamedField(value_type, offset, default, documentation)
+        SpecificNamedField = type(
+            "SpecificNamedField", (NamedField,), {"__doc__": documentation}
+        )
+        self._named_field = SpecificNamedField(
+            value_type, offset, default, documentation
+        )
         self._instance_data = WeakKeyDictionary()
 
     @property
@@ -272,7 +300,9 @@ class HeaderFieldDescriptor:
 
     @_name.setter
     def _name(self, value):
-        self._named_field.__class__.__name__ = underscores_to_camelcase(value + '_field')
+        self._named_field.__class__.__name__ = underscores_to_camelcase(
+            value + "_field"
+        )
         self._named_field._name = value
 
     def __get__(self, instance, owner):
@@ -298,8 +328,11 @@ class HeaderFieldDescriptor:
         try:
             self._instance_data[instance] = self._named_field._value_type(value)
         except ValueError as e:
-            raise ValueError("Assigned value {!r} for {} attribute must be convertible to {}: {}"
-                             .format(value, self._name, self._named_field._value_type.__name__, e)) from e
+            raise ValueError(
+                "Assigned value {!r} for {} attribute must be convertible to {}: {}".format(
+                    value, self._name, self._named_field._value_type.__name__, e
+                )
+            ) from e
 
     def __delete__(self, instance):
         raise AttributeError("Can't delete {} attribute".format(self._name))
@@ -307,4 +340,5 @@ class HeaderFieldDescriptor:
 
 class Header(BaseHeader, metaclass=FormatMeta):
     """A base class for header definition classes."""
+
     pass

@@ -13,10 +13,10 @@
 from html.parser import HTMLParser
 from itertools import zip_longest
 
-PRIORITY_PARENT_TAGS = ('code', 'a')
-OMIT_NESTED_TAGS = ('span', 'i', 'code', 'a')
-OMIT_SELF_TAGS = ('i', 'b')
-HTML_BLOCK_DISPLAY_TAGS = ('p', 'note', 'ul', 'li')
+PRIORITY_PARENT_TAGS = ("code", "a")
+OMIT_NESTED_TAGS = ("span", "i", "code", "a")
+OMIT_SELF_TAGS = ("i", "b")
+HTML_BLOCK_DISPLAY_TAGS = ("p", "note", "ul", "li")
 
 
 class DocStringParser(HTMLParser):
@@ -83,9 +83,9 @@ class HTMLTree:
 
     def _doc_has_handler(self, tag, is_start):
         if is_start:
-            handler_name = f'start_{tag}'
+            handler_name = f"start_{tag}"
         else:
-            handler_name = f'end_{tag}'
+            handler_name = f"end_{tag}"
 
         return hasattr(self.doc.style, handler_name)
 
@@ -175,9 +175,7 @@ class TagNode(StemNode):
         return any(isinstance(child, TagNode) for child in self.children)
 
     def write(self, doc, next_child=None):
-        prioritize_nested_tags = (
-            self.tag in OMIT_SELF_TAGS and self._has_nested_tags()
-        )
+        prioritize_nested_tags = self.tag in OMIT_SELF_TAGS and self._has_nested_tags()
         prioritize_parent_tag = (
             isinstance(self.parent, TagNode)
             and self.parent.tag in PRIORITY_PARENT_TAGS
@@ -226,14 +224,14 @@ class TagNode(StemNode):
             child.collapse_whitespace()
 
     def _write_start(self, doc):
-        handler_name = f'start_{self.tag}'
+        handler_name = f"start_{self.tag}"
         if hasattr(doc.style, handler_name):
             getattr(doc.style, handler_name)(self.attrs)
 
     def _write_end(self, doc, next_child):
-        handler_name = f'end_{self.tag}'
+        handler_name = f"end_{self.tag}"
         if hasattr(doc.style, handler_name):
-            if handler_name == 'end_a':
+            if handler_name == "end_a":
                 # We use lookahead to determine if a space is needed after a link node
                 getattr(doc.style, handler_name)(next_child)
             else:
@@ -249,17 +247,15 @@ class DataNode(Node):
         super().__init__(parent)
         if not isinstance(data, str):
             raise ValueError(f"Expecting string type, {type(data)} given.")
-        self._leading_whitespace = ''
-        self._trailing_whitespace = ''
-        self._stripped_data = ''
-        if data == '':
+        self._leading_whitespace = ""
+        self._trailing_whitespace = ""
+        self._stripped_data = ""
+        if data == "":
             return
         if data.isspace():
             self._trailing_whitespace = data
             return
-        first_non_space = next(
-            idx for idx, ch in enumerate(data) if not ch.isspace()
-        )
+        first_non_space = next(idx for idx, ch in enumerate(data) if not ch.isspace())
         last_non_space = len(data) - next(
             idx for idx, ch in enumerate(reversed(data)) if not ch.isspace()
         )
@@ -270,35 +266,35 @@ class DataNode(Node):
     @property
     def data(self):
         return (
-            f'{self._leading_whitespace}{self._stripped_data}'
-            f'{self._trailing_whitespace}'
+            f"{self._leading_whitespace}{self._stripped_data}"
+            f"{self._trailing_whitespace}"
         )
 
     def is_whitespace(self):
-        return self._stripped_data == '' and (
-            self._leading_whitespace != '' or self._trailing_whitespace != ''
+        return self._stripped_data == "" and (
+            self._leading_whitespace != "" or self._trailing_whitespace != ""
         )
 
     def startswith_whitespace(self):
-        return self._leading_whitespace != '' or (
-            self._stripped_data == '' and self._trailing_whitespace != ''
+        return self._leading_whitespace != "" or (
+            self._stripped_data == "" and self._trailing_whitespace != ""
         )
 
     def endswith_whitespace(self):
-        return self._trailing_whitespace != '' or (
-            self._stripped_data == '' and self._leading_whitespace != ''
+        return self._trailing_whitespace != "" or (
+            self._stripped_data == "" and self._leading_whitespace != ""
         )
 
     def lstrip(self):
-        if self._leading_whitespace != '':
-            self._leading_whitespace = ''
-        elif self._stripped_data == '':
+        if self._leading_whitespace != "":
+            self._leading_whitespace = ""
+        elif self._stripped_data == "":
             self.rstrip()
 
     def rstrip(self):
-        if self._trailing_whitespace != '':
-            self._trailing_whitespace = ''
-        elif self._stripped_data == '':
+        if self._trailing_whitespace != "":
+            self._trailing_whitespace = ""
+        elif self._stripped_data == "":
             self.lstrip()
 
     def collapse_whitespace(self):
@@ -308,8 +304,7 @@ class DataNode(Node):
     def write(self, doc):
         words = doc.translate_words(self._stripped_data.split())
         str_data = (
-            f'{self._leading_whitespace}{" ".join(words)}'
-            f'{self._trailing_whitespace}'
+            f"{self._leading_whitespace}{' '.join(words)}{self._trailing_whitespace}"
         )
-        if str_data != '':
+        if str_data != "":
             doc.handle_data(str_data)

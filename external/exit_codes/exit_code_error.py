@@ -15,5 +15,4 @@ class ExitCodeError(Exception):
         self.code = code
 
     def __repr__(self):
-        return 'ExitCodeError(msg="{}", code={})'.format(
-            self.args[0], self.code)
+        return 'ExitCodeError(msg="{}", code={})'.format(self.args[0], self.code)

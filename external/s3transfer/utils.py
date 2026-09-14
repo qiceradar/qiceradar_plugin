@@ -51,22 +51,22 @@ S3_RETRYABLE_DOWNLOAD_ERRORS = (
 
 
 def random_file_extension(num_digits=8):
-    return ''.join(random.choice(string.hexdigits) for _ in range(num_digits))
+    return "".join(random.choice(string.hexdigits) for _ in range(num_digits))
 
 
 def signal_not_transferring(request, operation_name, **kwargs):
-    if operation_name in ['PutObject', 'UploadPart'] and hasattr(
-        request.body, 'signal_not_transferring'
+    if operation_name in ["PutObject", "UploadPart"] and hasattr(
+        request.body, "signal_not_transferring"
     ):
         request.body.signal_not_transferring()
 
 
 def signal_transferring(request, operation_name, **kwargs):
-    if operation_name in ['PutObject', 'UploadPart']:
+    if operation_name in ["PutObject", "UploadPart"]:
         body = request.body
         if isinstance(body, AwsChunkedWrapper):
-            body = getattr(body, '_raw', None)
-        if hasattr(body, 'signal_transferring'):
+            body = getattr(body, "_raw", None)
+        if hasattr(body, "signal_transferring"):
             body.signal_transferring()
 
 
@@ -74,9 +74,7 @@ def calculate_num_parts(size, part_size):
     return int(math.ceil(size / float(part_size)))
 
 
-def calculate_range_parameter(
-    part_size, part_index, num_parts, total_size=None
-):
+def calculate_range_parameter(part_size, part_index, num_parts, total_size=None):
     """Calculate the range parameter for multipart downloads/copies
 
     :type part_size: int
@@ -95,12 +93,12 @@ def calculate_range_parameter(
     # Used to calculate the Range parameter
     start_range = part_index * part_size
     if part_index == num_parts - 1:
-        end_range = ''
+        end_range = ""
         if total_size is not None:
             end_range = str(total_size - 1)
     else:
         end_range = start_range + part_size - 1
-    range_param = f'bytes={start_range}-{end_range}'
+    range_param = f"bytes={start_range}-{end_range}"
     return range_param
 
 
@@ -123,7 +121,7 @@ def get_callbacks(transfer_future, callback_type):
     """
     callbacks = []
     for subscriber in transfer_future.meta.call_args.subscribers:
-        callback_name = 'on_' + callback_type
+        callback_name = "on_" + callback_type
         if hasattr(subscriber, callback_name):
             callbacks.append(
                 functools.partial(
@@ -149,9 +147,7 @@ def invoke_progress_callbacks(callbacks, bytes_transferred):
             callback(bytes_transferred=bytes_transferred)
 
 
-def get_filtered_dict(
-    original_dict, whitelisted_keys=None, blocklisted_keys=None
-):
+def get_filtered_dict(original_dict, whitelisted_keys=None, blocklisted_keys=None):
     """Gets a dictionary filtered by whitelisted and blocklisted keys.
 
     :param original_dict: The original dictionary of arguments to source keys
@@ -199,7 +195,9 @@ class FunctionContainer:
         self._kwargs = kwargs
 
     def __repr__(self):
-        return f'Function: {self._func} with args {self._args} and kwargs {self._kwargs}'
+        return (
+            f"Function: {self._func} with args {self._args} and kwargs {self._kwargs}"
+        )
 
     def __call__(self):
         return self._func(*self._args, **self._kwargs)
@@ -227,8 +225,7 @@ class CountCallbackInvoker:
         with self._lock:
             if self._is_finalized:
                 raise RuntimeError(
-                    'Counter has been finalized it can no longer be '
-                    'incremented.'
+                    "Counter has been finalized it can no longer be incremented."
                 )
             self._count += 1
 
@@ -236,9 +233,7 @@ class CountCallbackInvoker:
         """Decrement the count by one"""
         with self._lock:
             if self._count == 0:
-                raise RuntimeError(
-                    'Counter is at zero. It cannot dip below zero'
-                )
+                raise RuntimeError("Counter is at zero. It cannot dip below zero")
             self._count -= 1
             if self._is_finalized and self._count == 0:
                 self._callback()
@@ -336,7 +331,7 @@ class OSUtils:
 
     def allocate(self, filename, size):
         try:
-            with self.open(filename, 'wb') as f:
+            with self.open(filename, "wb") as f:
                 fallocate(f, size)
         except OSError:
             self.remove_file(filename)
@@ -344,7 +339,7 @@ class OSUtils:
 
 
 class DeferredOpenFile:
-    def __init__(self, filename, start_byte=0, mode='rb', open_function=open):
+    def __init__(self, filename, start_byte=0, mode="rb", open_function=open):
         """A class that defers the opening of a file till needed
 
         This is useful for deferring opening of a file till it is needed
@@ -506,7 +501,7 @@ class ReadFileChunk:
         :return: A new instance of ``ReadFileChunk``
 
         """
-        f = open(filename, 'rb')
+        f = open(filename, "rb")
         f.seek(start_byte)
         file_size = os.fstat(f.fileno()).st_size
         return cls(f, chunk_size, file_size, callbacks, enable_callbacks)
@@ -531,12 +526,12 @@ class ReadFileChunk:
 
     def signal_transferring(self):
         self.enable_callback()
-        if hasattr(self._fileobj, 'signal_transferring'):
+        if hasattr(self._fileobj, "signal_transferring"):
             self._fileobj.signal_transferring()
 
     def signal_not_transferring(self):
         self.disable_callback()
-        if hasattr(self._fileobj, 'signal_not_transferring'):
+        if hasattr(self._fileobj, "signal_not_transferring"):
             self._fileobj.signal_not_transferring()
 
     def enable_callback(self):
@@ -564,9 +559,7 @@ class ReadFileChunk:
             bounded_where = max(min(where - self._start_byte, self._size), 0)
             bounded_amount_read = min(self._amount_read, self._size)
             amount = bounded_where - bounded_amount_read
-            invoke_progress_callbacks(
-                self._callbacks, bytes_transferred=amount
-            )
+            invoke_progress_callbacks(self._callbacks, bytes_transferred=amount)
         self._amount_read = max(where - self._start_byte, 0)
 
     def close(self):
@@ -742,9 +735,7 @@ class SlidingWindowSemaphore(TaskSemaphore):
                 # We can't do anything right now because we're still waiting
                 # for the min sequence for the tag to be released.  We have
                 # to queue this for pending release.
-                self._pending_release.setdefault(tag, []).append(
-                    sequence_number
-                )
+                self._pending_release.setdefault(tag, []).append(sequence_number)
                 self._pending_release[tag].sort(reverse=True)
             else:
                 raise ValueError(

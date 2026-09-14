@@ -39,11 +39,11 @@ class FieldList(base.FormatterBase):
         :returns: Iterable producing the formatted text.
         """
         for name, value in sorted(data.items()):
-            full_text = f': {name} : {value}'
+            full_text = f": {name} : {value}"
             wrapped_text = textwrap.fill(
                 full_text,
-                initial_indent='',
-                subsequent_indent='    ',
+                initial_indent="",
+                subsequent_indent="    ",
                 width=self.max_width,
             )
-            yield wrapped_text + '\n'
+            yield wrapped_text + "\n"

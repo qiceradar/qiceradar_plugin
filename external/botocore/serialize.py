@@ -60,14 +60,14 @@ from botocore.utils import (
 )
 
 # From the spec, the default timestamp format if not specified is iso8601.
-DEFAULT_TIMESTAMP_FORMAT = 'iso8601'
-ISO8601 = '%Y-%m-%dT%H:%M:%SZ'
+DEFAULT_TIMESTAMP_FORMAT = "iso8601"
+ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
 # Same as ISO8601, but with microsecond precision.
-ISO8601_MICRO = '%Y-%m-%dT%H:%M:%S.%fZ'
+ISO8601_MICRO = "%Y-%m-%dT%H:%M:%S.%fZ"
 HOST_PREFIX_RE = re.compile(r"^[A-Za-z0-9\.\-]+$")
 
-TIMESTAMP_PRECISION_DEFAULT = 'default'
-TIMESTAMP_PRECISION_MILLISECOND = 'millisecond'
+TIMESTAMP_PRECISION_DEFAULT = "default"
+TIMESTAMP_PRECISION_MILLISECOND = "millisecond"
 TIMESTAMP_PRECISION_OPTIONS = (
     TIMESTAMP_PRECISION_DEFAULT,
     TIMESTAMP_PRECISION_MILLISECOND,
@@ -91,9 +91,7 @@ def create_serializer(
     :return: A serializer instance for the given protocol.
     """
     # TODO: Unknown protocols.
-    serializer = SERIALIZERS[protocol_name](
-        timestamp_precision=timestamp_precision
-    )
+    serializer = SERIALIZERS[protocol_name](timestamp_precision=timestamp_precision)
     if include_validation:
         validator = validate.ParamValidator()
         serializer = validate.ParamValidationDecorator(validator, serializer)
@@ -101,13 +99,13 @@ def create_serializer(
 
 
 class Serializer:
-    DEFAULT_METHOD = 'POST'
+    DEFAULT_METHOD = "POST"
     # Clients can change this to a different MutableMapping
     # (i.e OrderedDict) if they want.  This is used in the
     # compliance test to match the hash ordering used in the
     # tests.
     MAP_TYPE = dict
-    DEFAULT_ENCODING = 'utf-8'
+    DEFAULT_ENCODING = "utf-8"
 
     def __init__(self, timestamp_precision=TIMESTAMP_PRECISION_DEFAULT):
         if timestamp_precision not in TIMESTAMP_PRECISION_OPTIONS:
@@ -158,12 +156,12 @@ class Serializer:
         # Creates a boilerplate default request dict that subclasses
         # can use as a starting point.
         serialized = {
-            'url_path': '/',
-            'query_string': '',
-            'method': self.DEFAULT_METHOD,
-            'headers': {},
+            "url_path": "/",
+            "query_string": "",
+            "method": self.DEFAULT_METHOD,
+            "headers": {},
             # An empty body is represented as an empty byte string.
-            'body': b'',
+            "body": b"",
         }
         return serialized
 
@@ -174,9 +172,7 @@ class Serializer:
         # Smithy's standard is milliseconds, so we truncate the timestamp if the millisecond flag is set to true
         if self._timestamp_precision == TIMESTAMP_PRECISION_MILLISECOND:
             milliseconds = value.microsecond // 1000
-            return (
-                value.strftime('%Y-%m-%dT%H:%M:%S') + f'.{milliseconds:03d}Z'
-            )
+            return value.strftime("%Y-%m-%dT%H:%M:%S") + f".{milliseconds:03d}Z"
         else:
             # Otherwise we continue supporting microseconds in iso8601 for legacy reasons
             if value.microsecond > 0:
@@ -207,14 +203,14 @@ class Serializer:
             timestamp_format = self.TIMESTAMP_FORMAT
         timestamp_format = timestamp_format.lower()
         datetime_obj = parse_to_aware_datetime(value)
-        converter = getattr(self, f'_timestamp_{timestamp_format}')
+        converter = getattr(self, f"_timestamp_{timestamp_format}")
         final_value = converter(datetime_obj)
         return final_value
 
     def _get_serialized_name(self, shape, default_name):
         # Returns the serialized name for the shape if it exists.
         # Otherwise it will return the passed in default_name.
-        return shape.serialization.get('name', default_name)
+        return shape.serialization.get("name", default_name)
 
     def _get_base64(self, value):
         # Returns the base64-encoded version of value, handling
@@ -226,20 +222,17 @@ class Serializer:
 
     def _expand_host_prefix(self, parameters, operation_model):
         operation_endpoint = operation_model.endpoint
-        if (
-            operation_endpoint is None
-            or 'hostPrefix' not in operation_endpoint
-        ):
+        if operation_endpoint is None or "hostPrefix" not in operation_endpoint:
             return None
 
-        host_prefix_expression = operation_endpoint['hostPrefix']
+        host_prefix_expression = operation_endpoint["hostPrefix"]
         if operation_model.input_shape is None:
             return host_prefix_expression
         input_members = operation_model.input_shape.members
         host_labels = [
             member
             for member, shape in input_members.items()
-            if shape.serialization.get('hostLabel')
+            if shape.serialization.get("hostLabel")
         ]
         format_kwargs = {}
         bad_labels = []
@@ -259,7 +252,7 @@ class Serializer:
         return host_prefix_expression.format(**format_kwargs)
 
     def _is_shape_flattened(self, shape):
-        return shape.serialization.get('flattened')
+        return shape.serialization.get("flattened")
 
     def _handle_float(self, value):
         if value == float("Infinity"):
@@ -272,37 +265,35 @@ class Serializer:
 
     def _handle_query_compatible_trait(self, operation_model, serialized):
         if operation_model.service_model.is_query_compatible:
-            serialized['headers']['x-amzn-query-mode'] = 'true'
+            serialized["headers"]["x-amzn-query-mode"] = "true"
 
 
 class QuerySerializer(Serializer):
-    TIMESTAMP_FORMAT = 'iso8601'
+    TIMESTAMP_FORMAT = "iso8601"
 
     def serialize_to_request(self, parameters, operation_model):
         shape = operation_model.input_shape
         serialized = self._create_default_request()
-        serialized['method'] = operation_model.http.get(
-            'method', self.DEFAULT_METHOD
-        )
-        serialized['headers'] = {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+        serialized["method"] = operation_model.http.get("method", self.DEFAULT_METHOD)
+        serialized["headers"] = {
+            "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
         }
         # The query serializer only deals with body params so
         # that's what we hand off the _serialize_* methods.
         body_params = self.MAP_TYPE()
-        body_params['Action'] = operation_model.name
-        body_params['Version'] = operation_model.metadata['apiVersion']
+        body_params["Action"] = operation_model.name
+        body_params["Version"] = operation_model.metadata["apiVersion"]
         if shape is not None:
             self._serialize(body_params, parameters, shape)
-        serialized['body'] = body_params
+        serialized["body"] = body_params
 
         host_prefix = self._expand_host_prefix(parameters, operation_model)
         if host_prefix is not None:
-            serialized['host_prefix'] = host_prefix
+            serialized["host_prefix"] = host_prefix
 
         return serialized
 
-    def _serialize(self, serialized, value, shape, prefix=''):
+    def _serialize(self, serialized, value, shape, prefix=""):
         # serialized: The dict that is incrementally added to with the
         #             final serialized parameters.
         # value: The current user input value.
@@ -312,77 +303,77 @@ class QuerySerializer(Serializer):
         #         key (i.e Foo.bar.members.1).
         method = getattr(
             self,
-            f'_serialize_type_{shape.type_name}',
+            f"_serialize_type_{shape.type_name}",
             self._default_serialize,
         )
         method(serialized, value, shape, prefix=prefix)
 
-    def _serialize_type_structure(self, serialized, value, shape, prefix=''):
+    def _serialize_type_structure(self, serialized, value, shape, prefix=""):
         members = shape.members
         for key, value in value.items():
             member_shape = members[key]
             member_prefix = self._get_serialized_name(member_shape, key)
             if prefix:
-                member_prefix = f'{prefix}.{member_prefix}'
+                member_prefix = f"{prefix}.{member_prefix}"
             self._serialize(serialized, value, member_shape, member_prefix)
 
-    def _serialize_type_list(self, serialized, value, shape, prefix=''):
+    def _serialize_type_list(self, serialized, value, shape, prefix=""):
         if not value:
             # The query protocol serializes empty lists.
-            serialized[prefix] = ''
+            serialized[prefix] = ""
             return
         if self._is_shape_flattened(shape):
             list_prefix = prefix
-            if shape.member.serialization.get('name'):
-                name = self._get_serialized_name(shape.member, default_name='')
+            if shape.member.serialization.get("name"):
+                name = self._get_serialized_name(shape.member, default_name="")
                 # Replace '.Original' with '.{name}'.
-                list_prefix = '.'.join(prefix.split('.')[:-1] + [name])
+                list_prefix = ".".join(prefix.split(".")[:-1] + [name])
         else:
-            list_name = shape.member.serialization.get('name', 'member')
-            list_prefix = f'{prefix}.{list_name}'
+            list_name = shape.member.serialization.get("name", "member")
+            list_prefix = f"{prefix}.{list_name}"
         for i, element in enumerate(value, 1):
-            element_prefix = f'{list_prefix}.{i}'
+            element_prefix = f"{list_prefix}.{i}"
             element_shape = shape.member
             self._serialize(serialized, element, element_shape, element_prefix)
 
-    def _serialize_type_map(self, serialized, value, shape, prefix=''):
+    def _serialize_type_map(self, serialized, value, shape, prefix=""):
         if self._is_shape_flattened(shape):
             full_prefix = prefix
         else:
-            full_prefix = f'{prefix}.entry'
-        template = full_prefix + '.{i}.{suffix}'
+            full_prefix = f"{prefix}.entry"
+        template = full_prefix + ".{i}.{suffix}"
         key_shape = shape.key
         value_shape = shape.value
-        key_suffix = self._get_serialized_name(key_shape, default_name='key')
-        value_suffix = self._get_serialized_name(value_shape, 'value')
+        key_suffix = self._get_serialized_name(key_shape, default_name="key")
+        value_suffix = self._get_serialized_name(value_shape, "value")
         for i, key in enumerate(value, 1):
             key_prefix = template.format(i=i, suffix=key_suffix)
             value_prefix = template.format(i=i, suffix=value_suffix)
             self._serialize(serialized, key, key_shape, key_prefix)
             self._serialize(serialized, value[key], value_shape, value_prefix)
 
-    def _serialize_type_blob(self, serialized, value, shape, prefix=''):
+    def _serialize_type_blob(self, serialized, value, shape, prefix=""):
         # Blob args must be base64 encoded.
         serialized[prefix] = self._get_base64(value)
 
-    def _serialize_type_timestamp(self, serialized, value, shape, prefix=''):
+    def _serialize_type_timestamp(self, serialized, value, shape, prefix=""):
         serialized[prefix] = self._convert_timestamp_to_str(
-            value, shape.serialization.get('timestampFormat')
+            value, shape.serialization.get("timestampFormat")
         )
 
-    def _serialize_type_boolean(self, serialized, value, shape, prefix=''):
+    def _serialize_type_boolean(self, serialized, value, shape, prefix=""):
         if value:
-            serialized[prefix] = 'true'
+            serialized[prefix] = "true"
         else:
-            serialized[prefix] = 'false'
+            serialized[prefix] = "false"
 
-    def _default_serialize(self, serialized, value, shape, prefix=''):
+    def _default_serialize(self, serialized, value, shape, prefix=""):
         serialized[prefix] = value
 
-    def _serialize_type_float(self, serialized, value, shape, prefix=''):
+    def _serialize_type_float(self, serialized, value, shape, prefix=""):
         serialized[prefix] = self._handle_float(value)
 
-    def _serialize_type_double(self, serialized, value, shape, prefix=''):
+    def _serialize_type_double(self, serialized, value, shape, prefix=""):
         self._serialize_type_float(serialized, value, shape, prefix)
 
 
@@ -399,39 +390,37 @@ class EC2Serializer(QuerySerializer):
     def _get_serialized_name(self, shape, default_name):
         # Returns the serialized name for the shape if it exists.
         # Otherwise it will return the passed in capitalized default_name.
-        if 'queryName' in shape.serialization:
-            return shape.serialization['queryName']
-        elif 'name' in shape.serialization:
+        if "queryName" in shape.serialization:
+            return shape.serialization["queryName"]
+        elif "name" in shape.serialization:
             # A locationName is always capitalized
             # on input for the ec2 protocol.
-            name = shape.serialization['name']
+            name = shape.serialization["name"]
             return name[0].upper() + name[1:]
         else:
             return default_name
 
-    def _serialize_type_list(self, serialized, value, shape, prefix=''):
+    def _serialize_type_list(self, serialized, value, shape, prefix=""):
         for i, element in enumerate(value, 1):
-            element_prefix = f'{prefix}.{i}'
+            element_prefix = f"{prefix}.{i}"
             element_shape = shape.member
             self._serialize(serialized, element, element_shape, element_prefix)
 
 
 class JSONSerializer(Serializer):
-    TIMESTAMP_FORMAT = 'unixtimestamp'
+    TIMESTAMP_FORMAT = "unixtimestamp"
 
     def serialize_to_request(self, parameters, operation_model):
-        target = '{}.{}'.format(
-            operation_model.metadata['targetPrefix'],
+        target = "{}.{}".format(
+            operation_model.metadata["targetPrefix"],
             operation_model.name,
         )
-        json_version = operation_model.metadata['jsonVersion']
+        json_version = operation_model.metadata["jsonVersion"]
         serialized = self._create_default_request()
-        serialized['method'] = operation_model.http.get(
-            'method', self.DEFAULT_METHOD
-        )
-        serialized['headers'] = {
-            'X-Amz-Target': target,
-            'Content-Type': f'application/x-amz-json-{json_version}',
+        serialized["method"] = operation_model.http.get("method", self.DEFAULT_METHOD)
+        serialized["headers"] = {
+            "X-Amz-Target": target,
+            "Content-Type": f"application/x-amz-json-{json_version}",
         }
         self._handle_query_compatible_trait(operation_model, serialized)
 
@@ -439,18 +428,18 @@ class JSONSerializer(Serializer):
         input_shape = operation_model.input_shape
         if input_shape is not None:
             self._serialize(body, parameters, input_shape)
-        serialized['body'] = json.dumps(body).encode(self.DEFAULT_ENCODING)
+        serialized["body"] = json.dumps(body).encode(self.DEFAULT_ENCODING)
 
         host_prefix = self._expand_host_prefix(parameters, operation_model)
         if host_prefix is not None:
-            serialized['host_prefix'] = host_prefix
+            serialized["host_prefix"] = host_prefix
 
         return serialized
 
     def _serialize(self, serialized, value, shape, key=None):
         method = getattr(
             self,
-            f'_serialize_type_{shape.type_name}',
+            f"_serialize_type_{shape.type_name}",
             self._default_serialize,
         )
         method(serialized, value, shape, key)
@@ -471,11 +460,9 @@ class JSONSerializer(Serializer):
             members = shape.members
             for member_key, member_value in value.items():
                 member_shape = members[member_key]
-                if 'name' in member_shape.serialization:
-                    member_key = member_shape.serialization['name']
-                self._serialize(
-                    serialized, member_value, member_shape, member_key
-                )
+                if "name" in member_shape.serialization:
+                    member_key = member_shape.serialization["name"]
+                self._serialize(serialized, member_value, member_shape, member_key)
 
     def _serialize_type_map(self, serialized, value, shape, key):
         map_obj = self.MAP_TYPE()
@@ -500,18 +487,18 @@ class JSONSerializer(Serializer):
 
     def _serialize_type_timestamp(self, serialized, value, shape, key):
         serialized[key] = self._convert_timestamp_to_str(
-            value, shape.serialization.get('timestampFormat')
+            value, shape.serialization.get("timestampFormat")
         )
 
     def _serialize_type_blob(self, serialized, value, shape, key):
         serialized[key] = self._get_base64(value)
 
-    def _serialize_type_float(self, serialized, value, shape, prefix=''):
+    def _serialize_type_float(self, serialized, value, shape, prefix=""):
         if isinstance(value, decimal.Decimal):
             value = float(value)
         serialized[prefix] = self._handle_float(value)
 
-    def _serialize_type_double(self, serialized, value, shape, prefix=''):
+    def _serialize_type_double(self, serialized, value, shape, prefix=""):
         self._serialize_type_float(serialized, value, shape, prefix)
 
 
@@ -526,11 +513,10 @@ class CBORSerializer(Serializer):
     FLOAT_AND_SIMPLE_MAJOR_TYPE = 7
 
     def _serialize_data_item(self, serialized, value, shape, key=None):
-        method = getattr(self, f'_serialize_type_{shape.type_name}')
+        method = getattr(self, f"_serialize_type_{shape.type_name}")
         if method is None:
             raise ValueError(
-                f"Unrecognized C2J type: {shape.type_name}, unable to "
-                f"serialize request"
+                f"Unrecognized C2J type: {shape.type_name}, unable to serialize request"
             )
         method(serialized, value, shape, key)
 
@@ -543,9 +529,7 @@ class CBORSerializer(Serializer):
             # that for negative, we set the major type to 1 and set the value to -1
             # minus the value
             value = -1 - value
-        additional_info, num_bytes = self._get_additional_info_and_num_bytes(
-            value
-        )
+        additional_info, num_bytes = self._get_additional_info_and_num_bytes(value)
         initial_byte = self._get_initial_byte(major_type, additional_info)
         if num_bytes == 0:
             serialized.extend(initial_byte)
@@ -557,18 +541,14 @@ class CBORSerializer(Serializer):
 
     def _serialize_type_blob(self, serialized, value, shape, key):
         if isinstance(value, str):
-            value = value.encode('utf-8')
+            value = value.encode("utf-8")
         elif not isinstance(value, (bytes, bytearray)):
             # We support file-like objects for blobs; these already have been
             # validated to ensure they have a read method
             value = value.read()
         length = len(value)
-        additional_info, num_bytes = self._get_additional_info_and_num_bytes(
-            length
-        )
-        initial_byte = self._get_initial_byte(
-            self.BLOB_MAJOR_TYPE, additional_info
-        )
+        additional_info, num_bytes = self._get_additional_info_and_num_bytes(length)
+        initial_byte = self._get_initial_byte(self.BLOB_MAJOR_TYPE, additional_info)
         if num_bytes == 0:
             serialized.extend(initial_byte)
         else:
@@ -576,14 +556,10 @@ class CBORSerializer(Serializer):
         serialized.extend(value)
 
     def _serialize_type_string(self, serialized, value, shape, key):
-        encoded = value.encode('utf-8')
+        encoded = value.encode("utf-8")
         length = len(encoded)
-        additional_info, num_bytes = self._get_additional_info_and_num_bytes(
-            length
-        )
-        initial_byte = self._get_initial_byte(
-            self.STRING_MAJOR_TYPE, additional_info
-        )
+        additional_info, num_bytes = self._get_additional_info_and_num_bytes(length)
+        initial_byte = self._get_initial_byte(self.STRING_MAJOR_TYPE, additional_info)
         if num_bytes == 0:
             serialized.extend(initial_byte + encoded)
         else:
@@ -593,12 +569,8 @@ class CBORSerializer(Serializer):
 
     def _serialize_type_list(self, serialized, value, shape, key):
         length = len(value)
-        additional_info, num_bytes = self._get_additional_info_and_num_bytes(
-            length
-        )
-        initial_byte = self._get_initial_byte(
-            self.LIST_MAJOR_TYPE, additional_info
-        )
+        additional_info, num_bytes = self._get_additional_info_and_num_bytes(length)
+        initial_byte = self._get_initial_byte(self.LIST_MAJOR_TYPE, additional_info)
         if num_bytes == 0:
             serialized.extend(initial_byte)
         else:
@@ -608,12 +580,8 @@ class CBORSerializer(Serializer):
 
     def _serialize_type_map(self, serialized, value, shape, key):
         length = len(value)
-        additional_info, num_bytes = self._get_additional_info_and_num_bytes(
-            length
-        )
-        initial_byte = self._get_initial_byte(
-            self.MAP_MAJOR_TYPE, additional_info
-        )
+        additional_info, num_bytes = self._get_additional_info_and_num_bytes(length)
+        initial_byte = self._get_initial_byte(self.MAP_MAJOR_TYPE, additional_info)
         if num_bytes == 0:
             serialized.extend(initial_byte)
         else:
@@ -631,38 +599,28 @@ class CBORSerializer(Serializer):
         value = {k: v for k, v in value.items() if v is not None}
 
         map_length = len(value)
-        additional_info, num_bytes = self._get_additional_info_and_num_bytes(
-            map_length
-        )
-        initial_byte = self._get_initial_byte(
-            self.MAP_MAJOR_TYPE, additional_info
-        )
+        additional_info, num_bytes = self._get_additional_info_and_num_bytes(map_length)
+        initial_byte = self._get_initial_byte(self.MAP_MAJOR_TYPE, additional_info)
         if num_bytes == 0:
             serialized.extend(initial_byte)
         else:
-            serialized.extend(
-                initial_byte + map_length.to_bytes(num_bytes, "big")
-            )
+            serialized.extend(initial_byte + map_length.to_bytes(num_bytes, "big"))
 
         members = shape.members
         for member_key, member_value in value.items():
             member_shape = members[member_key]
-            if 'name' in member_shape.serialization:
-                member_key = member_shape.serialization['name']
+            if "name" in member_shape.serialization:
+                member_key = member_shape.serialization["name"]
             if member_value is not None:
                 self._serialize_type_string(serialized, member_key, None, None)
-                self._serialize_data_item(
-                    serialized, member_value, member_shape
-                )
+                self._serialize_data_item(serialized, member_value, member_shape)
 
     def _serialize_type_timestamp(self, serialized, value, shape, key):
         timestamp = self._convert_timestamp_to_str(value)
         tag = 1  # Use tag 1 for unix timestamp
         initial_byte = self._get_initial_byte(self.TAG_MAJOR_TYPE, tag)
         serialized.extend(initial_byte)  # Tagging the timestamp
-        additional_info, num_bytes = self._get_additional_info_and_num_bytes(
-            timestamp
-        )
+        additional_info, num_bytes = self._get_additional_info_and_num_bytes(timestamp)
 
         if num_bytes == 0:
             initial_byte = self._get_initial_byte(
@@ -673,9 +631,7 @@ class CBORSerializer(Serializer):
             initial_byte = self._get_initial_byte(
                 self.UNSIGNED_INT_MAJOR_TYPE, additional_info
             )
-            serialized.extend(
-                initial_byte + timestamp.to_bytes(num_bytes, "big")
-            )
+            serialized.extend(initial_byte + timestamp.to_bytes(num_bytes, "big"))
 
     def _serialize_type_float(self, serialized, value, shape, key):
         if self._is_special_number(value):
@@ -683,9 +639,7 @@ class CBORSerializer(Serializer):
                 self._get_bytes_for_special_numbers(value)
             )  # Handle special values like NaN or Infinity
         else:
-            initial_byte = self._get_initial_byte(
-                self.FLOAT_AND_SIMPLE_MAJOR_TYPE, 26
-            )
+            initial_byte = self._get_initial_byte(self.FLOAT_AND_SIMPLE_MAJOR_TYPE, 26)
             serialized.extend(initial_byte + struct.pack(">f", value))
 
     def _serialize_type_double(self, serialized, value, shape, key):
@@ -694,17 +648,13 @@ class CBORSerializer(Serializer):
                 self._get_bytes_for_special_numbers(value)
             )  # Handle special values like NaN or Infinity
         else:
-            initial_byte = self._get_initial_byte(
-                self.FLOAT_AND_SIMPLE_MAJOR_TYPE, 27
-            )
+            initial_byte = self._get_initial_byte(self.FLOAT_AND_SIMPLE_MAJOR_TYPE, 27)
             serialized.extend(initial_byte + struct.pack(">d", value))
 
     def _serialize_type_boolean(self, serialized, value, shape, key):
         additional_info = 21 if value else 20
         serialized.extend(
-            self._get_initial_byte(
-                self.FLOAT_AND_SIMPLE_MAJOR_TYPE, additional_info
-            )
+            self._get_initial_byte(self.FLOAT_AND_SIMPLE_MAJOR_TYPE, additional_info)
         )
 
     def _get_additional_info_and_num_bytes(self, value):
@@ -738,8 +688,8 @@ class CBORSerializer(Serializer):
     def _is_special_number(self, value):
         return any(
             [
-                value == float('inf'),
-                value == float('-inf'),
+                value == float("inf"),
+                value == float("-inf"),
                 math.isnan(value),
             ]
         )
@@ -749,9 +699,9 @@ class CBORSerializer(Serializer):
         initial_byte = self._get_initial_byte(
             self.FLOAT_AND_SIMPLE_MAJOR_TYPE, additional_info
         )
-        if value == float('inf'):
+        if value == float("inf"):
             return initial_byte + struct.pack(">H", 0x7C00)
-        elif value == float('-inf'):
+        elif value == float("-inf"):
             return initial_byte + struct.pack(">H", 0xFC00)
         elif math.isnan(value):
             return initial_byte + struct.pack(">H", 0x7E00)
@@ -768,26 +718,24 @@ class BaseRestSerializer(Serializer):
 
     """
 
-    QUERY_STRING_TIMESTAMP_FORMAT = 'iso8601'
-    HEADER_TIMESTAMP_FORMAT = 'rfc822'
+    QUERY_STRING_TIMESTAMP_FORMAT = "iso8601"
+    HEADER_TIMESTAMP_FORMAT = "rfc822"
     # This is a list of known values for the "location" key in the
     # serialization dict.  The location key tells us where on the request
     # to put the serialized value.
-    KNOWN_LOCATIONS = ['uri', 'querystring', 'header', 'headers']
+    KNOWN_LOCATIONS = ["uri", "querystring", "header", "headers"]
 
     def serialize_to_request(self, parameters, operation_model):
         serialized = self._create_default_request()
-        serialized['method'] = operation_model.http.get(
-            'method', self.DEFAULT_METHOD
-        )
+        serialized["method"] = operation_model.http.get("method", self.DEFAULT_METHOD)
         shape = operation_model.input_shape
 
         host_prefix = self._expand_host_prefix(parameters, operation_model)
         if host_prefix is not None:
-            serialized['host_prefix'] = host_prefix
+            serialized["host_prefix"] = host_prefix
 
         if shape is None:
-            serialized['url_path'] = operation_model.http['requestUri']
+            serialized["url_path"] = operation_model.http["requestUri"]
             return serialized
         shape_members = shape.members
         # While the ``serialized`` key holds the final serialized request
@@ -801,10 +749,10 @@ class BaseRestSerializer(Serializer):
         # and for rest-xml, will create XML.  This is what the
         # ``partitioned`` dict below is for.
         partitioned = {
-            'uri_path_kwargs': self.MAP_TYPE(),
-            'query_string_kwargs': self.MAP_TYPE(),
-            'body_kwargs': self.MAP_TYPE(),
-            'headers': self.MAP_TYPE(),
+            "uri_path_kwargs": self.MAP_TYPE(),
+            "query_string_kwargs": self.MAP_TYPE(),
+            "body_kwargs": self.MAP_TYPE(),
+            "headers": self.MAP_TYPE(),
         }
         for param_name, param_value in parameters.items():
             if param_value is None:
@@ -813,21 +761,21 @@ class BaseRestSerializer(Serializer):
             self._partition_parameters(
                 partitioned, param_name, param_value, shape_members
             )
-        serialized['url_path'] = self._render_uri_template(
-            operation_model.http['requestUri'], partitioned['uri_path_kwargs']
+        serialized["url_path"] = self._render_uri_template(
+            operation_model.http["requestUri"], partitioned["uri_path_kwargs"]
         )
 
-        if 'authPath' in operation_model.http:
-            serialized['auth_path'] = self._render_uri_template(
-                operation_model.http['authPath'],
-                partitioned['uri_path_kwargs'],
+        if "authPath" in operation_model.http:
+            serialized["auth_path"] = self._render_uri_template(
+                operation_model.http["authPath"],
+                partitioned["uri_path_kwargs"],
             )
         # Note that we lean on the http implementation to handle the case
         # where the requestUri path already has query parameters.
         # The bundled http client, requests, already supports this.
-        serialized['query_string'] = partitioned['query_string_kwargs']
-        if partitioned['headers']:
-            serialized['headers'] = partitioned['headers']
+        serialized["query_string"] = partitioned["query_string_kwargs"]
+        if partitioned["headers"]:
+            serialized["headers"] = partitioned["headers"]
         self._serialize_payload(
             partitioned, parameters, serialized, shape, shape_members
         )
@@ -843,15 +791,13 @@ class BaseRestSerializer(Serializer):
         # A label ending with '+' is greedy.  There can only
         # be one greedy key.
         encoded_params = {}
-        for template_param in re.findall(r'{(.*?)}', uri_template):
-            if template_param.endswith('+'):
+        for template_param in re.findall(r"{(.*?)}", uri_template):
+            if template_param.endswith("+"):
                 encoded_params[template_param] = percent_encode(
-                    params[template_param[:-1]], safe='/~'
+                    params[template_param[:-1]], safe="/~"
                 )
             else:
-                encoded_params[template_param] = percent_encode(
-                    params[template_param]
-                )
+                encoded_params[template_param] = percent_encode(params[template_param])
         return uri_template.format(**encoded_params)
 
     def _serialize_payload(
@@ -862,32 +808,32 @@ class BaseRestSerializer(Serializer):
         # serialized - The final serialized request dict.
         # shape - Describes the expected input shape
         # shape_members - The members of the input struct shape
-        payload_member = shape.serialization.get('payload')
+        payload_member = shape.serialization.get("payload")
         if self._has_streaming_payload(payload_member, shape_members):
             # If it's streaming, then the body is just the
             # value of the payload.
-            body_payload = parameters.get(payload_member, b'')
+            body_payload = parameters.get(payload_member, b"")
             body_payload = self._encode_payload(body_payload)
-            serialized['body'] = body_payload
+            serialized["body"] = body_payload
         elif payload_member is not None:
             # If there's a payload member, we serialized that
             # member to they body.
             body_params = parameters.get(payload_member)
             if body_params is not None:
-                serialized['body'] = self._serialize_body_params(
+                serialized["body"] = self._serialize_body_params(
                     body_params, shape_members[payload_member]
                 )
             else:
-                serialized['body'] = self._serialize_empty_body()
-        elif partitioned['body_kwargs']:
-            serialized['body'] = self._serialize_body_params(
-                partitioned['body_kwargs'], shape
+                serialized["body"] = self._serialize_empty_body()
+        elif partitioned["body_kwargs"]:
+            serialized["body"] = self._serialize_body_params(
+                partitioned["body_kwargs"], shape
             )
         elif self._requires_empty_body(shape):
-            serialized['body'] = self._serialize_empty_body()
+            serialized["body"] = self._serialize_empty_body()
 
     def _serialize_empty_body(self):
-        return b''
+        return b""
 
     def _serialize_content_type(self, serialized, shape, shape_members):
         """
@@ -907,8 +853,8 @@ class BaseRestSerializer(Serializer):
     def _has_streaming_payload(self, payload, shape_members):
         """Determine if payload is streaming (a blob or string)."""
         return payload is not None and shape_members[payload].type_name in (
-            'blob',
-            'string',
+            "blob",
+            "string",
         )
 
     def _encode_payload(self, body):
@@ -924,36 +870,32 @@ class BaseRestSerializer(Serializer):
         # Some params are HTTP headers, some are used in the URI, some
         # are in the request body.  This method deals with this.
         member = shape_members[param_name]
-        location = member.serialization.get('location')
-        key_name = member.serialization.get('name', param_name)
-        if location == 'uri':
-            uri_path_value = self._get_uri_and_query_string_value(
-                param_value, member
-            )
-            partitioned['uri_path_kwargs'][key_name] = uri_path_value
-        elif location == 'querystring':
+        location = member.serialization.get("location")
+        key_name = member.serialization.get("name", param_name)
+        if location == "uri":
+            uri_path_value = self._get_uri_and_query_string_value(param_value, member)
+            partitioned["uri_path_kwargs"][key_name] = uri_path_value
+        elif location == "querystring":
             if isinstance(param_value, dict):
-                partitioned['query_string_kwargs'].update(param_value)
-            elif member.type_name == 'list':
+                partitioned["query_string_kwargs"].update(param_value)
+            elif member.type_name == "list":
                 new_param = [
                     self._get_uri_and_query_string_value(value, member.member)
                     for value in param_value
                 ]
-                partitioned['query_string_kwargs'][key_name] = new_param
+                partitioned["query_string_kwargs"][key_name] = new_param
             else:
-                new_param = self._get_uri_and_query_string_value(
-                    param_value, member
-                )
-                partitioned['query_string_kwargs'][key_name] = new_param
-        elif location == 'header':
+                new_param = self._get_uri_and_query_string_value(param_value, member)
+                partitioned["query_string_kwargs"][key_name] = new_param
+        elif location == "header":
             shape = shape_members[param_name]
-            if not param_value and shape.type_name == 'list':
+            if not param_value and shape.type_name == "list":
                 # Empty lists should not be set on the headers
                 return
-            partitioned['headers'][key_name] = self._convert_header_value(
+            partitioned["headers"][key_name] = self._convert_header_value(
                 shape, param_value
             )
-        elif location == 'headers':
+        elif location == "headers":
             # 'headers' is a bit of an oddball.  The ``key_name``
             # is actually really a prefix for the header names:
             header_prefix = key_name
@@ -962,22 +904,20 @@ class BaseRestSerializer(Serializer):
             # name to use for each header is the header_prefix (``key_name``)
             # plus the key provided by the user.
             self._do_serialize_header_map(
-                header_prefix, partitioned['headers'], param_value
+                header_prefix, partitioned["headers"], param_value
             )
         else:
-            partitioned['body_kwargs'][param_name] = param_value
+            partitioned["body_kwargs"][param_name] = param_value
 
     def _get_uri_and_query_string_value(self, param_value, member):
-        if member.type_name == 'boolean':
+        if member.type_name == "boolean":
             return str(param_value).lower()
-        elif member.type_name == 'timestamp':
+        elif member.type_name == "timestamp":
             timestamp_format = member.serialization.get(
-                'timestampFormat', self.QUERY_STRING_TIMESTAMP_FORMAT
+                "timestampFormat", self.QUERY_STRING_TIMESTAMP_FORMAT
             )
-            return self._convert_timestamp_to_str(
-                param_value, timestamp_format
-            )
-        elif member.type_name in ['float', 'double']:
+            return self._convert_timestamp_to_str(param_value, timestamp_format)
+        elif member.type_name in ["float", "double"]:
             return str(self._handle_float(param_value))
         return param_value
 
@@ -987,24 +927,20 @@ class BaseRestSerializer(Serializer):
             headers[full_key] = val
 
     def _serialize_body_params(self, params, shape):
-        raise NotImplementedError('_serialize_body_params')
+        raise NotImplementedError("_serialize_body_params")
 
     def _convert_header_value(self, shape, value):
-        if shape.type_name == 'timestamp':
+        if shape.type_name == "timestamp":
             datetime_obj = parse_to_aware_datetime(value)
             timestamp = calendar.timegm(datetime_obj.utctimetuple())
             timestamp_format = shape.serialization.get(
-                'timestampFormat', self.HEADER_TIMESTAMP_FORMAT
+                "timestampFormat", self.HEADER_TIMESTAMP_FORMAT
             )
-            return str(
-                self._convert_timestamp_to_str(timestamp, timestamp_format)
-            )
-        elif shape.type_name == 'list':
+            return str(self._convert_timestamp_to_str(timestamp, timestamp_format))
+        elif shape.type_name == "list":
             if shape.member.type_name == "string":
                 converted_value = [
-                    self._escape_header_list_string(v)
-                    for v in value
-                    if v is not None
+                    self._escape_header_list_string(v) for v in value if v is not None
                 ]
             else:
                 converted_value = [
@@ -1016,10 +952,10 @@ class BaseRestSerializer(Serializer):
         elif is_json_value_header(shape):
             # Serialize with no spaces after separators to save space in
             # the header.
-            return self._get_base64(json.dumps(value, separators=(',', ':')))
-        elif shape.type_name == 'boolean':
+            return self._get_base64(json.dumps(value, separators=(",", ":")))
+        elif shape.type_name == "boolean":
             return str(value).lower()
-        elif shape.type_name in ['float', 'double']:
+        elif shape.type_name in ["float", "double"]:
             return str(self._handle_float(value))
         else:
             return str(value)
@@ -1027,7 +963,7 @@ class BaseRestSerializer(Serializer):
     def _escape_header_list_string(self, value):
         # Escapes a header list string by wrapping it in double quotes if it contains
         # a comma or a double quote, and escapes any internal double quotes.
-        if '"' in value or ',' in value:
+        if '"' in value or "," in value:
             return '"' + value.replace('"', '\\"') + '"'
         else:
             return value
@@ -1047,11 +983,9 @@ class BaseRpcV2Serializer(Serializer):
 
     def serialize_to_request(self, parameters, operation_model):
         serialized = self._create_default_request()
-        service_name = operation_model.service_model.metadata['targetPrefix']
+        service_name = operation_model.service_model.metadata["targetPrefix"]
         operation_name = operation_model.name
-        serialized['url_path'] = (
-            f'/service/{service_name}/operation/{operation_name}'
-        )
+        serialized["url_path"] = f"/service/{service_name}/operation/{operation_name}"
 
         input_shape = operation_model.input_shape
         if input_shape is not None:
@@ -1059,7 +993,7 @@ class BaseRpcV2Serializer(Serializer):
 
         host_prefix = self._expand_host_prefix(parameters, operation_model)
         if host_prefix is not None:
-            serialized['host_prefix'] = host_prefix
+            serialized["host_prefix"] = host_prefix
 
         self._serialize_headers(serialized, operation_model)
 
@@ -1067,7 +1001,7 @@ class BaseRpcV2Serializer(Serializer):
 
     def _serialize_payload(self, parameters, serialized, shape):
         body_payload = self._serialize_body_params(parameters, shape)
-        serialized['body'] = body_payload
+        serialized["body"] = body_payload
 
     def _serialize_headers(self, serialized, operation_model):
         raise NotImplementedError("_serialize_headers")
@@ -1078,7 +1012,7 @@ class BaseRpcV2Serializer(Serializer):
 
 class RestJSONSerializer(BaseRestSerializer, JSONSerializer):
     def _serialize_empty_body(self):
-        return b'{}'
+        return b"{}"
 
     def _requires_empty_body(self, shape):
         """
@@ -1086,21 +1020,21 @@ class RestJSONSerializer(BaseRestSerializer, JSONSerializer):
         members not targeting a location.
         """
         for member, val in shape.members.items():
-            if 'location' not in val.serialization:
+            if "location" not in val.serialization:
                 return True
         return False
 
     def _serialize_content_type(self, serialized, shape, shape_members):
         """Set Content-Type to application/json for all structured bodies."""
-        payload = shape.serialization.get('payload')
+        payload = shape.serialization.get("payload")
         if self._has_streaming_payload(payload, shape_members):
             # Don't apply content-type to streaming bodies
             return
 
-        has_body = serialized['body'] != b''
-        has_content_type = has_header('Content-Type', serialized['headers'])
+        has_body = serialized["body"] != b""
+        has_content_type = has_header("Content-Type", serialized["headers"])
         if has_body and not has_content_type:
-            serialized['headers']['Content-Type'] = 'application/json'
+            serialized["headers"]["Content-Type"] = "application/json"
 
     def _serialize_body_params(self, params, shape):
         serialized_body = self.MAP_TYPE()
@@ -1109,11 +1043,11 @@ class RestJSONSerializer(BaseRestSerializer, JSONSerializer):
 
 
 class RestXMLSerializer(BaseRestSerializer):
-    TIMESTAMP_FORMAT = 'iso8601'
+    TIMESTAMP_FORMAT = "iso8601"
 
     def _serialize_body_params(self, params, shape):
-        root_name = shape.serialization['name']
-        pseudo_root = ElementTree.Element('')
+        root_name = shape.serialization["name"]
+        pseudo_root = ElementTree.Element("")
         self._serialize(shape, params, pseudo_root, root_name)
         real_root = list(pseudo_root)[0]
         return ElementTree.tostring(real_root, encoding=self.DEFAULT_ENCODING)
@@ -1121,7 +1055,7 @@ class RestXMLSerializer(BaseRestSerializer):
     def _serialize(self, shape, params, xmlnode, name):
         method = getattr(
             self,
-            f'_serialize_type_{shape.type_name}',
+            f"_serialize_type_{shape.type_name}",
             self._default_serialize,
         )
         method(xmlnode, params, shape, name)
@@ -1132,7 +1066,7 @@ class RestXMLSerializer(BaseRestSerializer):
         self._add_xml_namespace(shape, structure_node)
         for key, value in params.items():
             member_shape = shape.members[key]
-            member_name = member_shape.serialization.get('name', key)
+            member_name = member_shape.serialization.get("name", key)
             # We need to special case member shapes that are marked as an
             # xmlAttribute.  Rather than serializing into an XML child node,
             # we instead serialize the shape to an XML attribute of the
@@ -1140,20 +1074,20 @@ class RestXMLSerializer(BaseRestSerializer):
             if value is None:
                 # Don't serialize any param whose value is None.
                 return
-            if member_shape.serialization.get('xmlAttribute'):
+            if member_shape.serialization.get("xmlAttribute"):
                 # xmlAttributes must have a serialization name.
-                xml_attribute_name = member_shape.serialization['name']
+                xml_attribute_name = member_shape.serialization["name"]
                 structure_node.attrib[xml_attribute_name] = value
                 continue
             self._serialize(member_shape, value, structure_node, member_name)
 
     def _serialize_type_list(self, xmlnode, params, shape, name):
         member_shape = shape.member
-        if shape.serialization.get('flattened'):
+        if shape.serialization.get("flattened"):
             element_name = name
             list_node = xmlnode
         else:
-            element_name = member_shape.serialization.get('name', 'member')
+            element_name = member_shape.serialization.get("name", "member")
             list_node = ElementTree.SubElement(xmlnode, name)
         self._add_xml_namespace(shape, list_node)
         for item in params:
@@ -1176,12 +1110,10 @@ class RestXMLSerializer(BaseRestSerializer):
             sub_node = (
                 ElementTree.SubElement(xmlnode, name)
                 if self._is_shape_flattened(shape)
-                else ElementTree.SubElement(node, 'entry')
+                else ElementTree.SubElement(node, "entry")
             )
-            key_name = self._get_serialized_name(shape.key, default_name='key')
-            val_name = self._get_serialized_name(
-                shape.value, default_name='value'
-            )
+            key_name = self._get_serialized_name(shape.key, default_name="key")
+            val_name = self._get_serialized_name(shape.value, default_name="value")
             self._serialize(shape.key, key, sub_node, key_name)
             self._serialize(shape.value, value, sub_node, val_name)
 
@@ -1191,9 +1123,9 @@ class RestXMLSerializer(BaseRestSerializer):
         # It will either be 'true' or 'false'
         node = ElementTree.SubElement(xmlnode, name)
         if params:
-            str_value = 'true'
+            str_value = "true"
         else:
-            str_value = 'false'
+            str_value = "false"
         node.text = str_value
         self._add_xml_namespace(shape, node)
 
@@ -1206,7 +1138,7 @@ class RestXMLSerializer(BaseRestSerializer):
         node = ElementTree.SubElement(xmlnode, name)
         node.text = str(
             self._convert_timestamp_to_str(
-                params, shape.serialization.get('timestampFormat')
+                params, shape.serialization.get("timestampFormat")
             )
         )
         self._add_xml_namespace(shape, node)
@@ -1225,24 +1157,22 @@ class RestXMLSerializer(BaseRestSerializer):
         self._add_xml_namespace(shape, node)
 
     def _add_xml_namespace(self, shape, structure_node):
-        if 'xmlNamespace' in shape.serialization:
-            namespace_metadata = shape.serialization['xmlNamespace']
-            attribute_name = 'xmlns'
+        if "xmlNamespace" in shape.serialization:
+            namespace_metadata = shape.serialization["xmlNamespace"]
+            attribute_name = "xmlns"
             if isinstance(namespace_metadata, dict):
-                if namespace_metadata.get('prefix'):
+                if namespace_metadata.get("prefix"):
                     attribute_name += f":{namespace_metadata['prefix']}"
-                structure_node.attrib[attribute_name] = namespace_metadata[
-                    'uri'
-                ]
+                structure_node.attrib[attribute_name] = namespace_metadata["uri"]
             elif isinstance(namespace_metadata, str):
                 structure_node.attrib[attribute_name] = namespace_metadata
 
 
 class RpcV2CBORSerializer(BaseRpcV2Serializer, CBORSerializer):
-    TIMESTAMP_FORMAT = 'unixtimestamp'
+    TIMESTAMP_FORMAT = "unixtimestamp"
 
     def serialize_to_request(self, parameters, operation_model):
-        register_feature_id('PROTOCOL_RPC_V2_CBOR')
+        register_feature_id("PROTOCOL_RPC_V2_CBOR")
         return super().serialize_to_request(parameters, operation_model)
 
     def _serialize_body_params(self, parameters, input_shape):
@@ -1251,27 +1181,27 @@ class RpcV2CBORSerializer(BaseRpcV2Serializer, CBORSerializer):
         return bytes(body)
 
     def _serialize_headers(self, serialized, operation_model):
-        serialized['headers']['smithy-protocol'] = 'rpc-v2-cbor'
+        serialized["headers"]["smithy-protocol"] = "rpc-v2-cbor"
 
         if operation_model.has_event_stream_output:
-            header_val = 'application/vnd.amazon.eventstream'
+            header_val = "application/vnd.amazon.eventstream"
         else:
-            header_val = 'application/cbor'
+            header_val = "application/cbor"
         self._handle_query_compatible_trait(operation_model, serialized)
 
-        has_body = serialized['body'] != b''
-        has_content_type = has_header('Content-Type', serialized['headers'])
+        has_body = serialized["body"] != b""
+        has_content_type = has_header("Content-Type", serialized["headers"])
 
-        serialized['headers']['Accept'] = header_val
+        serialized["headers"]["Accept"] = header_val
         if not has_content_type and has_body:
-            serialized['headers']['Content-Type'] = header_val
+            serialized["headers"]["Content-Type"] = header_val
 
 
 SERIALIZERS = {
-    'ec2': EC2Serializer,
-    'query': QuerySerializer,
-    'json': JSONSerializer,
-    'rest-json': RestJSONSerializer,
-    'rest-xml': RestXMLSerializer,
-    'smithy-rpc-v2-cbor': RpcV2CBORSerializer,
+    "ec2": EC2Serializer,
+    "query": QuerySerializer,
+    "json": JSONSerializer,
+    "rest-json": RestJSONSerializer,
+    "rest-xml": RestXMLSerializer,
+    "smithy-rpc-v2-cbor": RpcV2CBORSerializer,
 }

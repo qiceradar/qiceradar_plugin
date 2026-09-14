@@ -22,16 +22,16 @@ from decimal import (
 
 from boto3.compat import collections_abc
 
-STRING = 'S'
-NUMBER = 'N'
-BINARY = 'B'
-STRING_SET = 'SS'
-NUMBER_SET = 'NS'
-BINARY_SET = 'BS'
-NULL = 'NULL'
-BOOLEAN = 'BOOL'
-MAP = 'M'
-LIST = 'L'
+STRING = "S"
+NUMBER = "N"
+BINARY = "B"
+STRING_SET = "SS"
+NUMBER_SET = "NS"
+BINARY_SET = "BS"
+NULL = "NULL"
+BOOLEAN = "BOOL"
+MAP = "M"
+LIST = "L"
 
 
 DYNAMODB_CONTEXT = Context(
@@ -55,8 +55,8 @@ class Binary:
 
     def __init__(self, value):
         if not isinstance(value, BINARY_TYPES):
-            types = ', '.join([str(t) for t in BINARY_TYPES])
-            raise TypeError(f'Value must be of the following types: {types}')
+            types = ", ".join([str(t) for t in BINARY_TYPES])
+            raise TypeError(f"Value must be of the following types: {types}")
         self.value = value
 
     def __eq__(self, other):
@@ -68,7 +68,7 @@ class Binary:
         return not self.__eq__(other)
 
     def __repr__(self):
-        return f'Binary({self.value!r})'
+        return f"Binary({self.value!r})"
 
     def __str__(self):
         return self.value
@@ -112,7 +112,7 @@ class TypeSerializer:
             dictionaries can be directly passed to botocore methods.
         """
         dynamodb_type = self._get_dynamodb_type(value)
-        serializer = getattr(self, f'_serialize_{dynamodb_type}'.lower())
+        serializer = getattr(self, f"_serialize_{dynamodb_type}".lower())
         return {dynamodb_type: serializer(value)}
 
     def _get_dynamodb_type(self, value):
@@ -168,9 +168,7 @@ class TypeSerializer:
         if isinstance(value, (int, Decimal)):
             return True
         elif isinstance(value, float):
-            raise TypeError(
-                'Float types are not supported. Use Decimal types instead.'
-            )
+            raise TypeError("Float types are not supported. Use Decimal types instead.")
         return False
 
     def _is_string(self, value):
@@ -212,8 +210,8 @@ class TypeSerializer:
 
     def _serialize_n(self, value):
         number = str(DYNAMODB_CONTEXT.create_decimal(value))
-        if number in ['Infinity', 'NaN']:
-            raise TypeError('Infinity and NaN not supported')
+        if number in ["Infinity", "NaN"]:
+            raise TypeError("Infinity and NaN not supported")
         return number
 
     def _serialize_s(self, value):
@@ -267,16 +265,14 @@ class TypeDeserializer:
 
         if not value:
             raise TypeError(
-                'Value must be a nonempty dictionary whose key '
-                'is a valid dynamodb type.'
+                "Value must be a nonempty dictionary whose key "
+                "is a valid dynamodb type."
             )
         dynamodb_type = list(value.keys())[0]
         try:
-            deserializer = getattr(
-                self, f'_deserialize_{dynamodb_type}'.lower()
-            )
+            deserializer = getattr(self, f"_deserialize_{dynamodb_type}".lower())
         except AttributeError:
-            raise TypeError(f'Dynamodb type {dynamodb_type} is not supported')
+            raise TypeError(f"Dynamodb type {dynamodb_type} is not supported")
         return deserializer(value[dynamodb_type])
 
     def _deserialize_null(self, value):

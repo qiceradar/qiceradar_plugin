@@ -1,11 +1,9 @@
-
 from bisect import bisect_left
 from collections.abc import Sequence, Set
 from itertools import chain
 
 
 class SortedFrozenSet(Sequence, Set):
-
     def __new__(cls, items=None):
         if type(items) == cls:
             return items
@@ -31,7 +29,7 @@ class SortedFrozenSet(Sequence, Set):
         return SortedFrozenSet(result) if isinstance(index, slice) else result
 
     def __repr__(self):
-        return "SortedFrozenSet({})".format(repr(self._items) if self._items else '')
+        return "SortedFrozenSet({})".format(repr(self._items) if self._items else "")
 
     def __eq__(self, rhs):
         if not isinstance(rhs, SortedFrozenSet):

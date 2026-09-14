@@ -30,7 +30,7 @@ class RequestExceededException(Exception):
         """
         self.requested_amt = requested_amt
         self.retry_time = retry_time
-        msg = f'Request amount {requested_amt} exceeded the amount available. Retry in {retry_time}'
+        msg = f"Request amount {requested_amt} exceeded the amount available. Retry in {retry_time}"
         super().__init__(msg)
 
 
@@ -73,9 +73,7 @@ class BandwidthLimiter:
         if time_utils is None:
             self._time_utils = TimeUtils()
 
-    def get_bandwith_limited_stream(
-        self, fileobj, transfer_coordinator, enabled=True
-    ):
+    def get_bandwith_limited_stream(self, fileobj, transfer_coordinator, enabled=True):
         """Wraps a fileobj in a bandwidth limited stream wrapper
 
         :type fileobj: file-like obj
@@ -168,9 +166,7 @@ class BandwidthLimitedStream:
         # worst.
         while not self._transfer_coordinator.exception:
             try:
-                self._leaky_bucket.consume(
-                    self._bytes_seen, self._request_token
-                )
+                self._leaky_bucket.consume(self._bytes_seen, self._request_token)
                 self._bytes_seen = 0
                 return
             except RequestExceededException as e:
@@ -270,9 +266,7 @@ class LeakyBucket:
                     amt, request_token, time_now
                 )
             elif self._projected_to_exceed_max_rate(amt, time_now):
-                self._raise_request_exceeded_exception(
-                    amt, request_token, time_now
-                )
+                self._raise_request_exceeded_exception(amt, request_token, time_now)
             else:
                 return self._release_requested_amt(amt, time_now)
 
@@ -283,9 +277,7 @@ class LeakyBucket:
     def _release_requested_amt_for_scheduled_request(
         self, amt, request_token, time_now
     ):
-        self._consumption_scheduler.process_scheduled_consumption(
-            request_token
-        )
+        self._consumption_scheduler.process_scheduled_consumption(request_token)
         return self._release_requested_amt(amt, time_now)
 
     def _raise_request_exceeded_exception(self, amt, request_token, time_now):
@@ -293,9 +285,7 @@ class LeakyBucket:
         retry_time = self._consumption_scheduler.schedule_consumption(
             amt, request_token, allocated_time
         )
-        raise RequestExceededException(
-            requested_amt=amt, retry_time=retry_time
-        )
+        raise RequestExceededException(requested_amt=amt, retry_time=retry_time)
 
     def _release_requested_amt(self, amt, time_now):
         self._rate_tracker.record_consumption_rate(amt, time_now)
@@ -338,8 +328,8 @@ class ConsumptionScheduler:
         """
         self._total_wait += time_to_consume
         self._tokens_to_scheduled_consumption[token] = {
-            'wait_duration': self._total_wait,
-            'time_to_consume': time_to_consume,
+            "wait_duration": self._total_wait,
+            "time_to_consume": time_to_consume,
         }
         return self._total_wait
 
@@ -351,9 +341,7 @@ class ConsumptionScheduler:
             request that is used to identify the request.
         """
         scheduled_retry = self._tokens_to_scheduled_consumption.pop(token)
-        self._total_wait = max(
-            self._total_wait - scheduled_retry['time_to_consume'], 0
-        )
+        self._total_wait = max(self._total_wait - scheduled_retry["time_to_consume"], 0)
 
 
 class BandwidthRateTracker:
@@ -398,9 +386,7 @@ class BandwidthRateTracker:
         """
         if self._last_time is None:
             return 0.0
-        return self._calculate_exponential_moving_average_rate(
-            amt, time_at_consumption
-        )
+        return self._calculate_exponential_moving_average_rate(amt, time_at_consumption)
 
     def record_consumption_rate(self, amt, time_at_consumption):
         """Record the consumption rate based off amount and time point
@@ -427,11 +413,9 @@ class BandwidthRateTracker:
             # we do not want to be returning back a negative rate or try to
             # divide the amount by zero. So instead return back an infinite
             # rate as the time delta is infinitesimally small.
-            return float('inf')
+            return float("inf")
         return amt / (time_delta)
 
-    def _calculate_exponential_moving_average_rate(
-        self, amt, time_at_consumption
-    ):
+    def _calculate_exponential_moving_average_rate(self, amt, time_at_consumption):
         new_rate = self._calculate_rate(amt, time_at_consumption)
         return self._alpha * new_rate + (1 - self._alpha) * self._current_rate

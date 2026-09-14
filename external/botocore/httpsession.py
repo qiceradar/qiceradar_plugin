@@ -81,9 +81,9 @@ filter_ssl_warnings()
 logger = logging.getLogger(__name__)
 DEFAULT_TIMEOUT = 60
 MAX_POOL_CONNECTIONS = 10
-DEFAULT_CA_BUNDLE = os.path.join(os.path.dirname(__file__), 'cacert.pem')
+DEFAULT_CA_BUNDLE = os.path.join(os.path.dirname(__file__), "cacert.pem")
 BUFFER_SIZE = None
-if hasattr(PoolKey, 'key_blocksize'):
+if hasattr(PoolKey, "key_blocksize"):
     # urllib3 2.0 implemented its own chunking logic and set
     # a default blocksize of 16KB. This creates a noticeable
     # performance bottleneck when transferring objects
@@ -155,9 +155,9 @@ def create_urllib3_context(
     # versions of Python.  We only enable on Python 3.7.4+ or if certificate
     # verification is enabled to work around Python issue #37428
     # See: https://bugs.python.org/issue37428
-    if (
-        cert_reqs == ssl.CERT_REQUIRED or sys.version_info >= (3, 7, 4)
-    ) and getattr(context, "post_handshake_auth", None) is not None:
+    if (cert_reqs == ssl.CERT_REQUIRED or sys.version_info >= (3, 7, 4)) and getattr(
+        context, "post_handshake_auth", None
+    ) is not None:
         context.post_handshake_auth = True
 
     def disable_check_hostname():
@@ -198,7 +198,7 @@ def ensure_boolean(val):
     if isinstance(val, bool):
         return val
     else:
-        return val.lower() == 'true'
+        return val.lower() == "true"
 
 
 def mask_proxy_url(proxy_url):
@@ -210,7 +210,7 @@ def mask_proxy_url(proxy_url):
 
     :return: Masked proxy url, i.e. https://***:***@proxy.com
     """
-    mask = '*' * 3
+    mask = "*" * 3
     parsed_url = urlparse(proxy_url)
     if parsed_url.username:
         proxy_url = proxy_url.replace(parsed_url.username, mask, 1)
@@ -255,7 +255,7 @@ class ProxyConfiguration:
         username, password = self._get_auth_from_url(proxy_url)
         if username and password:
             basic_auth = self._construct_basic_auth(username, password)
-            headers['Proxy-Authorization'] = basic_auth
+            headers["Proxy-Authorization"] = basic_auth
         return headers
 
     @property
@@ -263,17 +263,17 @@ class ProxyConfiguration:
         return self._proxies_settings
 
     def _fix_proxy_url(self, proxy_url):
-        if proxy_url.startswith('http:') or proxy_url.startswith('https:'):
+        if proxy_url.startswith("http:") or proxy_url.startswith("https:"):
             return proxy_url
-        elif proxy_url.startswith('//'):
-            return 'http:' + proxy_url
+        elif proxy_url.startswith("//"):
+            return "http:" + proxy_url
         else:
-            return 'http://' + proxy_url
+            return "http://" + proxy_url
 
     def _construct_basic_auth(self, username, password):
-        auth_str = f'{username}:{password}'
-        encoded_str = b64encode(auth_str.encode('ascii')).strip().decode()
-        return f'Basic {encoded_str}'
+        auth_str = f"{username}:{password}"
+        encoded_str = b64encode(auth_str.encode("ascii")).strip().decode()
+        return f"Basic {encoded_str}"
 
     def _get_auth_from_url(self, url):
         parsed_url = urlparse(url)
@@ -310,8 +310,8 @@ class URLLib3Session:
             proxies=proxies, proxies_settings=proxies_config
         )
         self._pool_classes_by_scheme = {
-            'http': botocore.awsrequest.AWSHTTPConnectionPool,
-            'https': botocore.awsrequest.AWSHTTPSConnectionPool,
+            "http": botocore.awsrequest.AWSHTTPConnectionPool,
+            "https": botocore.awsrequest.AWSHTTPSConnectionPool,
         }
         if timeout is None:
             timeout = DEFAULT_TIMEOUT
@@ -337,8 +337,8 @@ class URLLib3Session:
     def _proxies_kwargs(self, **kwargs):
         proxies_settings = self._proxy_config.settings
         proxies_kwargs = {
-            'use_forwarding_for_https': proxies_settings.get(
-                'proxy_use_forwarding_for_https'
+            "use_forwarding_for_https": proxies_settings.get(
+                "proxy_use_forwarding_for_https"
             ),
             **kwargs,
         }
@@ -346,15 +346,15 @@ class URLLib3Session:
 
     def _get_pool_manager_kwargs(self, **extra_kwargs):
         pool_manager_kwargs = {
-            'timeout': self._timeout,
-            'maxsize': self._max_pool_connections,
-            'ssl_context': self._get_ssl_context(),
-            'socket_options': self._socket_options,
-            'cert_file': self._cert_file,
-            'key_file': self._key_file,
+            "timeout": self._timeout,
+            "maxsize": self._max_pool_connections,
+            "ssl_context": self._get_ssl_context(),
+            "socket_options": self._socket_options,
+            "cert_file": self._cert_file,
+            "key_file": self._key_file,
         }
         if BUFFER_SIZE:
-            pool_manager_kwargs['blocksize'] = BUFFER_SIZE
+            pool_manager_kwargs["blocksize"] = BUFFER_SIZE
         pool_manager_kwargs.update(**extra_kwargs)
         return pool_manager_kwargs
 
@@ -381,23 +381,23 @@ class URLLib3Session:
         parsed_url = urlparse(url)
         path = parsed_url.path
         if not path:
-            path = '/'
+            path = "/"
         if parsed_url.query:
-            path = path + '?' + parsed_url.query
+            path = path + "?" + parsed_url.query
         return path
 
     def _setup_ssl_cert(self, conn, url, verify):
-        if url.lower().startswith('https') and verify:
-            conn.cert_reqs = 'CERT_REQUIRED'
+        if url.lower().startswith("https") and verify:
+            conn.cert_reqs = "CERT_REQUIRED"
             conn.ca_certs = get_cert_path(verify)
         else:
-            conn.cert_reqs = 'CERT_NONE'
+            conn.cert_reqs = "CERT_NONE"
             conn.ca_certs = None
 
     def _setup_proxy_ssl_context(self, proxy_url):
         proxies_settings = self._proxy_config.settings
-        proxy_ca_bundle = proxies_settings.get('proxy_ca_bundle')
-        proxy_cert = proxies_settings.get('proxy_client_cert')
+        proxy_ca_bundle = proxies_settings.get("proxy_ca_bundle")
+        proxy_cert = proxies_settings.get("proxy_client_cert")
         if proxy_ca_bundle is None and proxy_cert is None:
             return None
 
@@ -438,19 +438,19 @@ class URLLib3Session:
         # forwarding for HTTPS through the 'use_forwarding_for_https' parameter.
         proxy_scheme = urlparse(proxy_url).scheme
         using_https_forwarding_proxy = (
-            proxy_scheme == 'https'
-            and self._proxies_kwargs().get('use_forwarding_for_https', False)
+            proxy_scheme == "https"
+            and self._proxies_kwargs().get("use_forwarding_for_https", False)
         )
 
-        if using_https_forwarding_proxy or url.startswith('http:'):
+        if using_https_forwarding_proxy or url.startswith("http:"):
             return url
         else:
             return self._path_url(url)
 
     def _chunked(self, headers):
-        transfer_encoding = headers.get('Transfer-Encoding', b'')
+        transfer_encoding = headers.get("Transfer-Encoding", b"")
         transfer_encoding = ensure_bytes(transfer_encoding)
-        return transfer_encoding.lower() == b'chunked'
+        return transfer_encoding.lower() == b"chunked"
 
     def close(self):
         self._manager.clear()
@@ -464,14 +464,14 @@ class URLLib3Session:
             conn = manager.connection_from_url(request.url)
             self._setup_ssl_cert(conn, request.url, self._verify)
             if ensure_boolean(
-                os.environ.get('BOTO_EXPERIMENTAL__ADD_PROXY_HOST_HEADER', '')
+                os.environ.get("BOTO_EXPERIMENTAL__ADD_PROXY_HOST_HEADER", "")
             ):
                 # This is currently an "experimental" feature which provides
                 # no guarantees of backwards compatibility. It may be subject
                 # to change or removal in any patch version. Anyone opting in
                 # to this feature should strictly pin botocore.
                 host = urlparse(request.url).hostname
-                conn.proxy_headers['host'] = host
+                conn.proxy_headers["host"] = host
 
             request_target = self._get_request_target(request.url, proxy_url)
             urllib_response = conn.urlopen(
@@ -505,9 +505,7 @@ class URLLib3Session:
         except (NewConnectionError, socket.gaierror) as e:
             raise EndpointConnectionError(endpoint_url=request.url, error=e)
         except ProxyError as e:
-            raise ProxyConnectionError(
-                proxy_url=mask_proxy_url(proxy_url), error=e
-            )
+            raise ProxyConnectionError(proxy_url=mask_proxy_url(proxy_url), error=e)
         except URLLib3ConnectTimeoutError as e:
             raise ConnectTimeoutError(endpoint_url=request.url, error=e)
         except URLLib3ReadTimeoutError as e:
@@ -519,6 +517,6 @@ class URLLib3Session:
         except CancelledError:
             raise
         except Exception as e:
-            message = 'Exception received when sending urllib3 HTTP request'
+            message = "Exception received when sending urllib3 HTTP request"
             logger.debug(message, exc_info=True)
             raise HTTPClientError(error=e)

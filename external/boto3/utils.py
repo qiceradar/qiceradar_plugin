@@ -14,12 +14,12 @@ from collections import namedtuple
 from importlib import import_module
 
 _ServiceContext = namedtuple(
-    'ServiceContext',
+    "ServiceContext",
     [
-        'service_name',
-        'service_model',
-        'service_waiter_model',
-        'resource_json_definitions',
+        "service_name",
+        "service_model",
+        "service_waiter_model",
+        "resource_json_definitions",
     ],
 )
 
@@ -51,7 +51,7 @@ def lazy_call(full_name, **kwargs):
     parent_kwargs = kwargs
 
     def _handler(**kwargs):
-        module, function_name = full_name.rsplit('.', 1)
+        module, function_name = full_name.rsplit(".", 1)
         module = import_module(module)
         kwargs.update(parent_kwargs)
         return getattr(module, function_name)(**kwargs)
@@ -63,7 +63,7 @@ def inject_attribute(class_attributes, name, value):
     if name in class_attributes:
         raise RuntimeError(
             f'Cannot inject class attribute "{name}", attribute '
-            f'already exists in class dict.'
+            f"already exists in class dict."
         )
     else:
         class_attributes[name] = value

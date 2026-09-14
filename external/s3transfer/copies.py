@@ -34,55 +34,53 @@ class CopySubmissionTask(SubmissionTask):
     """Task for submitting tasks to execute a copy"""
 
     EXTRA_ARGS_TO_HEAD_ARGS_MAPPING = {
-        'CopySourceIfMatch': 'IfMatch',
-        'CopySourceIfModifiedSince': 'IfModifiedSince',
-        'CopySourceIfNoneMatch': 'IfNoneMatch',
-        'CopySourceIfUnmodifiedSince': 'IfUnmodifiedSince',
-        'CopySourceSSECustomerKey': 'SSECustomerKey',
-        'CopySourceSSECustomerAlgorithm': 'SSECustomerAlgorithm',
-        'CopySourceSSECustomerKeyMD5': 'SSECustomerKeyMD5',
-        'RequestPayer': 'RequestPayer',
-        'ExpectedBucketOwner': 'ExpectedBucketOwner',
+        "CopySourceIfMatch": "IfMatch",
+        "CopySourceIfModifiedSince": "IfModifiedSince",
+        "CopySourceIfNoneMatch": "IfNoneMatch",
+        "CopySourceIfUnmodifiedSince": "IfUnmodifiedSince",
+        "CopySourceSSECustomerKey": "SSECustomerKey",
+        "CopySourceSSECustomerAlgorithm": "SSECustomerAlgorithm",
+        "CopySourceSSECustomerKeyMD5": "SSECustomerKeyMD5",
+        "RequestPayer": "RequestPayer",
+        "ExpectedBucketOwner": "ExpectedBucketOwner",
     }
 
     UPLOAD_PART_COPY_ARGS = [
-        'CopySourceIfMatch',
-        'CopySourceIfModifiedSince',
-        'CopySourceIfNoneMatch',
-        'CopySourceIfUnmodifiedSince',
-        'CopySourceSSECustomerKey',
-        'CopySourceSSECustomerAlgorithm',
-        'CopySourceSSECustomerKeyMD5',
-        'SSECustomerKey',
-        'SSECustomerAlgorithm',
-        'SSECustomerKeyMD5',
-        'RequestPayer',
-        'ExpectedBucketOwner',
+        "CopySourceIfMatch",
+        "CopySourceIfModifiedSince",
+        "CopySourceIfNoneMatch",
+        "CopySourceIfUnmodifiedSince",
+        "CopySourceSSECustomerKey",
+        "CopySourceSSECustomerAlgorithm",
+        "CopySourceSSECustomerKeyMD5",
+        "SSECustomerKey",
+        "SSECustomerAlgorithm",
+        "SSECustomerKeyMD5",
+        "RequestPayer",
+        "ExpectedBucketOwner",
     ]
 
     CREATE_MULTIPART_ARGS_BLACKLIST = [
-        'CopySourceIfMatch',
-        'CopySourceIfModifiedSince',
-        'CopySourceIfNoneMatch',
-        'CopySourceIfUnmodifiedSince',
-        'CopySourceSSECustomerKey',
-        'CopySourceSSECustomerAlgorithm',
-        'CopySourceSSECustomerKeyMD5',
-        'MetadataDirective',
-        'TaggingDirective',
+        "CopySourceIfMatch",
+        "CopySourceIfModifiedSince",
+        "CopySourceIfNoneMatch",
+        "CopySourceIfUnmodifiedSince",
+        "CopySourceSSECustomerKey",
+        "CopySourceSSECustomerAlgorithm",
+        "CopySourceSSECustomerKeyMD5",
+        "MetadataDirective",
+        "TaggingDirective",
     ]
 
     COMPLETE_MULTIPART_ARGS = [
-        'SSECustomerKey',
-        'SSECustomerAlgorithm',
-        'SSECustomerKeyMD5',
-        'RequestPayer',
-        'ExpectedBucketOwner',
+        "SSECustomerKey",
+        "SSECustomerAlgorithm",
+        "SSECustomerKeyMD5",
+        "RequestPayer",
+        "ExpectedBucketOwner",
     ]
 
-    def _submit(
-        self, client, config, osutil, request_executor, transfer_future
-    ):
+    def _submit(self, client, config, osutil, request_executor, transfer_future):
         """
         :param client: The client associated with the transfer manager
 
@@ -101,20 +99,15 @@ class CopySubmissionTask(SubmissionTask):
         :param transfer_future: The transfer future associated with the
             transfer request that tasks are being submitted for
         """
-        if (
-            transfer_future.meta.size is None
-            or transfer_future.meta.etag is None
-        ):
+        if transfer_future.meta.size is None or transfer_future.meta.etag is None:
             # If a size was not provided figure out the size for the
             # user. Note that we will only use the client provided to
             # the TransferManager. If the object is outside of the region
             # of the client, they may have to provide the file size themselves
             # with a completely new client.
             call_args = transfer_future.meta.call_args
-            head_object_request = (
-                self._get_head_object_request_from_copy_source(
-                    call_args.copy_source
-                )
+            head_object_request = self._get_head_object_request_from_copy_source(
+                call_args.copy_source
             )
             extra_args = call_args.extra_args
 
@@ -122,19 +115,15 @@ class CopySubmissionTask(SubmissionTask):
             # used in the copy object
             for param, value in extra_args.items():
                 if param in self.EXTRA_ARGS_TO_HEAD_ARGS_MAPPING:
-                    head_object_request[
-                        self.EXTRA_ARGS_TO_HEAD_ARGS_MAPPING[param]
-                    ] = value
+                    head_object_request[self.EXTRA_ARGS_TO_HEAD_ARGS_MAPPING[param]] = (
+                        value
+                    )
 
-            response = call_args.source_client.head_object(
-                **head_object_request
-            )
-            transfer_future.meta.provide_transfer_size(
-                response['ContentLength']
-            )
+            response = call_args.source_client.head_object(**head_object_request)
+            transfer_future.meta.provide_transfer_size(response["ContentLength"])
             # Provide an etag to ensure a stored object is not modified
             # during a multipart copy.
-            transfer_future.meta.provide_object_etag(response.get('ETag'))
+            transfer_future.meta.provide_object_etag(response.get("ETag"))
 
         # If it is greater than threshold do a multipart copy, otherwise
         # do a regular copy object.
@@ -153,7 +142,7 @@ class CopySubmissionTask(SubmissionTask):
         call_args = transfer_future.meta.call_args
 
         # Get the needed progress callbacks for the task
-        progress_callbacks = get_callbacks(transfer_future, 'progress')
+        progress_callbacks = get_callbacks(transfer_future, "progress")
 
         # Submit the request of a single copy.
         self._transfer_coordinator.submit(
@@ -161,13 +150,13 @@ class CopySubmissionTask(SubmissionTask):
             CopyObjectTask(
                 transfer_coordinator=self._transfer_coordinator,
                 main_kwargs={
-                    'client': client,
-                    'copy_source': call_args.copy_source,
-                    'bucket': call_args.bucket,
-                    'key': call_args.key,
-                    'extra_args': call_args.extra_args,
-                    'callbacks': progress_callbacks,
-                    'size': transfer_future.meta.size,
+                    "client": client,
+                    "copy_source": call_args.copy_source,
+                    "bucket": call_args.bucket,
+                    "key": call_args.key,
+                    "extra_args": call_args.extra_args,
+                    "callbacks": progress_callbacks,
+                    "size": transfer_future.meta.size,
                 },
                 is_final=True,
             ),
@@ -190,10 +179,10 @@ class CopySubmissionTask(SubmissionTask):
             CreateMultipartUploadTask(
                 transfer_coordinator=self._transfer_coordinator,
                 main_kwargs={
-                    'client': client,
-                    'bucket': call_args.bucket,
-                    'key': call_args.key,
-                    'extra_args': create_multipart_extra_args,
+                    "client": client,
+                    "bucket": call_args.bucket,
+                    "key": call_args.key,
+                    "extra_args": create_multipart_extra_args,
                 },
             ),
         )
@@ -202,34 +191,26 @@ class CopySubmissionTask(SubmissionTask):
         # desired chunksize.
         part_size = config.multipart_chunksize
         adjuster = ChunksizeAdjuster()
-        part_size = adjuster.adjust_chunksize(
-            part_size, transfer_future.meta.size
-        )
-        num_parts = int(
-            math.ceil(transfer_future.meta.size / float(part_size))
-        )
+        part_size = adjuster.adjust_chunksize(part_size, transfer_future.meta.size)
+        num_parts = int(math.ceil(transfer_future.meta.size / float(part_size)))
 
         # Submit requests to upload the parts of the file.
         part_futures = []
-        progress_callbacks = get_callbacks(transfer_future, 'progress')
+        progress_callbacks = get_callbacks(transfer_future, "progress")
 
         for part_number in range(1, num_parts + 1):
-            extra_part_args = self._extra_upload_part_args(
-                call_args.extra_args
-            )
+            extra_part_args = self._extra_upload_part_args(call_args.extra_args)
             # The part number for upload part starts at 1 while the
             # range parameter starts at zero, so just subtract 1 off of
             # the part number
-            extra_part_args['CopySourceRange'] = calculate_range_parameter(
+            extra_part_args["CopySourceRange"] = calculate_range_parameter(
                 part_size,
                 part_number - 1,
                 num_parts,
                 transfer_future.meta.size,
             )
             if transfer_future.meta.etag is not None:
-                extra_part_args['CopySourceIfMatch'] = (
-                    transfer_future.meta.etag
-                )
+                extra_part_args["CopySourceIfMatch"] = transfer_future.meta.etag
             # Get the size of the part copy as well for the progress
             # callbacks.
             size = self._get_transfer_size(
@@ -246,19 +227,17 @@ class CopySubmissionTask(SubmissionTask):
                     CopyPartTask(
                         transfer_coordinator=self._transfer_coordinator,
                         main_kwargs={
-                            'client': client,
-                            'copy_source': call_args.copy_source,
-                            'bucket': call_args.bucket,
-                            'key': call_args.key,
-                            'part_number': part_number,
-                            'extra_args': extra_part_args,
-                            'callbacks': progress_callbacks,
-                            'size': size,
-                            'checksum_algorithm': checksum_algorithm,
+                            "client": client,
+                            "copy_source": call_args.copy_source,
+                            "bucket": call_args.bucket,
+                            "key": call_args.key,
+                            "part_number": part_number,
+                            "extra_args": extra_part_args,
+                            "callbacks": progress_callbacks,
+                            "size": size,
+                            "checksum_algorithm": checksum_algorithm,
                         },
-                        pending_main_kwargs={
-                            'upload_id': create_multipart_future
-                        },
+                        pending_main_kwargs={"upload_id": create_multipart_future},
                     ),
                 )
             )
@@ -272,14 +251,14 @@ class CopySubmissionTask(SubmissionTask):
             CompleteMultipartUploadTask(
                 transfer_coordinator=self._transfer_coordinator,
                 main_kwargs={
-                    'client': client,
-                    'bucket': call_args.bucket,
-                    'key': call_args.key,
-                    'extra_args': complete_multipart_extra_args,
+                    "client": client,
+                    "bucket": call_args.bucket,
+                    "key": call_args.key,
+                    "extra_args": complete_multipart_extra_args,
                 },
                 pending_main_kwargs={
-                    'upload_id': create_multipart_future,
-                    'parts': part_futures,
+                    "upload_id": create_multipart_future,
+                    "parts": part_futures,
                 },
                 is_final=True,
             ),
@@ -290,9 +269,9 @@ class CopySubmissionTask(SubmissionTask):
             return copy.copy(copy_source)
         else:
             raise TypeError(
-                'Expecting dictionary formatted: '
+                "Expecting dictionary formatted: "
                 '{"Bucket": bucket_name, "Key": key} '
-                f'but got {copy_source} or type {type(copy_source)}.'
+                f"but got {copy_source} or type {type(copy_source)}."
             )
 
     def _extra_upload_part_args(self, extra_args):
@@ -303,9 +282,7 @@ class CopySubmissionTask(SubmissionTask):
     def _extra_complete_multipart_args(self, extra_args):
         return get_filtered_dict(extra_args, self.COMPLETE_MULTIPART_ARGS)
 
-    def _get_transfer_size(
-        self, part_size, part_index, num_parts, total_transfer_size
-    ):
+    def _get_transfer_size(self, part_size, part_index, num_parts, total_transfer_size):
         if part_index == num_parts - 1:
             # The last part may be different in size then the rest of the
             # parts.
@@ -316,9 +293,7 @@ class CopySubmissionTask(SubmissionTask):
 class CopyObjectTask(Task):
     """Task to do a nonmultipart copy"""
 
-    def _main(
-        self, client, copy_source, bucket, key, extra_args, callbacks, size
-    ):
+    def _main(self, client, copy_source, bucket, key, extra_args, callbacks, size):
         """
         :param client: The client to use when calling PutObject
         :param copy_source: The CopySource parameter to use
@@ -331,9 +306,7 @@ class CopyObjectTask(Task):
             the callbacks
 
         """
-        client.copy_object(
-            CopySource=copy_source, Bucket=bucket, Key=key, **extra_args
-        )
+        client.copy_object(CopySource=copy_source, Bucket=bucket, Key=key, **extra_args)
         for callback in callbacks:
             callback(bytes_transferred=size)
 
@@ -389,25 +362,25 @@ class CopyPartTask(Task):
                 **extra_args,
             )
         except ClientError as e:
-            error_code = e.response.get('Error', {}).get('Code')
-            src_key = copy_source['Key']
-            src_bucket = copy_source['Bucket']
+            error_code = e.response.get("Error", {}).get("Code")
+            src_key = copy_source["Key"]
+            src_bucket = copy_source["Bucket"]
             if error_code == "PreconditionFailed":
                 raise S3CopyFailedError(
                     f'Contents of stored object "{src_key}" '
                     f'in bucket "{src_bucket}" did not match '
-                    'expected ETag.'
+                    "expected ETag."
                 )
             else:
                 raise
         for callback in callbacks:
             callback(bytes_transferred=size)
-        etag = response['CopyPartResult']['ETag']
-        part_metadata = {'ETag': etag, 'PartNumber': part_number}
+        etag = response["CopyPartResult"]["ETag"]
+        part_metadata = {"ETag": etag, "PartNumber": part_number}
         if checksum_algorithm:
-            checksum_member = f'Checksum{checksum_algorithm.upper()}'
-            if checksum_member in response['CopyPartResult']:
-                part_metadata[checksum_member] = response['CopyPartResult'][
+            checksum_member = f"Checksum{checksum_algorithm.upper()}"
+            if checksum_member in response["CopyPartResult"]:
+                part_metadata[checksum_member] = response["CopyPartResult"][
                     checksum_member
                 ]
         return part_metadata

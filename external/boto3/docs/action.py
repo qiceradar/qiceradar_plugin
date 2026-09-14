@@ -51,36 +51,34 @@ class ActionDocumenter(NestedDocumenter):
         modeled_actions = {}
         for modeled_action in modeled_actions_list:
             modeled_actions[modeled_action.name] = modeled_action
-        resource_actions = get_resource_public_actions(
-            self._resource.__class__
-        )
-        self.member_map['actions'] = sorted(resource_actions)
+        resource_actions = get_resource_public_actions(self._resource.__class__)
+        self.member_map["actions"] = sorted(resource_actions)
         add_resource_type_overview(
             section=section,
-            resource_type='Actions',
+            resource_type="Actions",
             description=(
-                'Actions call operations on resources.  They may '
-                'automatically handle the passing in of arguments set '
-                'from identifiers and some attributes.'
+                "Actions call operations on resources.  They may "
+                "automatically handle the passing in of arguments set "
+                "from identifiers and some attributes."
             ),
-            intro_link='actions_intro',
+            intro_link="actions_intro",
         )
         resource_warnings = WARNING_MESSAGES.get(self._resource_name, {})
         for action_name in sorted(resource_actions):
             # Create a new DocumentStructure for each action and add contents.
-            action_doc = DocumentStructure(action_name, target='html')
-            breadcrumb_section = action_doc.add_new_section('breadcrumb')
-            breadcrumb_section.style.ref(self._resource_class_name, 'index')
-            breadcrumb_section.write(f' / Action / {action_name}')
+            action_doc = DocumentStructure(action_name, target="html")
+            breadcrumb_section = action_doc.add_new_section("breadcrumb")
+            breadcrumb_section.style.ref(self._resource_class_name, "index")
+            breadcrumb_section.write(f" / Action / {action_name}")
             action_doc.add_title_section(action_name)
             warning_message = resource_warnings.get(action_name)
             if warning_message is not None:
                 action_doc.add_new_section("warning").write(warning_message)
             action_section = action_doc.add_new_section(
                 action_name,
-                context={'qualifier': f'{self.class_name}.'},
+                context={"qualifier": f"{self.class_name}."},
             )
-            if action_name in ['load', 'reload'] and self._resource_model.load:
+            if action_name in ["load", "reload"] and self._resource_model.load:
                 document_load_reload_action(
                     section=action_section,
                     action_name=action_name,
@@ -105,8 +103,8 @@ class ActionDocumenter(NestedDocumenter):
             # Path: <root>/reference/services/<service>/<resource_name>/<action_name>.rst
             actions_dir_path = os.path.join(
                 self._root_docs_path,
-                f'{self._service_name}',
-                f'{self._resource_sub_path}',
+                f"{self._service_name}",
+                f"{self._resource_sub_path}",
             )
             action_doc.write_to_file(actions_dir_path, action_name)
 
@@ -134,25 +132,21 @@ def document_action(
     :param include_signature: Whether or not to include the signature.
         It is useful for generating docstrings.
     """
-    operation_model = service_model.operation_model(
-        action_model.request.operation
-    )
+    operation_model = service_model.operation_model(action_model.request.operation)
     ignore_params = IGNORE_PARAMS.get(resource_name, {}).get(
         action_model.name,
         get_resource_ignore_params(action_model.request.params),
     )
-    example_return_value = 'response'
+    example_return_value = "response"
     if action_model.resource:
         example_return_value = xform_name(action_model.resource.type)
     example_resource_name = xform_name(resource_name)
     if service_model.service_name == resource_name:
         example_resource_name = resource_name
     example_prefix = (
-        f'{example_return_value} = {example_resource_name}.{action_model.name}'
+        f"{example_return_value} = {example_resource_name}.{action_model.name}"
     )
-    full_action_name = (
-        f"{section.context.get('qualifier', '')}{action_model.name}"
-    )
+    full_action_name = f"{section.context.get('qualifier', '')}{action_model.name}"
     document_model_driven_resource_method(
         section=section,
         method_name=full_action_name,
@@ -193,15 +187,15 @@ def document_load_reload_action(
         It is useful for generating docstrings.
     """
     description = (
-        f'Calls :py:meth:`{get_service_module_name(service_model)}.Client.'
-        f'{xform_name(load_model.request.operation)}` to update the attributes of the '
-        f'{resource_name} resource. Note that the load and reload methods are '
-        'the same method and can be used interchangeably.'
+        f"Calls :py:meth:`{get_service_module_name(service_model)}.Client."
+        f"{xform_name(load_model.request.operation)}` to update the attributes of the "
+        f"{resource_name} resource. Note that the load and reload methods are "
+        "the same method and can be used interchangeably."
     )
     example_resource_name = xform_name(resource_name)
     if service_model.service_name == resource_name:
         example_resource_name = resource_name
-    example_prefix = f'{example_resource_name}.{action_name}'
+    example_prefix = f"{example_resource_name}.{action_name}"
     full_action_name = f"{section.context.get('qualifier', '')}{action_name}"
     document_model_driven_method(
         section=section,

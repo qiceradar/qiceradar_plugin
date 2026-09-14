@@ -7,11 +7,12 @@ _non_command = None
 
 
 def command(name=None):
-    """A decorator to register a subcommand with the global `Subcommands` instance.
-    """
+    """A decorator to register a subcommand with the global `Subcommands` instance."""
+
     def decorator(f):
         _commands.append((name, f))
         return f
+
     return decorator
 
 
@@ -20,11 +21,7 @@ def non_command(f):
     _non_command = f
 
 
-def main(program=None,
-         doc_template=None,
-         commands=None,
-         argv=None,
-         exit_at_end=True):
+def main(program=None, doc_template=None, commands=None, argv=None, exit_at_end=True):
     """Top-level driver for creating subcommand-based programs.
 
     Args: program: The name of your program. doc_template: The top-level docstring template for your program. If `None`,
@@ -44,10 +41,8 @@ def main(program=None,
     """
     if commands is None:
         if program is None:
-            raise ValueError(
-                '`program` required if subcommand object not provided')
-        commands = Subcommands(program,
-                               doc_template=doc_template)
+            raise ValueError("`program` required if subcommand object not provided")
+        commands = Subcommands(program, doc_template=doc_template)
         for name, handler in _commands:
             commands.add_command(handler, name)
 

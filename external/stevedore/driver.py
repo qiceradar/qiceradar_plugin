@@ -26,9 +26,9 @@ from .named import OnMissingEntrypointsCallbackT
 from .named import warning_on_missing_entrypoint
 
 
-T = TypeVar('T')
-U = TypeVar('U')
-P = ParamSpec('P')
+T = TypeVar("T")
+U = TypeVar("U")
+P = ParamSpec("P")
 
 
 class DriverManager(NamedExtensionManager[T]):
@@ -70,14 +70,14 @@ class DriverManager(NamedExtensionManager[T]):
         invoke_on_load: bool = False,
         invoke_args: tuple[Any, ...] | None = None,
         invoke_kwds: dict[str, Any] | None = None,
-        on_load_failure_callback: 'OnLoadFailureCallbackT[T] | None' = None,
+        on_load_failure_callback: "OnLoadFailureCallbackT[T] | None" = None,
         on_missing_entrypoints_callback: (
             OnMissingEntrypointsCallbackT | None
         ) = warning_on_missing_entrypoint,
         verify_requirements: bool | None = None,
         warn_on_missing_entrypoint: bool | None = None,
         *,
-        conflict_resolver: 'ConflictResolverT[T]' = ignore_conflicts,
+        conflict_resolver: "ConflictResolverT[T]" = ignore_conflicts,
     ) -> None:
         invoke_args = () if invoke_args is None else invoke_args
         invoke_kwds = {} if invoke_kwds is None else invoke_kwds
@@ -99,7 +99,7 @@ class DriverManager(NamedExtensionManager[T]):
 
     @staticmethod
     def _default_on_load_failure(
-        manager: 'ExtensionManager[T]',
+        manager: "ExtensionManager[T]",
         ep: importlib.metadata.EntryPoint,
         err: BaseException,
     ) -> None:
@@ -109,12 +109,12 @@ class DriverManager(NamedExtensionManager[T]):
     def make_test_instance(  # type: ignore[override]
         cls,
         extension: Extension[T],
-        namespace: str = 'TESTING',
+        namespace: str = "TESTING",
         propagate_map_exceptions: bool = False,
-        on_load_failure_callback: 'OnLoadFailureCallbackT[T] | None' = None,
+        on_load_failure_callback: "OnLoadFailureCallbackT[T] | None" = None,
         verify_requirements: bool | None = None,
         *,
-        conflict_resolver: 'ConflictResolverT[T]' = ignore_conflicts,
+        conflict_resolver: "ConflictResolverT[T]" = ignore_conflicts,
     ) -> Self:
         """Construct a test DriverManager
 
@@ -154,17 +154,12 @@ class DriverManager(NamedExtensionManager[T]):
 
         if not self.extensions:
             name = self._names[0]
-            raise NoMatches(
-                f'No {self.namespace!r} driver found, looking for {name!r}'
-            )
+            raise NoMatches(f"No {self.namespace!r} driver found, looking for {name!r}")
         if len(self.extensions) > 1:
-            discovered_drivers = ','.join(
-                e.entry_point_target for e in self.extensions
-            )
+            discovered_drivers = ",".join(e.entry_point_target for e in self.extensions)
 
             raise MultipleMatches(
-                f'Multiple {self.namespace!r} drivers found: '
-                f'{discovered_drivers}'
+                f"Multiple {self.namespace!r} drivers found: {discovered_drivers}"
             )
 
     def __call__(

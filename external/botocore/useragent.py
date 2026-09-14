@@ -39,72 +39,72 @@ logger = logging.getLogger(__name__)
 
 _USERAGENT_ALLOWED_CHARACTERS = ascii_letters + digits + "!$%&'*+-.^_`|~,"
 _USERAGENT_ALLOWED_OS_NAMES = (
-    'windows',
-    'linux',
-    'macos',
-    'android',
-    'ios',
-    'watchos',
-    'tvos',
-    'other',
+    "windows",
+    "linux",
+    "macos",
+    "android",
+    "ios",
+    "watchos",
+    "tvos",
+    "other",
 )
-_USERAGENT_PLATFORM_NAME_MAPPINGS = {'darwin': 'macos'}
+_USERAGENT_PLATFORM_NAME_MAPPINGS = {"darwin": "macos"}
 # The name by which botocore is identified in the User-Agent header. While most
 # AWS SDKs follow a naming pattern of "aws-sdk-*", botocore and boto3 continue
 # using their existing values. Uses uppercase "B" with all other characters
 # lowercase.
-_USERAGENT_SDK_NAME = 'Botocore'
+_USERAGENT_SDK_NAME = "Botocore"
 _USERAGENT_FEATURE_MAPPINGS = {
-    'WAITER': 'B',
-    'PAGINATOR': 'C',
+    "WAITER": "B",
+    "PAGINATOR": "C",
     "RETRY_MODE_LEGACY": "D",
     "RETRY_MODE_STANDARD": "E",
     "RETRY_MODE_ADAPTIVE": "F",
-    'S3_TRANSFER': 'G',
-    'GZIP_REQUEST_COMPRESSION': 'L',
-    'PROTOCOL_RPC_V2_CBOR': 'M',
-    'ENDPOINT_OVERRIDE': 'N',
-    'ACCOUNT_ID_MODE_PREFERRED': 'P',
-    'ACCOUNT_ID_MODE_DISABLED': 'Q',
-    'ACCOUNT_ID_MODE_REQUIRED': 'R',
-    'SIGV4A_SIGNING': 'S',
-    'RESOLVED_ACCOUNT_ID': 'T',
-    'FLEXIBLE_CHECKSUMS_REQ_CRC32': 'U',
-    'FLEXIBLE_CHECKSUMS_REQ_CRC32C': 'V',
-    'FLEXIBLE_CHECKSUMS_REQ_CRC64': 'W',
-    'FLEXIBLE_CHECKSUMS_REQ_SHA1': 'X',
-    'FLEXIBLE_CHECKSUMS_REQ_SHA256': 'Y',
-    'FLEXIBLE_CHECKSUMS_REQ_WHEN_SUPPORTED': 'Z',
-    'FLEXIBLE_CHECKSUMS_REQ_WHEN_REQUIRED': 'a',
-    'FLEXIBLE_CHECKSUMS_RES_WHEN_SUPPORTED': 'b',
-    'FLEXIBLE_CHECKSUMS_RES_WHEN_REQUIRED': 'c',
-    'CREDENTIALS_CODE': 'e',
-    'CREDENTIALS_ENV_VARS': 'g',
-    'CREDENTIALS_ENV_VARS_STS_WEB_ID_TOKEN': 'h',
-    'CREDENTIALS_STS_ASSUME_ROLE': 'i',
-    'CREDENTIALS_STS_ASSUME_ROLE_WEB_ID': 'k',
-    'CREDENTIALS_PROFILE': 'n',
-    'CREDENTIALS_PROFILE_SOURCE_PROFILE': 'o',
-    'CREDENTIALS_PROFILE_NAMED_PROVIDER': 'p',
-    'CREDENTIALS_PROFILE_STS_WEB_ID_TOKEN': 'q',
-    'CREDENTIALS_PROFILE_SSO': 'r',
-    'CREDENTIALS_SSO': 's',
-    'CREDENTIALS_PROFILE_SSO_LEGACY': 't',
-    'CREDENTIALS_SSO_LEGACY': 'u',
-    'CREDENTIALS_PROFILE_PROCESS': 'v',
-    'CREDENTIALS_PROCESS': 'w',
-    'CREDENTIALS_BOTO2_CONFIG_FILE': 'x',
-    'CREDENTIALS_HTTP': 'z',
-    'CREDENTIALS_IMDS': '0',
-    'BEARER_SERVICE_ENV_VARS': '3',
-    'CLI_V1_TO_V2_MIGRATION_DEBUG_MODE': '-',
-    'CREDENTIALS_PROFILE_LOGIN': 'AC',
-    'CREDENTIALS_LOGIN': 'AD',
-    'FLEXIBLE_CHECKSUMS_REQ_MD5': 'AE',
-    'FLEXIBLE_CHECKSUMS_REQ_SHA512': 'AF',
-    'FLEXIBLE_CHECKSUMS_REQ_XXHASH3': 'AG',
-    'FLEXIBLE_CHECKSUMS_REQ_XXHASH64': 'AH',
-    'FLEXIBLE_CHECKSUMS_REQ_XXHASH128': 'AI',
+    "S3_TRANSFER": "G",
+    "GZIP_REQUEST_COMPRESSION": "L",
+    "PROTOCOL_RPC_V2_CBOR": "M",
+    "ENDPOINT_OVERRIDE": "N",
+    "ACCOUNT_ID_MODE_PREFERRED": "P",
+    "ACCOUNT_ID_MODE_DISABLED": "Q",
+    "ACCOUNT_ID_MODE_REQUIRED": "R",
+    "SIGV4A_SIGNING": "S",
+    "RESOLVED_ACCOUNT_ID": "T",
+    "FLEXIBLE_CHECKSUMS_REQ_CRC32": "U",
+    "FLEXIBLE_CHECKSUMS_REQ_CRC32C": "V",
+    "FLEXIBLE_CHECKSUMS_REQ_CRC64": "W",
+    "FLEXIBLE_CHECKSUMS_REQ_SHA1": "X",
+    "FLEXIBLE_CHECKSUMS_REQ_SHA256": "Y",
+    "FLEXIBLE_CHECKSUMS_REQ_WHEN_SUPPORTED": "Z",
+    "FLEXIBLE_CHECKSUMS_REQ_WHEN_REQUIRED": "a",
+    "FLEXIBLE_CHECKSUMS_RES_WHEN_SUPPORTED": "b",
+    "FLEXIBLE_CHECKSUMS_RES_WHEN_REQUIRED": "c",
+    "CREDENTIALS_CODE": "e",
+    "CREDENTIALS_ENV_VARS": "g",
+    "CREDENTIALS_ENV_VARS_STS_WEB_ID_TOKEN": "h",
+    "CREDENTIALS_STS_ASSUME_ROLE": "i",
+    "CREDENTIALS_STS_ASSUME_ROLE_WEB_ID": "k",
+    "CREDENTIALS_PROFILE": "n",
+    "CREDENTIALS_PROFILE_SOURCE_PROFILE": "o",
+    "CREDENTIALS_PROFILE_NAMED_PROVIDER": "p",
+    "CREDENTIALS_PROFILE_STS_WEB_ID_TOKEN": "q",
+    "CREDENTIALS_PROFILE_SSO": "r",
+    "CREDENTIALS_SSO": "s",
+    "CREDENTIALS_PROFILE_SSO_LEGACY": "t",
+    "CREDENTIALS_SSO_LEGACY": "u",
+    "CREDENTIALS_PROFILE_PROCESS": "v",
+    "CREDENTIALS_PROCESS": "w",
+    "CREDENTIALS_BOTO2_CONFIG_FILE": "x",
+    "CREDENTIALS_HTTP": "z",
+    "CREDENTIALS_IMDS": "0",
+    "BEARER_SERVICE_ENV_VARS": "3",
+    "CLI_V1_TO_V2_MIGRATION_DEBUG_MODE": "-",
+    "CREDENTIALS_PROFILE_LOGIN": "AC",
+    "CREDENTIALS_LOGIN": "AD",
+    "FLEXIBLE_CHECKSUMS_REQ_MD5": "AE",
+    "FLEXIBLE_CHECKSUMS_REQ_SHA512": "AF",
+    "FLEXIBLE_CHECKSUMS_REQ_XXHASH3": "AG",
+    "FLEXIBLE_CHECKSUMS_REQ_XXHASH64": "AH",
+    "FLEXIBLE_CHECKSUMS_REQ_XXHASH128": "AI",
 }
 
 
@@ -150,10 +150,8 @@ def sanitize_user_agent_string_component(raw_str, allow_hash):
     :type allow_hash: bool
     :param allow_hash: Whether "#" is considered an allowed character.
     """
-    return ''.join(
-        c
-        if c in _USERAGENT_ALLOWED_CHARACTERS or (allow_hash and c == '#')
-        else '-'
+    return "".join(
+        c if c in _USERAGENT_ALLOWED_CHARACTERS or (allow_hash and c == "#") else "-"
         for c in raw_str
     )
 
@@ -172,8 +170,8 @@ class UserAgentComponentSizeConfig:
     def _validate_input(self):
         if self.max_size_in_bytes < 1:
             raise ValueError(
-                f'Invalid `max_size_in_bytes`: {self.max_size_in_bytes}. '
-                'Value must be a positive integer.'
+                f"Invalid `max_size_in_bytes`: {self.max_size_in_bytes}. "
+                "Value must be a positive integer."
             )
 
 
@@ -201,16 +199,14 @@ class UserAgentComponent(NamedTuple):
         clean_prefix = sanitize_user_agent_string_component(
             self.prefix, allow_hash=True
         )
-        clean_name = sanitize_user_agent_string_component(
-            self.name, allow_hash=False
-        )
-        if self.value is None or self.value == '':
-            clean_string = f'{clean_prefix}/{clean_name}'
+        clean_name = sanitize_user_agent_string_component(self.name, allow_hash=False)
+        if self.value is None or self.value == "":
+            clean_string = f"{clean_prefix}/{clean_name}"
         else:
             clean_value = sanitize_user_agent_string_component(
                 self.value, allow_hash=True
             )
-            clean_string = f'{clean_prefix}/{clean_name}#{clean_value}'
+            clean_string = f"{clean_prefix}/{clean_name}#{clean_value}"
         if self.size_config is not None:
             clean_string = self._truncate_string(
                 clean_string,
@@ -225,12 +221,12 @@ class UserAgentComponent(NamedTuple):
         equal to ``max_size``.
         """
         orig = string
-        while len(string.encode('utf-8')) > max_size:
+        while len(string.encode("utf-8")) > max_size:
             parts = string.split(delimiter)
             parts.pop()
             string = delimiter.join(parts)
 
-        if string == '':
+        if string == "":
             logger.debug(
                 "User agent component `%s` could not be truncated to "
                 "`%s` bytes with delimiter "
@@ -353,14 +349,14 @@ class UserAgentString:
     def from_environment(cls):
         crt_version = None
         if HAS_CRT:
-            crt_version = _get_crt_version() or 'Unknown'
+            crt_version = _get_crt_version() or "Unknown"
         return cls(
             platform_name=platform.system(),
             platform_version=platform.release(),
             platform_machine=platform.machine(),
             python_version=platform.python_version(),
             python_implementation=platform.python_implementation(),
-            execution_env=os.environ.get('AWS_EXECUTION_ENV'),
+            execution_env=os.environ.get("AWS_EXECUTION_ENV"),
             crt_version=crt_version,
         )
 
@@ -414,7 +410,7 @@ class UserAgentString:
         """
         config_ua_override = None
         if self._client_config:
-            if hasattr(self._client_config, '_supplied_user_agent'):
+            if hasattr(self._client_config, "_supplied_user_agent"):
                 config_ua_override = self._client_config._supplied_user_agent
             else:
                 config_ua_override = self._client_config.user_agent
@@ -424,7 +420,7 @@ class UserAgentString:
 
         components = [
             *self._build_sdk_metadata(),
-            RawStringUserAgentComponent('ua/2.1'),
+            RawStringUserAgentComponent("ua/2.1"),
             *self._build_os_metadata(),
             *self._build_architecture_metadata(),
             *self._build_language_metadata(),
@@ -437,9 +433,7 @@ class UserAgentString:
 
         components = modify_components(components)
 
-        return ' '.join(
-            [comp.to_string() for comp in components if comp.to_string()]
-        )
+        return " ".join([comp.to_string() for comp in components if comp.to_string()])
 
     def _build_sdk_metadata(self):
         """
@@ -465,20 +459,14 @@ class UserAgentString:
                         self._session_user_agent_name,
                         self._session_user_agent_version,
                     ),
-                    UserAgentComponent(
-                        'md', _USERAGENT_SDK_NAME, botocore_version
-                    ),
+                    UserAgentComponent("md", _USERAGENT_SDK_NAME, botocore_version),
                 ]
             )
         else:
-            sdk_md.append(
-                UserAgentComponent(_USERAGENT_SDK_NAME, botocore_version)
-            )
+            sdk_md.append(UserAgentComponent(_USERAGENT_SDK_NAME, botocore_version))
 
         if self._crt_version is not None:
-            sdk_md.append(
-                UserAgentComponent('md', 'awscrt', self._crt_version)
-            )
+            sdk_md.append(UserAgentComponent("md", "awscrt", self._crt_version))
 
         return sdk_md
 
@@ -498,7 +486,7 @@ class UserAgentString:
          * ``os/other md/foobar#1.2.3``
         """
         if self._platform_name is None:
-            return [UserAgentComponent('os', 'other')]
+            return [UserAgentComponent("os", "other")]
 
         plt_name_lower = self._platform_name.lower()
         if plt_name_lower in _USERAGENT_ALLOWED_OS_NAMES:
@@ -509,15 +497,11 @@ class UserAgentString:
             os_family = None
 
         if os_family is not None:
-            return [
-                UserAgentComponent('os', os_family, self._platform_version)
-            ]
+            return [UserAgentComponent("os", os_family, self._platform_version)]
         else:
             return [
-                UserAgentComponent('os', 'other'),
-                UserAgentComponent(
-                    'md', self._platform_name, self._platform_version
-                ),
+                UserAgentComponent("os", "other"),
+                UserAgentComponent("md", self._platform_name, self._platform_version),
             ]
 
     def _build_architecture_metadata(self):
@@ -528,11 +512,7 @@ class UserAgentString:
         available. Common values include "x86_64", "arm64", "i386".
         """
         if self._platform_machine:
-            return [
-                UserAgentComponent(
-                    'md', 'arch', self._platform_machine.lower()
-                )
-            ]
+            return [UserAgentComponent("md", "arch", self._platform_machine.lower())]
         return []
 
     def _build_language_metadata(self):
@@ -547,11 +527,11 @@ class UserAgentString:
         ``lang/python#3.10.4 md/pyimpl#CPython``
         """
         lang_md = [
-            UserAgentComponent('lang', 'python', self._python_version),
+            UserAgentComponent("lang", "python", self._python_version),
         ]
         if self._python_implementation:
             lang_md.append(
-                UserAgentComponent('md', 'pyimpl', self._python_implementation)
+                UserAgentComponent("md", "pyimpl", self._python_implementation)
             )
         return lang_md
 
@@ -563,7 +543,7 @@ class UserAgentString:
         from the environment variable AWS_EXECUTION_ENV.
         """
         if self._execution_env:
-            return [UserAgentComponent('exec-env', self._execution_env)]
+            return [UserAgentComponent("exec-env", self._execution_env)]
         else:
             return []
 
@@ -580,12 +560,8 @@ class UserAgentString:
         features = client_features.union(context_features)
         if not features:
             return []
-        size_config = UserAgentComponentSizeConfig(1024, ',')
-        return [
-            UserAgentComponent(
-                'm', ','.join(features), size_config=size_config
-            )
-        ]
+        size_config = UserAgentComponentSizeConfig(1024, ",")
+        return [UserAgentComponent("m", ",".join(features), size_config=size_config)]
 
     def _build_config_metadata(self):
         """
@@ -597,10 +573,10 @@ class UserAgentString:
         """
         if not self._client_config or not self._client_config.retries:
             return []
-        retry_mode = self._client_config.retries.get('mode')
-        cfg_md = [UserAgentComponent('cfg', 'retry-mode', retry_mode)]
+        retry_mode = self._client_config.retries.get("mode")
+        cfg_md = [UserAgentComponent("cfg", "retry-mode", retry_mode)]
         if self._client_config.endpoint_discovery_enabled:
-            cfg_md.append(UserAgentComponent('cfg', 'endpoint-discovery'))
+            cfg_md.append(UserAgentComponent("cfg", "endpoint-discovery"))
         return cfg_md
 
     def _build_app_id(self):
@@ -618,7 +594,7 @@ class UserAgentString:
             appid = sanitize_user_agent_string_component(
                 raw_str=self._client_config.user_agent_appid, allow_hash=True
             )
-            return [RawStringUserAgentComponent(f'app/{appid}')]
+            return [RawStringUserAgentComponent(f"app/{appid}")]
         else:
             return []
 
@@ -637,14 +613,10 @@ class UserAgentString:
         """
         extra = []
         if self._session_user_agent_extra:
-            extra.append(
-                RawStringUserAgentComponent(self._session_user_agent_extra)
-            )
+            extra.append(RawStringUserAgentComponent(self._session_user_agent_extra))
         if self._client_config and self._client_config.user_agent_extra:
             extra.append(
-                RawStringUserAgentComponent(
-                    self._client_config.user_agent_extra
-                )
+                RawStringUserAgentComponent(self._client_config.user_agent_extra)
             )
         return extra
 
@@ -654,14 +626,12 @@ class UserAgentString:
             components.append(self._session_user_agent_extra)
         if self._client_config.user_agent_extra:
             components.append(self._client_config.user_agent_extra)
-        return ' '.join(components)
+        return " ".join(components)
 
-    def rebuild_and_replace_user_agent_handler(
-        self, operation_name, request, **kwargs
-    ):
+    def rebuild_and_replace_user_agent_handler(self, operation_name, request, **kwargs):
         ua_string = self.to_string()
-        if request.headers.get('User-Agent'):
-            request.headers.replace_header('User-Agent', ua_string)
+        if request.headers.get("User-Agent"):
+            request.headers.replace_header("User-Agent", ua_string)
 
 
 def _get_crt_version():

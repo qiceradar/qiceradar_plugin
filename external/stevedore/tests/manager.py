@@ -20,7 +20,7 @@ import warnings
 
 from stevedore import extension
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class TestExtensionManager(extension.ExtensionManager[T]):
@@ -48,7 +48,7 @@ class TestExtensionManager(extension.ExtensionManager[T]):
     def __init__(
         self,
         extensions,
-        namespace='test',
+        namespace="test",
         invoke_on_load=False,
         invoke_args=(),
         invoke_kwds={},
@@ -56,7 +56,7 @@ class TestExtensionManager(extension.ExtensionManager[T]):
         super().__init__(namespace, invoke_on_load, invoke_args, invoke_kwds)
         self.extensions = extensions
         warnings.warn(
-            'TestExtesionManager has been replaced by make_test_instance()',
+            "TestExtesionManager has been replaced by make_test_instance()",
             DeprecationWarning,
         )
 

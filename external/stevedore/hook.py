@@ -20,7 +20,7 @@ from .extension import OnLoadFailureCallbackT
 from .named import NamedExtensionManager
 from .named import OnMissingEntrypointsCallbackT
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class HookManager(NamedExtensionManager[T]):
@@ -62,17 +62,15 @@ class HookManager(NamedExtensionManager[T]):
         invoke_on_load: bool = False,
         invoke_args: tuple[Any, ...] | None = None,
         invoke_kwds: dict[str, Any] | None = None,
-        on_load_failure_callback: 'OnLoadFailureCallbackT[T] | None' = None,
+        on_load_failure_callback: "OnLoadFailureCallbackT[T] | None" = None,
         # NOTE(dhellmann): This default is different from the
         # base class because for hooks it is less likely to
         # be an error to have no entry points present.
-        on_missing_entrypoints_callback: (
-            OnMissingEntrypointsCallbackT | None
-        ) = None,
+        on_missing_entrypoints_callback: (OnMissingEntrypointsCallbackT | None) = None,
         verify_requirements: bool | None = None,
         warn_on_missing_entrypoint: bool | None = None,
         *,
-        conflict_resolver: 'ConflictResolverT[T]' = ignore_conflicts,
+        conflict_resolver: "ConflictResolverT[T]" = ignore_conflicts,
     ):
         invoke_args = () if invoke_args is None else invoke_args
         invoke_kwds = {} if invoke_kwds is None else invoke_kwds

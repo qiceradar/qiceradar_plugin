@@ -9,18 +9,34 @@ import re
 from segpy import textual_reel_header
 from segpy.binary_reel_header import BinaryReelHeader
 from segpy.catalog import CatalogBuilder
-from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes, DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE, CTYPE_TO_SIZE
-from segpy.encoding import guess_encoding, is_supported_encoding, UnsupportedEncodingError
+from segpy.datatypes import (
+    SEG_Y_TYPE_TO_CTYPE,
+    size_in_bytes,
+    DATA_SAMPLE_FORMAT_TO_SEG_Y_TYPE,
+    CTYPE_TO_SIZE,
+)
+from segpy.encoding import (
+    guess_encoding,
+    is_supported_encoding,
+    UnsupportedEncodingError,
+)
 from segpy.header import SubFormatMeta
 from segpy.ibm_float_packer import pack_ibm_floats, unpack_ibm_floats
 from segpy.packer import make_header_packer
 from segpy.revisions import canonicalize_revision
 from segpy.trace_header import TraceHeaderRev1
-from segpy.util import (file_length, batched, pad, complementary_intervals, NATIVE_ENDIANNESS,
-                        EMPTY_BYTE_STRING, restored_position_seek)
+from segpy.util import (
+    file_length,
+    batched,
+    pad,
+    complementary_intervals,
+    NATIVE_ENDIANNESS,
+    EMPTY_BYTE_STRING,
+    restored_position_seek,
+)
 
 
-HEADER_NEWLINE = '\r\n'
+HEADER_NEWLINE = "\r\n"
 
 CARD_LENGTH = 80
 CARDS_PER_HEADER = 40
@@ -158,14 +174,20 @@ def read_textual_reel_header(fh, encoding):
 
     num_bytes_read = len(raw_header)
     if num_bytes_read < TEXTUAL_HEADER_NUM_BYTES:
-        raise EOFError("Only {} bytes of {} byte textual reel header could be read"
-                       .format(num_bytes_read, TEXTUAL_HEADER_NUM_BYTES))
+        raise EOFError(
+            "Only {} bytes of {} byte textual reel header could be read".format(
+                num_bytes_read, TEXTUAL_HEADER_NUM_BYTES
+            )
+        )
 
-    lines = tuple(bytes(raw_line).decode(encoding) for raw_line in batched(raw_header, CARD_LENGTH))
+    lines = tuple(
+        bytes(raw_line).decode(encoding)
+        for raw_line in batched(raw_header, CARD_LENGTH)
+    )
     return lines
 
 
-def read_binary_reel_header(fh, binary_reel_header_format=BinaryReelHeader, endian='>'):
+def read_binary_reel_header(fh, binary_reel_header_format=BinaryReelHeader, endian=">"):
     """Read the SEG Y binary reel header.
 
     Args:
@@ -184,9 +206,9 @@ def read_binary_reel_header(fh, binary_reel_header_format=BinaryReelHeader, endi
 
 
 NON_NEGATIVE_FIELD_NAMES = (
-    'num_samples',
-    'sample_interval',
-    'data_sample_format',
+    "num_samples",
+    "sample_interval",
+    "data_sample_format",
 )
 
 
@@ -255,16 +277,21 @@ def read_extended_headers_counted(fh, num_expected, encoding):
         EOFError: If the file is too short.
     """
     if num_expected < 0:
-        raise ValueError("The number of expected extended textual headers of {} "
-                         "is less than zero".format(num_expected))
+        raise ValueError(
+            "The number of expected extended textual headers of {} "
+            "is less than zero".format(num_expected)
+        )
     extended_headers = []
     for i in range(num_expected):
         ext_header = read_textual_reel_header(fh, encoding)
         extended_headers.append(ext_header)
         if has_end_text_stanza(ext_header):
             if i != num_expected - 1:
-                raise ValueError("Unexpected end-text stanza in header {} of {} expected"
-                                 .format(i+1, num_expected))
+                raise ValueError(
+                    "Unexpected end-text stanza in header {} of {} expected".format(
+                        i + 1, num_expected
+                    )
+                )
 
     return extended_headers
 
@@ -305,10 +332,12 @@ def read_extended_textual_headers(fh, binary_reel_header, encoding):
 
 
 _READ_PROPORTION = 0.75  # The proportion of time spent in catalog_traces
-                         # reading the file. Determined empirically.
+# reading the file. Determined empirically.
 
 
-def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', progress=None):
+def catalog_traces(
+    fh, bps, trace_header_format=TraceHeaderRev1, endian=">", progress=None
+):
     """Build catalogs to facilitate random access to trace_samples data.
 
     Note:
@@ -365,15 +394,17 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
     if not callable(progress_callback):
         raise TypeError("catalog_traces(): progress callback must be callable")
 
-    class CatalogSubFormat(metaclass=SubFormatMeta,
-                           parent_format=trace_header_format,
-                           parent_field_names=(
-                               'file_sequence_num',
-                               'ensemble_num',
-                               'num_samples',
-                               'inline_number',
-                               'crossline_number',
-                           )):
+    class CatalogSubFormat(
+        metaclass=SubFormatMeta,
+        parent_format=trace_header_format,
+        parent_field_names=(
+            "file_sequence_num",
+            "ensemble_num",
+            "num_samples",
+            "inline_number",
+            "crossline_number",
+        ),
+    ):
         pass
 
     trace_header_packer = make_header_packer(CatalogSubFormat, endian)
@@ -400,9 +431,9 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
         samples_bytes = num_samples * bps
         trace_offset_catalog_builder.add(trace_number, pos_begin)
         # Should we check the data actually exists?
-        line_catalog_builder.add((trace_header.inline_number,
-                                  trace_header.crossline_number),
-                                 trace_number)
+        line_catalog_builder.add(
+            (trace_header.inline_number, trace_header.crossline_number), trace_number
+        )
         cdp_catalog_builder.add(trace_header.ensemble_num, trace_number)
         pos_end = pos_begin + TRACE_HEADER_NUM_BYTES + samples_bytes
         pos_begin = pos_end
@@ -422,10 +453,7 @@ def catalog_traces(fh, bps, trace_header_format=TraceHeaderRev1, endian='>', pro
 
     progress_callback(1)
 
-    return (trace_offset_catalog,
-            trace_length_catalog,
-            cdp_catalog,
-            line_catalog)
+    return (trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog)
 
 
 def read_trace_header(fh, trace_header_packer, pos=None):
@@ -453,12 +481,14 @@ def read_trace_header(fh, trace_header_packer, pos=None):
     try:
         trace_header = trace_header_packer.unpack(data)
     except ValueError as e:
-        raise EOFError("Trace header truncated when reading from position "
-                       "{} with packer {!r}".format(pos, trace_header_packer)) from e
+        raise EOFError(
+            "Trace header truncated when reading from position "
+            "{} with packer {!r}".format(pos, trace_header_packer)
+        ) from e
     return trace_header
 
 
-def read_binary_values(fh, pos=None, seg_y_type='int32', num_items=1, endian='>'):
+def read_binary_values(fh, pos=None, seg_y_type="int32", num_items=1, endian=">"):
     """Read a series of values from a binary file.
 
     Args:
@@ -486,17 +516,21 @@ def read_binary_values(fh, pos=None, seg_y_type='int32', num_items=1, endian='>'
     buf = fh.read(block_size)
 
     if len(buf) < block_size:
-        raise EOFError("{} bytes requested but only {} available when reading "
-                       "from position {}".format(block_size, len(buf), pos))
+        raise EOFError(
+            "{} bytes requested but only {} available when reading "
+            "from position {}".format(block_size, len(buf), pos)
+        )
 
-    values = (unpack_ibm_floats(buf, num_items)
-              if ctype == 'ibm'
-              else unpack_values(buf, ctype, endian))
+    values = (
+        unpack_ibm_floats(buf, num_items)
+        if ctype == "ibm"
+        else unpack_values(buf, ctype, endian)
+    )
     assert len(values) == num_items
     return values
 
 
-def unpack_values(buf, ctype, endian='>'):
+def unpack_values(buf, ctype, endian=">"):
     """Unpack a series items from a byte string.
 
     Args:
@@ -552,37 +586,44 @@ def format_standard_textual_header(revision, **kwargs):
 
     """
     # Consider making the template module an argument with a default.
-    kwargs.setdefault('end_marker', textual_reel_header.END_MARKERS[revision])
+    kwargs.setdefault("end_marker", textual_reel_header.END_MARKERS[revision])
 
     template = textual_reel_header.TEMPLATE
 
     placeholder_slices = parse_template(template)
-    background_slices = complementary_intervals(list(placeholder_slices.values()), 0, len(template))
+    background_slices = complementary_intervals(
+        list(placeholder_slices.values()), 0, len(template)
+    )
 
     chunks = []
-    for bg_slice, placeholder in zip_longest(background_slices,
-                                             placeholder_slices.items()):
+    for bg_slice, placeholder in zip_longest(
+        background_slices, placeholder_slices.items()
+    ):
         if bg_slice is not None:
             chunks.append(template[bg_slice])
 
         if placeholder is not None:
             ph_name, ph_slice = placeholder
             ph_arg_name = textual_reel_header.TEMPLATE_FIELD_NAMES[ph_name]
-            ph_value = kwargs.pop(ph_arg_name, '')
+            ph_value = kwargs.pop(ph_arg_name, "")
             ph_len = ph_slice.stop - ph_slice.start
-            substitute = str(ph_value)[:ph_len].ljust(ph_len, ' ')
+            substitute = str(ph_value)[:ph_len].ljust(ph_len, " ")
             chunks.append(substitute)
 
     if len(kwargs) > 0:
-        raise TypeError("The following keyword arguments did not correspond to template placeholders: {!r}"
-                        .format(list(kwargs.keys())))
+        raise TypeError(
+            "The following keyword arguments did not correspond to template placeholders: {!r}".format(
+                list(kwargs.keys())
+            )
+        )
 
-    concatenation = ''.join(chunks)
-    lines = list(''.join(s) for s in batched(concatenation, CARD_LENGTH))
+    concatenation = "".join(chunks)
+    lines = list("".join(s) for s in batched(concatenation, CARD_LENGTH))
 
     return lines
 
-_TEMPLATE_PATTERN = r'\{\s*(\w*)\s*\}'
+
+_TEMPLATE_PATTERN = r"\{\s*(\w*)\s*\}"
 _TEMPLATE_REGEX = re.compile(_TEMPLATE_PATTERN)
 
 
@@ -619,14 +660,20 @@ def parse_standard_textual_header(header_lines):
         An ordered mapping of field names to Unicode strings.
     """
     if len(header_lines) != CARDS_PER_HEADER:
-        raise ValueError("Cannot parse standard header which has {} lines instead of {}"
-                         .format(len(header_lines), CARDS_PER_HEADER))
+        raise ValueError(
+            "Cannot parse standard header which has {} lines instead of {}".format(
+                len(header_lines), CARDS_PER_HEADER
+            )
+        )
 
     if any(len(line) != CARD_LENGTH for line in header_lines):
-        raise ValueError("Cannot parse standard header where a line has length not equal to {}"
-                         .format(CARD_LENGTH))
+        raise ValueError(
+            "Cannot parse standard header where a line has length not equal to {}".format(
+                CARD_LENGTH
+            )
+        )
 
-    header = ''.join(header_lines)
+    header = "".join(header_lines)
     template = textual_reel_header.TEMPLATE
     placeholder_slices = parse_template(template)
     fields = OrderedDict()
@@ -672,14 +719,16 @@ def write_textual_reel_header(fh, lines, encoding):
     if not is_supported_encoding(encoding):
         raise UnsupportedEncodingError("Writing textual reel header", encoding)
 
-    padded_lines = [line.encode(encoding).ljust(CARD_LENGTH, ' '.encode(encoding))[:CARD_LENGTH]
-                    for line in pad(lines, padding='', size=CARDS_PER_HEADER)]
+    padded_lines = [
+        line.encode(encoding).ljust(CARD_LENGTH, " ".encode(encoding))[:CARD_LENGTH]
+        for line in pad(lines, padding="", size=CARDS_PER_HEADER)
+    ]
     joined_header = EMPTY_BYTE_STRING.join(padded_lines)
     assert len(joined_header) == TEXTUAL_HEADER_NUM_BYTES
     fh.write(joined_header)
 
 
-def write_binary_reel_header(fh, binary_reel_header, endian='>'):
+def write_binary_reel_header(fh, binary_reel_header, endian=">"):
     """Write the binary_reel_header to the given file-like object.
 
     Args:
@@ -722,11 +771,13 @@ def format_extended_textual_header(text, encoding, include_text_stop=False):
     # Split overly long lines (i.e. > 78) and pad too-short lines with spaces
     lines = []
     for original_line in original_lines:
-        padded_lines = (pad_and_terminate_header_line(original_line[i:i+width], width)
-                        for i in range(0, len(original_line), width))
+        padded_lines = (
+            pad_and_terminate_header_line(original_line[i : i + width], width)
+            for i in range(0, len(original_line), width)
+        )
         lines.extend(padded_lines)
 
-    pages = list(batched(lines, 40, pad_and_terminate_header_line('', width)))
+    pages = list(batched(lines, 40, pad_and_terminate_header_line("", width)))
 
     if include_text_stop:
         stop_page = format_extended_textual_header(END_TEXT_STANZA, encoding)[0]
@@ -736,7 +787,7 @@ def format_extended_textual_header(text, encoding, include_text_stop=False):
 
 
 def pad_and_terminate_header_line(line, width):
-    return line.ljust(width, ' ') + HEADER_NEWLINE
+    return line.ljust(width, " ") + HEADER_NEWLINE
 
 
 def write_extended_textual_headers(fh, pages, encoding):
@@ -774,18 +825,25 @@ def write_extended_textual_headers(fh, pages, encoding):
             encoded_line = line.encode(encoding)
             num_encoded_bytes = len(encoded_line)
             if num_encoded_bytes != CARD_LENGTH:
-                raise ValueError("Extended textual header line {} of page {} at {} bytes is not "
-                                 "{} bytes".format(line_index, page_index, num_encoded_bytes, CARD_LENGTH))
+                raise ValueError(
+                    "Extended textual header line {} of page {} at {} bytes is not "
+                    "{} bytes".format(
+                        line_index, page_index, num_encoded_bytes, CARD_LENGTH
+                    )
+                )
             encoded_page.append(encoded_line)
         num_encoded_lines = len(encoded_page)
         if num_encoded_lines != CARDS_PER_HEADER:
-            raise ValueError("Extended textual header page {} number of "
-                             "lines {} is not {}".format(page_index, num_encoded_lines, CARDS_PER_HEADER))
-        encoded_pages.append(encoded_page),
+            raise ValueError(
+                "Extended textual header page {} number of lines {} is not {}".format(
+                    page_index, num_encoded_lines, CARDS_PER_HEADER
+                )
+            )
+        (encoded_pages.append(encoded_page),)
 
     for encoded_page in encoded_pages:
         concatenated_page = EMPTY_BYTE_STRING.join(encoded_page)
-        assert(len(concatenated_page) == TEXTUAL_HEADER_NUM_BYTES)
+        assert len(concatenated_page) == TEXTUAL_HEADER_NUM_BYTES
         fh.write(concatenated_page)
 
 
@@ -804,7 +862,7 @@ def write_trace_header(fh, trace_header, trace_header_packer):
     fh.write(buf)
 
 
-def write_trace_samples(fh, samples, seg_y_type, endian='>'):
+def write_trace_samples(fh, samples, seg_y_type, endian=">"):
     """Write a trace samples to a file
 
     Args:
@@ -820,7 +878,7 @@ def write_trace_samples(fh, samples, seg_y_type, endian='>'):
     write_binary_values(fh, samples, seg_y_type, endian)
 
 
-def write_binary_values(fh, values, seg_y_type, endian='>'):
+def write_binary_values(fh, values, seg_y_type, endian=">"):
     """Write a series of values to a file.
 
     Args:
@@ -835,14 +893,16 @@ def write_binary_values(fh, values, seg_y_type, endian='>'):
     """
     ctype = SEG_Y_TYPE_TO_CTYPE[seg_y_type]
 
-    buf = (pack_ibm_floats(values)
-           if ctype == 'ibm'
-           else pack_values(values, ctype, endian))
+    buf = (
+        pack_ibm_floats(values)
+        if ctype == "ibm"
+        else pack_values(values, ctype, endian)
+    )
 
     fh.write(buf)
 
 
-def pack_values(values, ctype, endian='>'):
+def pack_values(values, ctype, endian=">"):
     """Pack values into binary encoded big-endian byte strings.
 
     Args:
@@ -854,5 +914,5 @@ def pack_values(values, ctype, endian='>'):
         endian: '>' for big-endian data (the standard and default), '<'
             for little-endian (non-standard)
     """
-    c_format = '{}{}{}'.format(endian, len(values), ctype)
+    c_format = "{}{}{}".format(endian, len(values), ctype)
     return struct.pack(c_format, *values)

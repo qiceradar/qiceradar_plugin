@@ -28,5 +28,5 @@ class Simple(base.FormatterBase):
         :returns: Iterable producing the formatted text.
         """
         for name, value in sorted(data.items()):
-            line = f'{name} = {value}\n'
+            line = f"{name} = {value}\n"
             yield line

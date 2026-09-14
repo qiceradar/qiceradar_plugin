@@ -63,9 +63,7 @@ class TableResource:
 class BatchWriter:
     """Automatically handle batch writes to DynamoDB for a single table."""
 
-    def __init__(
-        self, table_name, client, flush_amount=25, overwrite_by_pkeys=None
-    ):
+    def __init__(self, table_name, client, flush_amount=25, overwrite_by_pkeys=None):
         """
 
         :type table_name: str
@@ -100,10 +98,10 @@ class BatchWriter:
         self._overwrite_by_pkeys = overwrite_by_pkeys
 
     def put_item(self, Item):
-        self._add_request_and_process({'PutRequest': {'Item': Item}})
+        self._add_request_and_process({"PutRequest": {"Item": Item}})
 
     def delete_item(self, Key):
-        self._add_request_and_process({'DeleteRequest': {'Key': Key}})
+        self._add_request_and_process({"DeleteRequest": {"Key": Key}})
 
     def _add_request_and_process(self, request):
         if self._overwrite_by_pkeys:
@@ -122,15 +120,13 @@ class BatchWriter:
                 )
 
     def _extract_pkey_values(self, request):
-        if request.get('PutRequest'):
+        if request.get("PutRequest"):
             return [
-                request['PutRequest']['Item'][key]
-                for key in self._overwrite_by_pkeys
+                request["PutRequest"]["Item"][key] for key in self._overwrite_by_pkeys
             ]
-        elif request.get('DeleteRequest'):
+        elif request.get("DeleteRequest"):
             return [
-                request['DeleteRequest']['Key'][key]
-                for key in self._overwrite_by_pkeys
+                request["DeleteRequest"]["Key"][key] for key in self._overwrite_by_pkeys
             ]
         return None
 
@@ -144,7 +140,7 @@ class BatchWriter:
         response = self._client.batch_write_item(
             RequestItems={self._table_name: items_to_send}
         )
-        unprocessed_items = response['UnprocessedItems']
+        unprocessed_items = response["UnprocessedItems"]
         if not unprocessed_items:
             unprocessed_items = {}
         item_list = unprocessed_items.get(self._table_name, [])

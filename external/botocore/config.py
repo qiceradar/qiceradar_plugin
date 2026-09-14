@@ -300,41 +300,41 @@ class Config:
 
     OPTION_DEFAULTS = OrderedDict(
         [
-            ('region_name', None),
-            ('signature_version', None),
-            ('user_agent', None),
-            ('user_agent_extra', None),
-            ('user_agent_appid', None),
-            ('connect_timeout', DEFAULT_TIMEOUT),
-            ('read_timeout', DEFAULT_TIMEOUT),
-            ('parameter_validation', True),
-            ('max_pool_connections', MAX_POOL_CONNECTIONS),
-            ('proxies', None),
-            ('proxies_config', None),
-            ('s3', None),
-            ('s3_disable_express_session_auth', None),
-            ('retries', None),
-            ('client_cert', None),
-            ('inject_host_prefix', None),
-            ('endpoint_discovery_enabled', None),
-            ('use_dualstack_endpoint', None),
-            ('use_fips_endpoint', None),
-            ('ignore_configured_endpoint_urls', None),
-            ('defaults_mode', None),
-            ('tcp_keepalive', None),
-            ('request_min_compression_size_bytes', None),
-            ('disable_request_compression', None),
-            ('client_context_params', None),
-            ('sigv4a_signing_region_set', None),
-            ('request_checksum_calculation', None),
-            ('response_checksum_validation', None),
-            ('account_id_endpoint_mode', None),
-            ('auth_scheme_preference', None),
+            ("region_name", None),
+            ("signature_version", None),
+            ("user_agent", None),
+            ("user_agent_extra", None),
+            ("user_agent_appid", None),
+            ("connect_timeout", DEFAULT_TIMEOUT),
+            ("read_timeout", DEFAULT_TIMEOUT),
+            ("parameter_validation", True),
+            ("max_pool_connections", MAX_POOL_CONNECTIONS),
+            ("proxies", None),
+            ("proxies_config", None),
+            ("s3", None),
+            ("s3_disable_express_session_auth", None),
+            ("retries", None),
+            ("client_cert", None),
+            ("inject_host_prefix", None),
+            ("endpoint_discovery_enabled", None),
+            ("use_dualstack_endpoint", None),
+            ("use_fips_endpoint", None),
+            ("ignore_configured_endpoint_urls", None),
+            ("defaults_mode", None),
+            ("tcp_keepalive", None),
+            ("request_min_compression_size_bytes", None),
+            ("disable_request_compression", None),
+            ("client_context_params", None),
+            ("sigv4a_signing_region_set", None),
+            ("request_checksum_calculation", None),
+            ("response_checksum_validation", None),
+            ("account_id_endpoint_mode", None),
+            ("auth_scheme_preference", None),
         ]
     )
 
     NON_LEGACY_OPTION_DEFAULTS = {
-        'connect_timeout': None,
+        "connect_timeout": None,
     }
 
     # The original default value of the inject_host_prefix parameter was True.
@@ -358,21 +358,17 @@ class Config:
         self._inject_host_prefix = value
 
     def __init__(self, *args, **kwargs):
-        self._user_provided_options = self._record_user_provided_options(
-            args, kwargs
-        )
+        self._user_provided_options = self._record_user_provided_options(args, kwargs)
 
         # By default, we use a value that indicates the user did not
         # set it. This value MUST persist on the Config object to be used
         # elsewhere.
-        self._inject_host_prefix = 'UNSET'
+        self._inject_host_prefix = "UNSET"
 
         # Merge the user_provided options onto the default options
         config_vars = copy.copy(self.OPTION_DEFAULTS)
-        defaults_mode = self._user_provided_options.get(
-            'defaults_mode', 'legacy'
-        )
-        if defaults_mode != 'legacy':
+        defaults_mode = self._user_provided_options.get("defaults_mode", "legacy")
+        if defaults_mode != "legacy":
             config_vars.update(self.NON_LEGACY_OPTION_DEFAULTS)
 
         config_vars.update(self._user_provided_options)
@@ -383,9 +379,8 @@ class Config:
             # to use `setattr` in the case where the user already supplied a
             # value.
             if (
-                key == 'inject_host_prefix'
-                and 'inject_host_prefix'
-                not in self._user_provided_options.keys()
+                key == "inject_host_prefix"
+                and "inject_host_prefix" not in self._user_provided_options.keys()
             ):
                 continue
             setattr(self, key, value)
@@ -429,15 +424,15 @@ class Config:
 
     def _validate_s3_configuration(self, s3):
         if s3 is not None:
-            addressing_style = s3.get('addressing_style')
-            if addressing_style not in ['virtual', 'auto', 'path', None]:
+            addressing_style = s3.get("addressing_style")
+            if addressing_style not in ["virtual", "auto", "path", None]:
                 raise InvalidS3AddressingStyleError(
                     s3_addressing_style=addressing_style
                 )
 
     def _validate_retry_configuration(self, retries):
-        valid_options = ('max_attempts', 'mode', 'total_max_attempts')
-        valid_modes = ('legacy', 'standard', 'adaptive')
+        valid_options = ("max_attempts", "mode", "total_max_attempts")
+        valid_modes = ("legacy", "standard", "adaptive")
         if retries is not None:
             for key, value in retries.items():
                 if key not in valid_options:
@@ -445,17 +440,17 @@ class Config:
                         retry_config_option=key,
                         valid_options=valid_options,
                     )
-                if key == 'max_attempts' and value < 0:
+                if key == "max_attempts" and value < 0:
                     raise InvalidMaxRetryAttemptsError(
                         provided_max_attempts=value,
                         min_value=0,
                     )
-                if key == 'total_max_attempts' and value < 1:
+                if key == "total_max_attempts" and value < 1:
                     raise InvalidMaxRetryAttemptsError(
                         provided_max_attempts=value,
                         min_value=1,
                     )
-                if key == 'mode' and value not in valid_modes:
+                if key == "mode" and value not in valid_modes:
                     raise InvalidRetryModeError(
                         provided_retry_mode=value,
                         valid_modes=valid_modes,

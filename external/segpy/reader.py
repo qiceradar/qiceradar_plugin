@@ -16,34 +16,43 @@ from segpy.dataset import Dataset
 from segpy.encoding import ASCII
 from segpy.packer import make_header_packer
 from segpy.trace_header import TraceHeaderRev1
-from segpy.util import file_length, filename_from_handle, make_sorted_distinct_sequence, hash_for_file, UNKNOWN_FILENAME
+from segpy.util import (
+    file_length,
+    filename_from_handle,
+    make_sorted_distinct_sequence,
+    hash_for_file,
+    UNKNOWN_FILENAME,
+)
 from segpy.datatypes import SEG_Y_TYPE_TO_CTYPE, size_in_bytes
-from segpy.toolkit import (extract_revision,
-                           bytes_per_sample,
-                           read_binary_reel_header,
-                           read_trace_header,
-                           catalog_traces,
-                           read_binary_values,
-                           REEL_HEADER_NUM_BYTES,
-                           TRACE_HEADER_NUM_BYTES,
-                           read_textual_reel_header,
-                           read_extended_textual_headers,
-                           guess_textual_header_encoding)
+from segpy.toolkit import (
+    extract_revision,
+    bytes_per_sample,
+    read_binary_reel_header,
+    read_trace_header,
+    catalog_traces,
+    read_binary_values,
+    REEL_HEADER_NUM_BYTES,
+    TRACE_HEADER_NUM_BYTES,
+    read_textual_reel_header,
+    read_extended_textual_headers,
+    guess_textual_header_encoding,
+)
 
 
 log = logging.getLogger(__name__)
-log.setLevel('INFO')
+log.setLevel("INFO")
 
 
 def create_reader(
-        fh,
-        encoding=None,
-        binary_reel_header_format=BinaryReelHeader,
-        trace_header_format=TraceHeaderRev1,
-        endian='>',
-        progress=None,
-        cache_directory=".segpy",
-        dimensionality=None):
+    fh,
+    encoding=None,
+    binary_reel_header_format=BinaryReelHeader,
+    trace_header_format=TraceHeaderRev1,
+    endian=">",
+    progress=None,
+    cache_directory=".segpy",
+    dimensionality=None,
+):
     """Create a SegYReader based on performing a scan of SEG Y data.
 
     This function is the preferred method for creating SegYReader
@@ -109,25 +118,23 @@ def create_reader(
 
     """
     if fh.closed:
-        raise ValueError(
-            "SegYReader must be provided with an open file object")
+        raise ValueError("SegYReader must be provided with an open file object")
 
-    if hasattr(fh, 'encoding') and fh.encoding is not None:
-        raise TypeError(
-            "SegYReader must be provided with a binary mode file object")
+    if hasattr(fh, "encoding") and fh.encoding is not None:
+        raise TypeError("SegYReader must be provided with a binary mode file object")
 
     if not fh.seekable():
-        raise TypeError(
-            "SegYReader must be provided with a seekable file object")
+        raise TypeError("SegYReader must be provided with a seekable file object")
 
     num_file_bytes = file_length(fh)
     if num_file_bytes < REEL_HEADER_NUM_BYTES:
         raise ValueError(
             "SEG Y file {!r} of {} bytes is too short".format(
-                filename_from_handle(fh),
-                num_file_bytes))
+                filename_from_handle(fh), num_file_bytes
+            )
+        )
 
-    if endian not in {'<', '>'}:
+    if endian not in {"<", ">"}:
         raise ValueError("Unrecognised endian value {!r}".format(endian))
 
     progress_callback = progress if progress is not None else lambda p: None
@@ -136,21 +143,32 @@ def create_reader(
         raise TypeError("create_reader(): progress callback must be callable")
 
     if dimensionality not in {None, 1, 2, 3}:
-        raise ValueError("dimensionality {!r} is not an of 1, 2, 3 or None.".format(dimensionality))
+        raise ValueError(
+            "dimensionality {!r} is not an of 1, 2, 3 or None.".format(dimensionality)
+        )
 
     reader = None
     cache_file_path = None
 
     if cache_directory is not None:
-        sha1 = hash_for_file(fh, encoding, binary_reel_header_format, trace_header_format, endian)
+        sha1 = hash_for_file(
+            fh, encoding, binary_reel_header_format, trace_header_format, endian
+        )
         seg_y_path = filename_from_handle(fh)
         cache_file_path = _locate_cache_file(seg_y_path, cache_directory, sha1)
         if cache_file_path is not None:
             reader = _load_reader_from_cache(cache_file_path, seg_y_path)
 
     if reader is None:
-        reader = _make_reader(fh, encoding, binary_reel_header_format, trace_header_format,
-                              endian, progress_callback, dimensionality)
+        reader = _make_reader(
+            fh,
+            encoding,
+            binary_reel_header_format,
+            trace_header_format,
+            endian,
+            progress_callback,
+            dimensionality,
+        )
         if cache_file_path is not None:
             _save_reader_to_cache(reader, cache_file_path)
 
@@ -176,13 +194,15 @@ def _locate_cache_file(seg_y_path, cache_directory, sha1):
         if the cache file path could not be determined.
     """
     cache_dir_path = Path(cache_directory)
-    cache_filename = (sha1 + '.p')
+    cache_filename = sha1 + ".p"
     if cache_dir_path.is_absolute():
         cache_file_path = cache_dir_path / cache_filename
     else:
         if seg_y_path != UNKNOWN_FILENAME:
             normalized_seg_y_path = Path(seg_y_path).resolve()
-            cache_file_path = normalized_seg_y_path.parent / cache_directory / cache_filename
+            cache_file_path = (
+                normalized_seg_y_path.parent / cache_directory / cache_filename
+            )
         else:
             cache_file_path = None
     return cache_file_path
@@ -198,11 +218,13 @@ def _save_reader_to_cache(reader, cache_file_path):
     cache_path = cache_file_path.parent
     os.makedirs(str(cache_path), exist_ok=True)
     try:
-        with cache_file_path.open('wb') as cache_file:
+        with cache_file_path.open("wb") as cache_file:
             try:
                 pickle.dump(reader, cache_file)
             except (AttributeError, pickle.PicklingError, TypeError) as pickling_error:
-                log.warn("Could not pickle {} because {}".format(reader, pickling_error))
+                log.warn(
+                    "Could not pickle {} because {}".format(reader, pickling_error)
+                )
                 pass
     except OSError as os_error:
         log.warn("Could not cache {} because {}".format(reader, os_error))
@@ -229,38 +251,66 @@ def _load_reader_from_cache(cache_file_path, seg_y_path):
     if not (cache_file_path.exists() and cache_file_path.is_file()):
         return None
 
-    with cache_file_path.open('rb') as pickle_file:
+    with cache_file_path.open("rb") as pickle_file:
         try:
             reader = pickle.load(pickle_file)
         except Exception as unpickling_error:
-            log.info("Could not unpickle reader for {} because {}".format(seg_y_path, unpickling_error))
+            log.info(
+                "Could not unpickle reader for {} because {}".format(
+                    seg_y_path, unpickling_error
+                )
+            )
             try:
                 cache_file_path.unlink()
             except OSError as os_error:
-                log.warn("Could not remove stale cache entry {} for {} because {}"
-                         .format(cache_file_path, seg_y_path, os_error))
+                log.warn(
+                    "Could not remove stale cache entry {} for {} because {}".format(
+                        cache_file_path, seg_y_path, os_error
+                    )
+                )
             else:
-                log.info("Removed stale cache entry {} for {}".format(cache_file_path, seg_y_path))
+                log.info(
+                    "Removed stale cache entry {} for {}".format(
+                        cache_file_path, seg_y_path
+                    )
+                )
             return None
         else:
             log.info("Successfully unpickled reader for {}".format(seg_y_path))
     if not isinstance(reader, SegYReader):
-        raise TypeError("Pickle at {} does not contain a {} instance.".format(cache_file_path, SegYReader.__name__))
+        raise TypeError(
+            "Pickle at {} does not contain a {} instance.".format(
+                cache_file_path, SegYReader.__name__
+            )
+        )
     return reader
 
 
-def _make_reader(fh, encoding, binary_reel_header_format, trace_header_format, endian, progress, dimensionality):
+def _make_reader(
+    fh,
+    encoding,
+    binary_reel_header_format,
+    trace_header_format,
+    endian,
+    progress,
+    dimensionality,
+):
     if encoding is None:
         encoding = guess_textual_header_encoding(fh)
     if encoding is None:
         encoding = ASCII
     textual_reel_header = read_textual_reel_header(fh, encoding)
-    binary_reel_header = read_binary_reel_header(fh, binary_reel_header_format, endian=endian)
-    extended_textual_header = read_extended_textual_headers(fh, binary_reel_header, encoding)
+    binary_reel_header = read_binary_reel_header(
+        fh, binary_reel_header_format, endian=endian
+    )
+    extended_textual_header = read_extended_textual_headers(
+        fh, binary_reel_header, encoding
+    )
     bps = bytes_per_sample(binary_reel_header)
 
-    trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = catalog_traces(fh, bps, trace_header_format,
-                                                                                           endian, progress)
+    trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = (
+        catalog_traces(fh, bps, trace_header_format, endian, progress)
+    )
 
     if dimensionality is None:
         if cdp_catalog is not None and line_catalog is None:
@@ -274,18 +324,52 @@ def _make_reader(fh, encoding, binary_reel_header_format, trace_header_format, e
 
     trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog = tuple(
         catalog or {}
-        for catalog
-        in (trace_offset_catalog, trace_length_catalog, cdp_catalog, line_catalog))
+        for catalog in (
+            trace_offset_catalog,
+            trace_length_catalog,
+            cdp_catalog,
+            line_catalog,
+        )
+    )
 
     if dimensionality == 1:
-        return SegYReader(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
-                          trace_length_catalog, trace_header_format, encoding, endian)
+        return SegYReader(
+            fh,
+            textual_reel_header,
+            binary_reel_header,
+            extended_textual_header,
+            trace_offset_catalog,
+            trace_length_catalog,
+            trace_header_format,
+            encoding,
+            endian,
+        )
     elif dimensionality == 2:
-        return SegYReader2D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
-                            trace_length_catalog, cdp_catalog, trace_header_format, encoding, endian)
+        return SegYReader2D(
+            fh,
+            textual_reel_header,
+            binary_reel_header,
+            extended_textual_header,
+            trace_offset_catalog,
+            trace_length_catalog,
+            cdp_catalog,
+            trace_header_format,
+            encoding,
+            endian,
+        )
     elif dimensionality == 3:
-        return SegYReader3D(fh, textual_reel_header, binary_reel_header, extended_textual_header, trace_offset_catalog,
-                            trace_length_catalog, line_catalog, trace_header_format, encoding, endian)
+        return SegYReader3D(
+            fh,
+            textual_reel_header,
+            binary_reel_header,
+            extended_textual_header,
+            trace_offset_catalog,
+            trace_length_catalog,
+            line_catalog,
+            trace_header_format,
+            encoding,
+            endian,
+        )
 
 
 class SegYReader(Dataset):
@@ -295,16 +379,18 @@ class SegYReader(Dataset):
     values. Traces can be accessed only by trace_samples index.
     """
 
-    def __init__(self,
-                 fh,
-                 textual_reel_header,
-                 binary_reel_header,
-                 extended_textual_headers,
-                 trace_offset_catalog,
-                 trace_length_catalog,
-                 trace_header_format,
-                 encoding,
-                 endian='>'):
+    def __init__(
+        self,
+        fh,
+        textual_reel_header,
+        binary_reel_header,
+        extended_textual_headers,
+        trace_offset_catalog,
+        trace_length_catalog,
+        trace_header_format,
+        encoding,
+        endian=">",
+    ):
         """Initialize a SegYReader around a file-like-object.
 
         Note:
@@ -348,13 +434,19 @@ class SegYReader(Dataset):
 
         if trace_offset_catalog is None:
             raise TypeError(
-                '{} must be provided with a non-None trace-offset catalog.'.format(self.__class__.__name__))
+                "{} must be provided with a non-None trace-offset catalog.".format(
+                    self.__class__.__name__
+                )
+            )
 
         self._trace_offset_catalog = trace_offset_catalog
 
         if trace_length_catalog is None:
             raise TypeError(
-                '{} must be provided with a non-None trace-length catalog.'.format(self.__class__.__name__))
+                "{} must be provided with a non-None trace-length catalog.".format(
+                    self.__class__.__name__
+                )
+            )
 
         self._trace_length_catalog = trace_length_catalog
 
@@ -370,24 +462,30 @@ class SegYReader(Dataset):
             override this method.
         """
         if self._fh.closed:
-            raise TypeError("Cannot pickle {} object where file handle has been closed"
-                            .format(self.__class__.__name__))
+            raise TypeError(
+                "Cannot pickle {} object where file handle has been closed".format(
+                    self.__class__.__name__
+                )
+            )
 
         filename = filename_from_handle(self._fh)
-        if filename == '<unknown>':
-            raise TypeError("Cannot pickle {} object where file handle has filename {!r}"
-                            .format(self.__class__.__name__, filename))
+        if filename == "<unknown>":
+            raise TypeError(
+                "Cannot pickle {} object where file handle has filename {!r}".format(
+                    self.__class__.__name__, filename
+                )
+            )
         file_pos = self._fh.tell()
         file_mode = self._fh.mode
 
         _ = self.max_num_trace_samples()
 
         state = self.__dict__.copy()
-        state['__version__'] = __version__
-        state['_file_name'] = filename
-        state['_file_pos'] = file_pos
-        state['_file_mode'] = file_mode
-        del state['_fh']
+        state["__version__"] = __version__
+        state["_file_name"] = filename
+        state["_file_pos"] = file_pos
+        state["_file_mode"] = file_mode
+        del state["_fh"]
         return state
 
     def __setstate__(self, state):
@@ -396,26 +494,30 @@ class SegYReader(Dataset):
         Note: Subclasses which have non-pickleable attributes must
               override this method.
         """
-        if state['__version__'] != __version__:
-            raise TypeError("Cannot unpickle {} version {} into version {}"
-                            .format(self.__class__.__name__,
-                                    state['__version__'],
-                                    __version__))
-        del state['__version__']
+        if state["__version__"] != __version__:
+            raise TypeError(
+                "Cannot unpickle {} version {} into version {}".format(
+                    self.__class__.__name__, state["__version__"], __version__
+                )
+            )
+        del state["__version__"]
 
         try:
-            fh = open(state['_file_name'], state['_file_mode'])
+            fh = open(state["_file_name"], state["_file_mode"])
         except OSError as e:
-            raise TypeError("Cannot unpickle {} as file {} could not be opened because {}"
-                            .format(self.__class__.__name__, state['_file_name'], str(e)))
+            raise TypeError(
+                "Cannot unpickle {} as file {} could not be opened because {}".format(
+                    self.__class__.__name__, state["_file_name"], str(e)
+                )
+            )
         else:
             self._fh = fh
-            del state['_file_name']
-            del state['_file_mode']
+            del state["_file_name"]
+            del state["_file_mode"]
 
-        file_pos = state['_file_pos']
+        file_pos = state["_file_pos"]
         fh.seek(file_pos)
-        del state['_file_pos']
+        del state["_file_pos"]
 
         self.__dict__.update(state)
 
@@ -435,7 +537,9 @@ class SegYReader(Dataset):
     def max_num_trace_samples(self):
         """The number of samples in the trace_samples with the most samples."""
         if self._max_num_trace_samples is None:
-            self._max_num_trace_samples = max(self._trace_length_catalog.values(), default=0)
+            self._max_num_trace_samples = max(
+                self._trace_length_catalog.values(), default=0
+            )
         return self._max_num_trace_samples
 
     def num_trace_samples(self, trace_index):
@@ -478,21 +582,30 @@ class SegYReader(Dataset):
         stop_sample = stop if stop is not None else num_samples_in_trace
 
         if not (0 <= stop_sample <= num_samples_in_trace):
-            raise ValueError("trace_samples(): stop value {} out of range 0 to {}"
-                             .format(stop, num_samples_in_trace))
+            raise ValueError(
+                "trace_samples(): stop value {} out of range 0 to {}".format(
+                    stop, num_samples_in_trace
+                )
+            )
 
         if not (0 <= start_sample <= stop_sample):
-            raise ValueError("trace_samples(): start value {} out of range 0 to {}"
-                             .format(start, stop_sample))
+            raise ValueError(
+                "trace_samples(): start value {} out of range 0 to {}".format(
+                    start, stop_sample
+                )
+            )
 
         seg_y_type = self.data_sample_format
-        start_pos = (self._trace_offset_catalog[trace_index]
-                     + TRACE_HEADER_NUM_BYTES
-                     + start_sample * size_in_bytes(SEG_Y_TYPE_TO_CTYPE[seg_y_type]))
+        start_pos = (
+            self._trace_offset_catalog[trace_index]
+            + TRACE_HEADER_NUM_BYTES
+            + start_sample * size_in_bytes(SEG_Y_TYPE_TO_CTYPE[seg_y_type])
+        )
         num_samples_to_read = stop_sample - start_sample
 
         trace_values = read_binary_values(
-            self._fh, start_pos, seg_y_type, num_samples_to_read, self._endian)
+            self._fh, start_pos, seg_y_type, num_samples_to_read, self._endian
+        )
         return trace_values
 
     def trace_header(self, trace_index, header_packer_override=None):
@@ -509,7 +622,11 @@ class SegYReader(Dataset):
         """
         if not (0 <= trace_index < self.num_traces()):
             raise ValueError("Trace index {} out of range".format(trace_index))
-        header_packer = self._trace_header_packer if header_packer_override is None else header_packer_override
+        header_packer = (
+            self._trace_header_packer
+            if header_packer_override is None
+            else header_packer_override
+        )
         pos = self._trace_offset_catalog[trace_index]
         trace_header = read_trace_header(self._fh, header_packer, pos)
         return trace_header
@@ -532,50 +649,44 @@ class SegYReader(Dataset):
 
     @property
     def textual_reel_header(self):
-        """The textual reel header as an immutable sequence of forty Unicode strings each 80 characters long.
-        """
+        """The textual reel header as an immutable sequence of forty Unicode strings each 80 characters long."""
         return self._textual_reel_header
 
     @property
     def binary_reel_header(self):
-        """The binary reel header.
-        """
+        """The binary reel header."""
         return self._binary_reel_header
 
     @property
     def extended_textual_header(self):
-        """A sequence of sequences of Unicode strings. If there were no headers, the sequence will be empty.
-        """
+        """A sequence of sequences of Unicode strings. If there were no headers, the sequence will be empty."""
         return self._extended_textual_headers
 
     @property
     def filename(self):
-        """The filename if it could be determined, otherwise '<unknown>'
-        """
+        """The filename if it could be determined, otherwise '<unknown>'"""
         return filename_from_handle(self._fh)
 
     @property
     def revision(self):
-        """The SEG Y revision. Either datatypes.SEGY_REVISION_0 or datatypes.SEGY_REVISION_1
-        """
+        """The SEG Y revision. Either datatypes.SEGY_REVISION_0 or datatypes.SEGY_REVISION_1"""
         return self._revision
 
     @property
     def bytes_per_sample(self):
-        """The number of bytes per trace_samples sample.
-        """
+        """The number of bytes per trace_samples sample."""
         return self._bytes_per_sample
 
     @property
     def encoding(self):
         """The encoding, of the data in the underlying file. Either ASCII ('ascii'),
-           EBCDIC ('cp037') or None."""
+        EBCDIC ('cp037') or None."""
         return self._encoding
 
     @property
     def endian(self):
         """The endianness of the data in the underlying file. Either '>' for big-endian or '<' for
-           little endian or None."""
+        little endian or None."""
         return self._endian
 
 
@@ -587,17 +698,19 @@ class SegYReader3D(SegYReader):
     to individual traces via crossline and inline co-ordinates.
     """
 
-    def __init__(self,
-                 fh,
-                 textual_reel_header,
-                 binary_reel_header,
-                 extended_textual_headers,
-                 trace_offset_catalog,
-                 trace_length_catalog,
-                 line_catalog,
-                 trace_header_format,
-                 encoding,
-                 endian='>'):
+    def __init__(
+        self,
+        fh,
+        textual_reel_header,
+        binary_reel_header,
+        extended_textual_headers,
+        trace_offset_catalog,
+        trace_length_catalog,
+        line_catalog,
+        trace_header_format,
+        encoding,
+        endian=">",
+    ):
         """Initialize a SegYReader3D around a file-like-object.
 
         Note:
@@ -626,13 +739,24 @@ class SegYReader3D(SegYReader):
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
-        super(SegYReader3D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
-                                           trace_offset_catalog, trace_length_catalog, trace_header_format,
-                                           encoding, endian)
+        super(SegYReader3D, self).__init__(
+            fh,
+            textual_reel_header,
+            binary_reel_header,
+            extended_textual_headers,
+            trace_offset_catalog,
+            trace_length_catalog,
+            trace_header_format,
+            encoding,
+            endian,
+        )
 
         if line_catalog is None:
             raise TypeError(
-                '{} must be provided with a non-None line catalog.'.format(self.__class__.__name__))
+                "{} must be provided with a non-None line catalog.".format(
+                    self.__class__.__name__
+                )
+            )
 
         self._line_catalog = line_catalog
         self._inline_numbers = None
@@ -660,10 +784,12 @@ class SegYReader3D(SegYReader):
             Sized, Iterable, Container and Sequence protocols.
         """
         if self._inline_numbers is None:
-            if hasattr(self._line_catalog, 'i_range'):
+            if hasattr(self._line_catalog, "i_range"):
                 self._inline_numbers = self._line_catalog.i_range
             else:
-                self._inline_numbers = make_sorted_distinct_sequence(i for i, j in self._line_catalog)
+                self._inline_numbers = make_sorted_distinct_sequence(
+                    i for i, j in self._line_catalog
+                )
         return self._inline_numbers
 
     def num_inlines(self):
@@ -682,10 +808,12 @@ class SegYReader3D(SegYReader):
             Sized, Iterable, Container and Sequence protocols.
         """
         if self._xline_numbers is None:
-            if hasattr(self._line_catalog, 'j_range'):
+            if hasattr(self._line_catalog, "j_range"):
                 self._xline_numbers = self._line_catalog.j_range
             else:
-                self._xline_numbers = make_sorted_distinct_sequence(j for i, j in self._line_catalog)
+                self._xline_numbers = make_sorted_distinct_sequence(
+                    j for i, j in self._line_catalog
+                )
         return self._xline_numbers
 
     def num_xlines(self):
@@ -734,17 +862,19 @@ class SegYReader3D(SegYReader):
 class SegYReader2D(SegYReader):
     """A reader for 2D seismic data."""
 
-    def __init__(self,
-                 fh,
-                 textual_reel_header,
-                 binary_reel_header,
-                 extended_textual_headers,
-                 trace_offset_catalog,
-                 trace_length_catalog,
-                 cdp_catalog,
-                 trace_header_format,
-                 encoding,
-                 endian='>'):
+    def __init__(
+        self,
+        fh,
+        textual_reel_header,
+        binary_reel_header,
+        extended_textual_headers,
+        trace_offset_catalog,
+        trace_length_catalog,
+        cdp_catalog,
+        trace_header_format,
+        encoding,
+        endian=">",
+    ):
         """Initialize a SegYReader2D around a file-like-object.
 
         Note:
@@ -772,13 +902,24 @@ class SegYReader2D(SegYReader):
             endian: '>' for big-endian data (the standard and default), '<' for
                 little-endian (non-standard)
         """
-        super(SegYReader2D, self).__init__(fh, textual_reel_header, binary_reel_header, extended_textual_headers,
-                                           trace_offset_catalog, trace_length_catalog, trace_header_format,
-                                           encoding, endian)
+        super(SegYReader2D, self).__init__(
+            fh,
+            textual_reel_header,
+            binary_reel_header,
+            extended_textual_headers,
+            trace_offset_catalog,
+            trace_length_catalog,
+            trace_header_format,
+            encoding,
+            endian,
+        )
 
         if cdp_catalog is None:
             raise TypeError(
-                '{} must be provided with a non-None CDP catalog.'.format(self.__class__.__name__))
+                "{} must be provided with a non-None CDP catalog.".format(
+                    self.__class__.__name__
+                )
+            )
 
         self._cdp_catalog = cdp_catalog
         self._cdp_numbers = None

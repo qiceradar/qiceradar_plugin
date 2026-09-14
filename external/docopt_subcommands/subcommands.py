@@ -18,11 +18,9 @@ See '{program} <command> -h' for help on specific commands.
 
 def dedent(s):
     """Removes the hanging dedent from all the first line of a string."""
-    head, _, tail = s.partition('\n')
+    head, _, tail = s.partition("\n")
     dedented_tail = textwrap.dedent(tail)
-    result = "{head}\n{tail}".format(
-        head=head,
-        tail=dedented_tail)
+    result = "{head}\n{tail}".format(head=head, tail=dedented_tail)
     return result
 
 
@@ -30,10 +28,12 @@ def docstring_to_subcommand(docstring):
     usage = [l for l in docstring.split() if l]
     if len(usage) < 3:
         raise ValueError(
-            "Subcommand docstring must start with 'usage: {program} <subcommand>'")
-    if usage[0] != 'usage:':
+            "Subcommand docstring must start with 'usage: {program} <subcommand>'"
+        )
+    if usage[0] != "usage:":
         raise ValueError(
-            "Subcommand docstring must start with 'usage: {program} <subcommand>'")
+            "Subcommand docstring must start with 'usage: {program} <subcommand>'"
+        )
     return usage[2]
 
 
@@ -63,9 +63,7 @@ class Subcommands:
             docopt for handler's docstring.
     """
 
-    def __init__(self,
-                 program,
-                 doc_template=None):
+    def __init__(self, program, doc_template=None):
         if doc_template is None:
             doc_template = DEFAULT_DOC_TEMPLATE
 
@@ -76,29 +74,28 @@ class Subcommands:
 
     @property
     def top_level_doc(self):
-        """The top-level documentation string for the program.
-        """
+        """The top-level documentation string for the program."""
         return self._doc_template.format(
-            available_commands='\n  '.join(sorted(self._commands)),
-            program=self.program)
+            available_commands="\n  ".join(sorted(self._commands)), program=self.program
+        )
 
     def command(self, name=None):
-        """A decorator to add subcommands.
-        """
+        """A decorator to add subcommands."""
+
         def decorator(f):
             self.add_command(f, name)
             return f
+
         return decorator
 
     def add_command(self, handler, name=None):
-        """Add a subcommand `name` which invokes `handler`.
-        """
+        """Add a subcommand `name` which invokes `handler`."""
         if name is None:
             name = docstring_to_subcommand(handler.__doc__)
 
         # TODO: Prevent overwriting 'help'?
         self._commands[name] = handler
-        
+
     def set_non_command_handler(self, handler):
         self._non_command_handler = handler
 
@@ -111,29 +108,24 @@ class Subcommands:
         be displayed.
         """
         # Parse top-level options, primarily looking for the sub-command to run.
-        common_config = docopt(self.top_level_doc,
-                               argv=argv,
-                               options_first=True)
+        common_config = docopt(self.top_level_doc, argv=argv, options_first=True)
 
-        command = common_config['<command>']
+        command = common_config["<command>"]
         if command is None:
             return self._non_command_handler(common_config)
 
         # Try to find a command handler, defaulting to 'help' if no match it found.
         try:
             handler = self._commands[command]
-            argv = [command] + common_config['<args>']
+            argv = [command] + common_config["<args>"]
         except KeyError:
             print('"{}" is not a valid command.\n'.format(command))
-            return self(['-h'])
+            return self(["-h"])
 
         # Parse the sub-command options
         command_config = docopt(
-            dedent(
-                handler.__doc__.format(
-                    program=self.program,
-                    command=command)),
-            argv)
+            dedent(handler.__doc__.format(program=self.program, command=command)), argv
+        )
 
         # run the command
         return handler(common_config, command_config)

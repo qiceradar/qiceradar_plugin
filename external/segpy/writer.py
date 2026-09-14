@@ -1,17 +1,23 @@
 from segpy.encoding import ASCII, is_supported_encoding, UnsupportedEncodingError
 from segpy.packer import make_header_packer
 from segpy.trace_header import TraceHeaderRev1
-from segpy.toolkit import (write_textual_reel_header, write_binary_reel_header,
-                           write_trace_header, write_trace_samples,
-                           write_extended_textual_headers)
+from segpy.toolkit import (
+    write_textual_reel_header,
+    write_binary_reel_header,
+    write_trace_header,
+    write_trace_samples,
+    write_extended_textual_headers,
+)
 
 
-def write_segy(fh,
-               dataset,
-               encoding=None,
-               trace_header_format=TraceHeaderRev1,
-               endian='>',
-               progress=None):
+def write_segy(
+    fh,
+    dataset,
+    encoding=None,
+    trace_header_format=TraceHeaderRev1,
+    endian=">",
+    progress=None,
+):
     """
     Args:
         fh: A file-like object open for binary write, positioned to write the textual reel header.
@@ -40,7 +46,7 @@ def write_segy(fh,
     if not callable(progress_callback):
         raise TypeError("write_segy(): progress callback must be callable")
 
-    encoding = encoding or (hasattr(dataset, 'encoding') and dataset.encoding) or ASCII
+    encoding = encoding or (hasattr(dataset, "encoding") and dataset.encoding) or ASCII
 
     if not is_supported_encoding(encoding):
         raise UnsupportedEncodingError("Writing SEG Y", encoding)
@@ -55,7 +61,12 @@ def write_segy(fh,
 
     for trace_index in dataset.trace_indexes():
         write_trace_header(fh, dataset.trace_header(trace_index), trace_header_packer)
-        write_trace_samples(fh, dataset.trace_samples(trace_index), dataset.data_sample_format, endian=endian)
+        write_trace_samples(
+            fh,
+            dataset.trace_samples(trace_index),
+            dataset.data_sample_format,
+            endian=endian,
+        )
         progress_callback(trace_index / num_traces)
 
     progress_callback(1)

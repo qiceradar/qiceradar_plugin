@@ -19,12 +19,12 @@ from boto3.exceptions import (
     DynamoDBOperationNotSupportedError,
 )
 
-ATTR_NAME_REGEX = re.compile(r'[^.\[\]]+(?![^\[]*\])')
+ATTR_NAME_REGEX = re.compile(r"[^.\[\]]+(?![^\[]*\])")
 
 
 class ConditionBase:
-    expression_format = ''
-    expression_operator = ''
+    expression_format = ""
+    expression_operator = ""
     has_grouped_values = False
 
     def __init__(self, *values):
@@ -32,12 +32,12 @@ class ConditionBase:
 
     def __and__(self, other):
         if not isinstance(other, ConditionBase):
-            raise DynamoDBOperationNotSupportedError('AND', other)
+            raise DynamoDBOperationNotSupportedError("AND", other)
         return And(self, other)
 
     def __or__(self, other):
         if not isinstance(other, ConditionBase):
-            raise DynamoDBOperationNotSupportedError('OR', other)
+            raise DynamoDBOperationNotSupportedError("OR", other)
         return Or(self, other)
 
     def __invert__(self):
@@ -45,9 +45,9 @@ class ConditionBase:
 
     def get_expression(self):
         return {
-            'format': self.expression_format,
-            'operator': self.expression_operator,
-            'values': self._values,
+            "format": self.expression_format,
+            "operator": self.expression_operator,
+            "values": self._values,
         }
 
     def __eq__(self, other):
@@ -65,13 +65,13 @@ class AttributeBase:
         self.name = name
 
     def __and__(self, value):
-        raise DynamoDBOperationNotSupportedError('AND', self)
+        raise DynamoDBOperationNotSupportedError("AND", self)
 
     def __or__(self, value):
-        raise DynamoDBOperationNotSupportedError('OR', self)
+        raise DynamoDBOperationNotSupportedError("OR", self)
 
     def __invert__(self):
-        raise DynamoDBOperationNotSupportedError('NOT', self)
+        raise DynamoDBOperationNotSupportedError("NOT", self)
 
     def eq(self, value):
         """Creates a condition where the attribute is equal to the value.
@@ -147,95 +147,93 @@ class ConditionAttributeBase(ConditionBase, AttributeBase):
         AttributeBase.__init__(self, values[0].name)
 
     def __eq__(self, other):
-        return ConditionBase.__eq__(self, other) and AttributeBase.__eq__(
-            self, other
-        )
+        return ConditionBase.__eq__(self, other) and AttributeBase.__eq__(self, other)
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
 
 class ComparisonCondition(ConditionBase):
-    expression_format = '{0} {operator} {1}'
+    expression_format = "{0} {operator} {1}"
 
 
 class Equals(ComparisonCondition):
-    expression_operator = '='
+    expression_operator = "="
 
 
 class NotEquals(ComparisonCondition):
-    expression_operator = '<>'
+    expression_operator = "<>"
 
 
 class LessThan(ComparisonCondition):
-    expression_operator = '<'
+    expression_operator = "<"
 
 
 class LessThanEquals(ComparisonCondition):
-    expression_operator = '<='
+    expression_operator = "<="
 
 
 class GreaterThan(ComparisonCondition):
-    expression_operator = '>'
+    expression_operator = ">"
 
 
 class GreaterThanEquals(ComparisonCondition):
-    expression_operator = '>='
+    expression_operator = ">="
 
 
 class In(ComparisonCondition):
-    expression_operator = 'IN'
+    expression_operator = "IN"
     has_grouped_values = True
 
 
 class Between(ConditionBase):
-    expression_operator = 'BETWEEN'
-    expression_format = '{0} {operator} {1} AND {2}'
+    expression_operator = "BETWEEN"
+    expression_format = "{0} {operator} {1} AND {2}"
 
 
 class BeginsWith(ConditionBase):
-    expression_operator = 'begins_with'
-    expression_format = '{operator}({0}, {1})'
+    expression_operator = "begins_with"
+    expression_format = "{operator}({0}, {1})"
 
 
 class Contains(ConditionBase):
-    expression_operator = 'contains'
-    expression_format = '{operator}({0}, {1})'
+    expression_operator = "contains"
+    expression_format = "{operator}({0}, {1})"
 
 
 class Size(ConditionAttributeBase):
-    expression_operator = 'size'
-    expression_format = '{operator}({0})'
+    expression_operator = "size"
+    expression_format = "{operator}({0})"
 
 
 class AttributeType(ConditionBase):
-    expression_operator = 'attribute_type'
-    expression_format = '{operator}({0}, {1})'
+    expression_operator = "attribute_type"
+    expression_format = "{operator}({0}, {1})"
 
 
 class AttributeExists(ConditionBase):
-    expression_operator = 'attribute_exists'
-    expression_format = '{operator}({0})'
+    expression_operator = "attribute_exists"
+    expression_format = "{operator}({0})"
 
 
 class AttributeNotExists(ConditionBase):
-    expression_operator = 'attribute_not_exists'
-    expression_format = '{operator}({0})'
+    expression_operator = "attribute_not_exists"
+    expression_format = "{operator}({0})"
 
 
 class And(ConditionBase):
-    expression_operator = 'AND'
-    expression_format = '({0} {operator} {1})'
+    expression_operator = "AND"
+    expression_format = "({0} {operator} {1})"
 
 
 class Or(ConditionBase):
-    expression_operator = 'OR'
-    expression_format = '({0} {operator} {1})'
+    expression_operator = "OR"
+    expression_format = "({0} {operator} {1})"
 
 
 class Not(ConditionBase):
-    expression_operator = 'NOT'
-    expression_format = '({operator} {0})'
+    expression_operator = "NOT"
+    expression_format = "({operator} {0})"
 
 
 class Key(AttributeBase):
@@ -292,11 +290,11 @@ class Attr(AttributeBase):
 
 
 BuiltConditionExpression = namedtuple(
-    'BuiltConditionExpression',
+    "BuiltConditionExpression",
     [
-        'condition_expression',
-        'attribute_name_placeholders',
-        'attribute_value_placeholders',
+        "condition_expression",
+        "attribute_name_placeholders",
+        "attribute_value_placeholders",
     ],
 )
 
@@ -307,8 +305,8 @@ class ConditionExpressionBuilder:
     def __init__(self):
         self._name_count = 0
         self._value_count = 0
-        self._name_placeholder = 'n'
-        self._value_placeholder = 'v'
+        self._name_placeholder = "n"
+        self._value_placeholder = "v"
 
     def _get_name_placeholder(self):
         return f"#{self._name_placeholder}{self._name_count}"
@@ -365,7 +363,7 @@ class ConditionExpressionBuilder:
     ):
         expression_dict = condition.get_expression()
         replaced_values = []
-        for value in expression_dict['values']:
+        for value in expression_dict["values"]:
             # Build the necessary placeholders for that value.
             # Placeholders are built for both attribute names and values.
             replaced_value = self._build_expression_component(
@@ -378,8 +376,8 @@ class ConditionExpressionBuilder:
             replaced_values.append(replaced_value)
         # Fill out the expression using the operator and the
         # values that have been replaced with placeholders.
-        return expression_dict['format'].format(
-            *replaced_values, operator=expression_dict['operator']
+        return expression_dict["format"].format(
+            *replaced_values, operator=expression_dict["operator"]
         )
 
     def _build_expression_component(
@@ -405,13 +403,11 @@ class ConditionExpressionBuilder:
         elif isinstance(value, AttributeBase):
             if is_key_condition and not isinstance(value, Key):
                 raise DynamoDBNeedsKeyConditionError(
-                    f'Attribute object {value.name} is of type {type(value)}. '
-                    f'KeyConditionExpression only supports Attribute objects '
-                    f'of type Key'
+                    f"Attribute object {value.name} is of type {type(value)}. "
+                    f"KeyConditionExpression only supports Attribute objects "
+                    f"of type Key"
                 )
-            return self._build_name_placeholder(
-                value, attribute_name_placeholders
-            )
+            return self._build_name_placeholder(value, attribute_name_placeholders)
         # If it is anything else, we treat it as a value and thus placeholders
         # are needed for the value.
         else:
@@ -425,7 +421,7 @@ class ConditionExpressionBuilder:
         attribute_name_parts = ATTR_NAME_REGEX.findall(attribute_name)
 
         # Add a temporary placeholder for each of these parts.
-        placeholder_format = ATTR_NAME_REGEX.sub('%s', attribute_name)
+        placeholder_format = ATTR_NAME_REGEX.sub("%s", attribute_name)
         str_format_args = []
         for part in attribute_name_parts:
             name_placeholder = self._get_name_placeholder()

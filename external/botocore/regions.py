@@ -52,8 +52,8 @@ from botocore.useragent import register_feature_id
 from botocore.utils import ensure_boolean, instance_cache
 
 LOG = logging.getLogger(__name__)
-DEFAULT_URI_TEMPLATE = '{service}.{region}.{dnsSuffix}'  # noqa
-DEFAULT_SERVICE_DATA = {'endpoints': {}}
+DEFAULT_URI_TEMPLATE = "{service}.{region}.{dnsSuffix}"  # noqa
+DEFAULT_SERVICE_DATA = {"endpoints": {}}
 
 
 class BaseEndpointResolver:
@@ -96,7 +96,7 @@ class BaseEndpointResolver:
         raise NotImplementedError
 
     def get_available_endpoints(
-        self, service_name, partition_name='aws', allow_non_regional=False
+        self, service_name, partition_name="aws", allow_non_regional=False
     ):
         """Lists the endpoint names of a particular partition.
 
@@ -120,7 +120,7 @@ class BaseEndpointResolver:
 class EndpointResolver(BaseEndpointResolver):
     """Resolves endpoints based on partition endpoint metadata"""
 
-    _UNSUPPORTED_DUALSTACK_PARTITIONS = ['aws-iso', 'aws-iso-b']
+    _UNSUPPORTED_DUALSTACK_PARTITIONS = ["aws-iso", "aws-iso-b"]
 
     def __init__(self, endpoint_data, uses_builtin_data=False):
         """
@@ -131,43 +131,43 @@ class EndpointResolver(BaseEndpointResolver):
         :param uses_builtin_data: Whether the endpoint data originates in the
             package's data directory.
         """
-        if 'partitions' not in endpoint_data:
+        if "partitions" not in endpoint_data:
             raise ValueError('Missing "partitions" in endpoint data')
         self._endpoint_data = endpoint_data
         self.uses_builtin_data = uses_builtin_data
 
-    def get_service_endpoints_data(self, service_name, partition_name='aws'):
-        for partition in self._endpoint_data['partitions']:
-            if partition['partition'] != partition_name:
+    def get_service_endpoints_data(self, service_name, partition_name="aws"):
+        for partition in self._endpoint_data["partitions"]:
+            if partition["partition"] != partition_name:
                 continue
-            services = partition['services']
+            services = partition["services"]
             if service_name not in services:
                 continue
-            return services[service_name]['endpoints']
+            return services[service_name]["endpoints"]
 
     def get_available_partitions(self):
         result = []
-        for partition in self._endpoint_data['partitions']:
-            result.append(partition['partition'])
+        for partition in self._endpoint_data["partitions"]:
+            result.append(partition["partition"])
         return result
 
     def get_available_endpoints(
         self,
         service_name,
-        partition_name='aws',
+        partition_name="aws",
         allow_non_regional=False,
         endpoint_variant_tags=None,
     ):
         result = []
-        for partition in self._endpoint_data['partitions']:
-            if partition['partition'] != partition_name:
+        for partition in self._endpoint_data["partitions"]:
+            if partition["partition"] != partition_name:
                 continue
-            services = partition['services']
+            services = partition["services"]
             if service_name not in services:
                 continue
-            service_endpoints = services[service_name]['endpoints']
+            service_endpoints = services[service_name]["endpoints"]
             for endpoint_name in service_endpoints:
-                is_regional_endpoint = endpoint_name in partition['regions']
+                is_regional_endpoint = endpoint_name in partition["regions"]
                 # Only regional endpoints can be modeled with variants
                 if endpoint_variant_tags and is_regional_endpoint:
                     variant_data = self._retrieve_variant_data(
@@ -179,19 +179,17 @@ class EndpointResolver(BaseEndpointResolver):
                     result.append(endpoint_name)
         return result
 
-    def get_partition_dns_suffix(
-        self, partition_name, endpoint_variant_tags=None
-    ):
-        for partition in self._endpoint_data['partitions']:
-            if partition['partition'] == partition_name:
+    def get_partition_dns_suffix(self, partition_name, endpoint_variant_tags=None):
+        for partition in self._endpoint_data["partitions"]:
+            if partition["partition"] == partition_name:
                 if endpoint_variant_tags:
                     variant = self._retrieve_variant_data(
-                        partition.get('defaults'), endpoint_variant_tags
+                        partition.get("defaults"), endpoint_variant_tags
                     )
-                    if variant and 'dnsSuffix' in variant:
-                        return variant['dnsSuffix']
+                    if variant and "dnsSuffix" in variant:
+                        return variant["dnsSuffix"]
                 else:
-                    return partition['dnsSuffix']
+                    return partition["dnsSuffix"]
         return None
 
     def construct_endpoint(
@@ -202,17 +200,13 @@ class EndpointResolver(BaseEndpointResolver):
         use_dualstack_endpoint=False,
         use_fips_endpoint=False,
     ):
-        if (
-            service_name == 's3'
-            and use_dualstack_endpoint
-            and region_name is None
-        ):
-            region_name = 'us-east-1'
+        if service_name == "s3" and use_dualstack_endpoint and region_name is None:
+            region_name = "us-east-1"
 
         if partition_name is not None:
             valid_partition = None
-            for partition in self._endpoint_data['partitions']:
-                if partition['partition'] == partition_name:
+            for partition in self._endpoint_data["partitions"]:
+                if partition["partition"] == partition_name:
                     valid_partition = partition
 
             if valid_partition is not None:
@@ -228,10 +222,9 @@ class EndpointResolver(BaseEndpointResolver):
             return None
 
         # Iterate over each partition until a match is found.
-        for partition in self._endpoint_data['partitions']:
+        for partition in self._endpoint_data["partitions"]:
             if use_dualstack_endpoint and (
-                partition['partition']
-                in self._UNSUPPORTED_DUALSTACK_PARTITIONS
+                partition["partition"] in self._UNSUPPORTED_DUALSTACK_PARTITIONS
             ):
                 continue
             result = self._endpoint_for_partition(
@@ -245,12 +238,12 @@ class EndpointResolver(BaseEndpointResolver):
                 return result
 
     def get_partition_for_region(self, region_name):
-        for partition in self._endpoint_data['partitions']:
+        for partition in self._endpoint_data["partitions"]:
             if self._region_match(partition, region_name):
-                return partition['partition']
+                return partition["partition"]
         raise UnknownRegionError(
             region_name=region_name,
-            error_msg='No partition found for provided region_name.',
+            error_msg="No partition found for provided region_name.",
         )
 
     def _endpoint_for_partition(
@@ -271,73 +264,71 @@ class EndpointResolver(BaseEndpointResolver):
                 "Dualstack endpoints are currently not supported"
                 f" for {partition_name} partition"
             )
-            raise EndpointVariantError(tags=['dualstack'], error_msg=error_msg)
+            raise EndpointVariantError(tags=["dualstack"], error_msg=error_msg)
 
         # Get the service from the partition, or an empty template.
-        service_data = partition['services'].get(
-            service_name, DEFAULT_SERVICE_DATA
-        )
+        service_data = partition["services"].get(service_name, DEFAULT_SERVICE_DATA)
         # Use the partition endpoint if no region is supplied.
         if region_name is None:
-            if 'partitionEndpoint' in service_data:
-                region_name = service_data['partitionEndpoint']
+            if "partitionEndpoint" in service_data:
+                region_name = service_data["partitionEndpoint"]
             else:
                 raise NoRegionError()
 
         resolve_kwargs = {
-            'partition': partition,
-            'service_name': service_name,
-            'service_data': service_data,
-            'endpoint_name': region_name,
-            'use_dualstack_endpoint': use_dualstack_endpoint,
-            'use_fips_endpoint': use_fips_endpoint,
+            "partition": partition,
+            "service_name": service_name,
+            "service_data": service_data,
+            "endpoint_name": region_name,
+            "use_dualstack_endpoint": use_dualstack_endpoint,
+            "use_fips_endpoint": use_fips_endpoint,
         }
 
         # Attempt to resolve the exact region for this partition.
-        if region_name in service_data['endpoints']:
+        if region_name in service_data["endpoints"]:
             return self._resolve(**resolve_kwargs)
 
         # Check to see if the endpoint provided is valid for the partition.
         if self._region_match(partition, region_name) or force_partition:
             # Use the partition endpoint if set and not regionalized.
-            partition_endpoint = service_data.get('partitionEndpoint')
-            is_regionalized = service_data.get('isRegionalized', True)
+            partition_endpoint = service_data.get("partitionEndpoint")
+            is_regionalized = service_data.get("isRegionalized", True)
             if partition_endpoint and not is_regionalized:
                 LOG.debug(
-                    'Using partition endpoint for %s, %s: %s',
+                    "Using partition endpoint for %s, %s: %s",
                     service_name,
                     region_name,
                     partition_endpoint,
                 )
-                resolve_kwargs['endpoint_name'] = partition_endpoint
+                resolve_kwargs["endpoint_name"] = partition_endpoint
                 return self._resolve(**resolve_kwargs)
             LOG.debug(
-                'Creating a regex based endpoint for %s, %s',
+                "Creating a regex based endpoint for %s, %s",
                 service_name,
                 region_name,
             )
             return self._resolve(**resolve_kwargs)
 
     def _region_match(self, partition, region_name):
-        if region_name in partition['regions']:
+        if region_name in partition["regions"]:
             return True
-        if 'regionRegex' in partition:
-            return re.compile(partition['regionRegex']).match(region_name)
+        if "regionRegex" in partition:
+            return re.compile(partition["regionRegex"]).match(region_name)
         return False
 
     def _retrieve_variant_data(self, endpoint_data, tags):
-        variants = endpoint_data.get('variants', [])
+        variants = endpoint_data.get("variants", [])
         for variant in variants:
-            if set(variant['tags']) == set(tags):
+            if set(variant["tags"]) == set(tags):
                 result = variant.copy()
                 return result
 
     def _create_tag_list(self, use_dualstack_endpoint, use_fips_endpoint):
         tags = []
         if use_dualstack_endpoint:
-            tags.append('dualstack')
+            tags.append("dualstack")
         if use_fips_endpoint:
-            tags.append('fips')
+            tags.append("fips")
         return tags
 
     def _resolve_variant(
@@ -359,18 +350,16 @@ class EndpointResolver(BaseEndpointResolver):
         use_dualstack_endpoint,
         use_fips_endpoint,
     ):
-        endpoint_data = service_data.get('endpoints', {}).get(
-            endpoint_name, {}
-        )
+        endpoint_data = service_data.get("endpoints", {}).get(endpoint_name, {})
 
-        if endpoint_data.get('deprecated'):
+        if endpoint_data.get("deprecated"):
             LOG.warning(
-                'Client is configured with the deprecated endpoint: %s',
+                "Client is configured with the deprecated endpoint: %s",
                 endpoint_name,
             )
 
-        service_defaults = service_data.get('defaults', {})
-        partition_defaults = partition.get('defaults', {})
+        service_defaults = service_data.get("defaults", {})
+        partition_defaults = partition.get("defaults", {})
         tags = self._create_tag_list(use_dualstack_endpoint, use_fips_endpoint)
 
         if tags:
@@ -388,30 +377,30 @@ class EndpointResolver(BaseEndpointResolver):
             result = endpoint_data
 
         # If dnsSuffix has not already been consumed from a variant definition
-        if 'dnsSuffix' not in result:
-            result['dnsSuffix'] = partition['dnsSuffix']
+        if "dnsSuffix" not in result:
+            result["dnsSuffix"] = partition["dnsSuffix"]
 
-        result['partition'] = partition['partition']
-        result['endpointName'] = endpoint_name
+        result["partition"] = partition["partition"]
+        result["endpointName"] = endpoint_name
 
         # Merge in the service defaults then the partition defaults.
         self._merge_keys(service_defaults, result)
         self._merge_keys(partition_defaults, result)
 
-        result['hostname'] = self._expand_template(
+        result["hostname"] = self._expand_template(
             partition,
-            result['hostname'],
+            result["hostname"],
             service_name,
             endpoint_name,
-            result['dnsSuffix'],
+            result["dnsSuffix"],
         )
-        if 'sslCommonName' in result:
-            result['sslCommonName'] = self._expand_template(
+        if "sslCommonName" in result:
+            result["sslCommonName"] = self._expand_template(
                 partition,
-                result['sslCommonName'],
+                result["sslCommonName"],
                 service_name,
                 endpoint_name,
-                result['dnsSuffix'],
+                result["dnsSuffix"],
             )
 
         return result
@@ -453,12 +442,10 @@ class EndpointResolverBuiltins(str, Enum):
     AWS_S3_USE_ARN_REGION = "AWS::S3::UseArnRegion"
     # Whether to use S3 Express session authentication, or fallback to default
     # authentication (for s3 service only, bool).
-    AWS_S3_DISABLE_EXPRESS_SESSION_AUTH = (
-        "AWS::S3::DisableS3ExpressSessionAuth"
-    )
+    AWS_S3_DISABLE_EXPRESS_SESSION_AUTH = "AWS::S3::DisableS3ExpressSessionAuth"
     # Whether to use the ARN region or raise an error when ARN and client
     # region differ (for s3-control service only, bool)
-    AWS_S3CONTROL_USE_ARN_REGION = 'AWS::S3Control::UseArnRegion'
+    AWS_S3CONTROL_USE_ARN_REGION = "AWS::S3Control::UseArnRegion"
     # Whether multi-region access points (MRAP) should be disabled (bool)
     AWS_S3_DISABLE_MRAP = "AWS::S3::DisableMultiRegionAccessPoints"
     # Whether a custom endpoint has been configured (str)
@@ -514,13 +501,9 @@ class EndpointRulesetResolver:
         provider_params = self._get_provider_params(
             operation_model, call_args, request_context
         )
-        LOG.debug(
-            'Calling endpoint provider with parameters: %s', provider_params
-        )
+        LOG.debug("Calling endpoint provider with parameters: %s", provider_params)
         try:
-            provider_result = self._provider.resolve_endpoint(
-                **provider_params
-            )
+            provider_result = self._provider.resolve_endpoint(**provider_params)
         except EndpointProviderError as ex:
             botocore_exception = self.ruleset_error_to_botocore_exception(
                 ex, provider_params
@@ -529,32 +512,28 @@ class EndpointRulesetResolver:
                 raise
             else:
                 raise botocore_exception from ex
-        LOG.debug('Endpoint provider result: %s', provider_result.url)
+        LOG.debug("Endpoint provider result: %s", provider_result.url)
 
         # The endpoint provider does not support non-secure transport.
         if (
             not self._use_ssl
-            and provider_result.url.startswith('https://')
-            and 'Endpoint' not in provider_params
+            and provider_result.url.startswith("https://")
+            and "Endpoint" not in provider_params
         ):
             provider_result = provider_result._replace(
-                url=f'http://{provider_result.url[8:]}'
+                url=f"http://{provider_result.url[8:]}"
             )
 
         # Multi-valued headers are not supported in botocore. Replace the list
         # of values returned for each header with just its first entry,
         # dropping any additionally entries.
         provider_result = provider_result._replace(
-            headers={
-                key: val[0] for key, val in provider_result.headers.items()
-            }
+            headers={key: val[0] for key, val in provider_result.headers.items()}
         )
 
         return provider_result
 
-    def _get_provider_params(
-        self, operation_model, call_args, request_context
-    ):
+    def _get_provider_params(self, operation_model, call_args, request_context):
         """Resolve a value for each parameter defined in the service's ruleset
 
         The resolution order for parameter values is:
@@ -586,9 +565,7 @@ class EndpointRulesetResolver:
 
         return provider_params
 
-    def _resolve_param_from_context(
-        self, param_name, operation_model, call_args
-    ):
+    def _resolve_param_from_context(self, param_name, operation_model, call_args):
         static = self._resolve_param_as_static_context_param(
             param_name, operation_model
         )
@@ -599,18 +576,14 @@ class EndpointRulesetResolver:
         )
         if dynamic is not None:
             return dynamic
-        operation_context_params = (
-            self._resolve_param_as_operation_context_param(
-                param_name, operation_model, call_args
-            )
+        operation_context_params = self._resolve_param_as_operation_context_param(
+            param_name, operation_model, call_args
         )
         if operation_context_params is not None:
             return operation_context_params
         return self._resolve_param_as_client_context_param(param_name)
 
-    def _resolve_param_as_static_context_param(
-        self, param_name, operation_model
-    ):
+    def _resolve_param_as_static_context_param(self, param_name, operation_model):
         static_ctx_params = self._get_static_context_params(operation_model)
         return static_ctx_params.get(param_name)
 
@@ -633,7 +606,7 @@ class EndpointRulesetResolver:
     ):
         operation_ctx_params = operation_model.operation_context_parameters
         if param_name in operation_ctx_params:
-            path = operation_ctx_params[param_name]['path']
+            path = operation_ctx_params[param_name]["path"]
             return jmespath.search(path, call_args)
 
     def _resolve_param_as_builtin(self, builtin_name, builtins):
@@ -668,14 +641,12 @@ class EndpointRulesetResolver:
             for param in self._service_model.client_context_parameters
         }
 
-    def _get_customized_builtins(
-        self, operation_model, call_args, request_context
-    ):
+    def _get_customized_builtins(self, operation_model, call_args, request_context):
         service_id = self._service_model.service_id.hyphenize()
         customized_builtins = copy.copy(self._builtins)
         # Handlers are expected to modify the builtins dict in place.
         self._event_emitter.emit(
-            f'before-endpoint-resolution.{service_id}',
+            f"before-endpoint-resolution.{service_id}",
             builtins=customized_builtins,
             model=operation_model,
             params=call_args,
@@ -700,20 +671,18 @@ class EndpointRulesetResolver:
             raise TypeError("auth_schemes must be a non-empty list.")
 
         LOG.debug(
-            'Selecting from endpoint provider\'s list of auth schemes: %s. '
+            "Selecting from endpoint provider's list of auth schemes: %s. "
             'User selected auth scheme is: "%s"',
-            ', '.join([f'"{s.get("name")}"' for s in auth_schemes]),
+            ", ".join([f'"{s.get("name")}"' for s in auth_schemes]),
             self._requested_auth_scheme,
         )
 
         if self._requested_auth_scheme == UNSIGNED:
-            return 'none', {}
+            return "none", {}
 
-        available_ruleset_names = [
-            s['name'].split('#')[-1] for s in auth_schemes
-        ]
+        available_ruleset_names = [s["name"].split("#")[-1] for s in auth_schemes]
         auth_schemes = [
-            {**scheme, 'name': self._strip_sig_prefix(scheme['name'])}
+            {**scheme, "name": self._strip_sig_prefix(scheme["name"])}
             for scheme in auth_schemes
         ]
         if self._requested_auth_scheme is not None:
@@ -725,7 +694,7 @@ class EndpointRulesetResolver:
                     (self._requested_auth_scheme, s)
                     for s in auth_schemes
                     if self._does_botocore_authname_match_ruleset_authname(
-                        self._requested_auth_scheme, s['name']
+                        self._requested_auth_scheme, s["name"]
                     )
                 )
             except StopIteration:
@@ -734,28 +703,24 @@ class EndpointRulesetResolver:
                 # customizations.
                 return None, {}
         elif self._auth_scheme_preference is not None:
-            prefs = self._auth_scheme_preference.split(',')
+            prefs = self._auth_scheme_preference.split(",")
             auth_schemes_by_auth_type = {
-                self._strip_sig_prefix(s['name'].split('#')[-1]): s
+                self._strip_sig_prefix(s["name"].split("#")[-1]): s
                 for s in auth_schemes
             }
-            name = resolve_auth_scheme_preference(
-                prefs, available_ruleset_names
-            )
+            name = resolve_auth_scheme_preference(prefs, available_ruleset_names)
             scheme = auth_schemes_by_auth_type[name]
         else:
             try:
                 name, scheme = next(
-                    (s['name'], s)
-                    for s in auth_schemes
-                    if s['name'] in AUTH_TYPE_MAPS
+                    (s["name"], s) for s in auth_schemes if s["name"] in AUTH_TYPE_MAPS
                 )
             except StopIteration:
                 # If no auth scheme was specifically requested and an
                 # authSchemes list is present in the Endpoint object but none
                 # of the entries are supported, raise an exception.
                 fixable_with_crt = False
-                auth_type_options = [s['name'] for s in auth_schemes]
+                auth_type_options = [s["name"] for s in auth_schemes]
                 if not HAS_CRT:
                     fixable_with_crt = any(
                         scheme in CRT_SUPPORTED_AUTH_TYPES
@@ -764,32 +729,30 @@ class EndpointRulesetResolver:
 
                 if fixable_with_crt:
                     raise MissingDependencyException(
-                        msg='This operation requires an additional dependency.'
-                        ' Use pip install botocore[crt] before proceeding.'
+                        msg="This operation requires an additional dependency."
+                        " Use pip install botocore[crt] before proceeding."
                     )
                 else:
                     raise UnknownSignatureVersionError(
-                        signature_version=', '.join(auth_type_options)
+                        signature_version=", ".join(auth_type_options)
                     )
 
         signing_context = {}
-        if 'signingRegion' in scheme:
-            signing_context['region'] = scheme['signingRegion']
-        elif 'signingRegionSet' in scheme:
-            if len(scheme['signingRegionSet']) > 0:
-                signing_context['region'] = ','.join(
-                    scheme['signingRegionSet']
-                )
-        if 'signingName' in scheme:
-            signing_context.update(signing_name=scheme['signingName'])
-        if 'disableDoubleEncoding' in scheme:
-            signing_context['disableDoubleEncoding'] = ensure_boolean(
-                scheme['disableDoubleEncoding']
+        if "signingRegion" in scheme:
+            signing_context["region"] = scheme["signingRegion"]
+        elif "signingRegionSet" in scheme:
+            if len(scheme["signingRegionSet"]) > 0:
+                signing_context["region"] = ",".join(scheme["signingRegionSet"])
+        if "signingName" in scheme:
+            signing_context.update(signing_name=scheme["signingName"])
+        if "disableDoubleEncoding" in scheme:
+            signing_context["disableDoubleEncoding"] = ensure_boolean(
+                scheme["disableDoubleEncoding"]
             )
 
         LOG.debug(
             'Selected auth type "%s" as "%s" with signing context params: %s',
-            scheme['name'],  # original name without "sig"
+            scheme["name"],  # original name without "sig"
             name,  # chosen name can differ when `signature_version` is set
             signing_context,
         )
@@ -797,7 +760,7 @@ class EndpointRulesetResolver:
 
     def _strip_sig_prefix(self, auth_name):
         """Normalize auth type names by removing any "sig" prefix"""
-        return auth_name[3:] if auth_name.startswith('sig') else auth_name
+        return auth_name[3:] if auth_name.startswith("sig") else auth_name
 
     def _does_botocore_authname_match_ruleset_authname(self, botoname, rsname):
         """
@@ -826,8 +789,8 @@ class EndpointRulesetResolver:
         * s3-presign-post, sigv4
         """
         rsname = self._strip_sig_prefix(rsname)
-        botoname = botoname.split('-')[0]
-        if botoname != 's3' and botoname.startswith('s3'):
+        botoname = botoname.split("-")[0]
+        if botoname != "s3" and botoname.startswith("s3"):
             botoname = botoname[2:]
         return rsname == botoname
 
@@ -835,59 +798,59 @@ class EndpointRulesetResolver:
         """Attempts to translate ruleset errors to pre-existing botocore
         exception types by string matching exception strings.
         """
-        msg = ruleset_exception.kwargs.get('msg')
+        msg = ruleset_exception.kwargs.get("msg")
         if msg is None:
             return
 
-        if msg.startswith('Invalid region in ARN: '):
+        if msg.startswith("Invalid region in ARN: "):
             # Example message:
             # "Invalid region in ARN: `us-we$t-2` (invalid DNS name)"
             try:
-                label = msg.split('`')[1]
+                label = msg.split("`")[1]
             except IndexError:
                 label = msg
             return InvalidHostLabelError(label=label)
 
         service_name = self._service_model.service_name
-        if service_name == 's3':
+        if service_name == "s3":
             if (
-                msg == 'S3 Object Lambda does not support S3 Accelerate'
-                or msg == 'Accelerate cannot be used with FIPS'
+                msg == "S3 Object Lambda does not support S3 Accelerate"
+                or msg == "Accelerate cannot be used with FIPS"
             ):
                 return UnsupportedS3ConfigurationError(msg=msg)
             if (
-                msg.startswith('S3 Outposts does not support')
-                or msg.startswith('S3 MRAP does not support')
-                or msg.startswith('S3 Object Lambda does not support')
-                or msg.startswith('Access Points do not support')
-                or msg.startswith('Invalid configuration:')
-                or msg.startswith('Client was configured for partition')
+                msg.startswith("S3 Outposts does not support")
+                or msg.startswith("S3 MRAP does not support")
+                or msg.startswith("S3 Object Lambda does not support")
+                or msg.startswith("Access Points do not support")
+                or msg.startswith("Invalid configuration:")
+                or msg.startswith("Client was configured for partition")
             ):
                 return UnsupportedS3AccesspointConfigurationError(msg=msg)
-            if msg.lower().startswith('invalid arn:'):
+            if msg.lower().startswith("invalid arn:"):
                 return ParamValidationError(report=msg)
-        if service_name == 's3control':
-            if msg.startswith('Invalid ARN:'):
-                arn = params.get('Bucket')
+        if service_name == "s3control":
+            if msg.startswith("Invalid ARN:"):
+                arn = params.get("Bucket")
                 return UnsupportedS3ControlArnError(arn=arn, msg=msg)
-            if msg.startswith('Invalid configuration:') or msg.startswith(
-                'Client was configured for partition'
+            if msg.startswith("Invalid configuration:") or msg.startswith(
+                "Client was configured for partition"
             ):
                 return UnsupportedS3ControlConfigurationError(msg=msg)
             if msg == "AccountId is required but not set":
                 return ParamValidationError(report=msg)
-        if service_name == 'events':
+        if service_name == "events":
             if msg.startswith(
-                'Invalid Configuration: FIPS is not supported with '
-                'EventBridge multi-region endpoints.'
+                "Invalid Configuration: FIPS is not supported with "
+                "EventBridge multi-region endpoints."
             ):
                 return InvalidEndpointConfigurationError(msg=msg)
-            if msg == 'EndpointId must be a valid host label.':
+            if msg == "EndpointId must be a valid host label.":
                 return InvalidEndpointConfigurationError(msg=msg)
         return None
 
     def _register_endpoint_feature_ids(self, param_name, param_val):
-        if param_name == 'AccountIdEndpointMode':
-            register_feature_id(f'ACCOUNT_ID_MODE_{param_val.upper()}')
-        elif param_name == 'AccountId':
-            register_feature_id('RESOLVED_ACCOUNT_ID')
+        if param_name == "AccountIdEndpointMode":
+            register_feature_id(f"ACCOUNT_ID_MODE_{param_val.upper()}")
+        elif param_name == "AccountId":
+            register_feature_id("RESOLVED_ACCOUNT_ID")

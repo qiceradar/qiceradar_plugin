@@ -225,9 +225,7 @@ class AwsChunkedWrapper:
 
     def seek(self, offset, whence=0):
         if offset != 0 or whence != 0:
-            raise AwsChunkedWrapperError(
-                error_msg="Can only seek to start of stream"
-            )
+            raise AwsChunkedWrapperError(error_msg="Can only seek to start of stream")
         self._reset()
         self._raw.seek(0)
 
@@ -380,7 +378,7 @@ def resolve_request_checksum_algorithm(
         operation_model.has_streaming_input
         and urlparse(request["url"]).scheme == "https"
     ):
-        if request["context"]["client_config"].signature_version != 's3':
+        if request["context"]["client_config"].signature_version != "s3":
             # Operations with streaming input must support trailers.
             # We only support unsigned trailer checksums currently. As this
             # disables payload signing we'll only use trailers over TLS.
@@ -396,17 +394,13 @@ def resolve_request_checksum_algorithm(
     request["context"]["checksum"] = checksum_context
 
 
-def _get_request_algorithm_member_header(
-    operation_model, request, algorithm_member
-):
+def _get_request_algorithm_member_header(operation_model, request, algorithm_member):
     """Get the name of the header targeted by the "requestAlgorithmMember"."""
     operation_input_shape = operation_model.input_shape
     if not isinstance(operation_input_shape, StructureShape):
         return
 
-    algorithm_member_shape = operation_input_shape.members.get(
-        algorithm_member
-    )
+    algorithm_member_shape = operation_input_shape.members.get(algorithm_member)
 
     if algorithm_member_shape:
         return algorithm_member_shape.serialization.get("name")
@@ -432,9 +426,9 @@ def apply_request_checksum(request):
         )
     if "request_algorithm_header" in checksum_context:
         request_algorithm_header = checksum_context["request_algorithm_header"]
-        request["headers"][request_algorithm_header["name"]] = (
-            request_algorithm_header["value"]
-        )
+        request["headers"][request_algorithm_header["name"]] = request_algorithm_header[
+            "value"
+        ]
 
 
 def _apply_request_header_checksum(request):
@@ -590,7 +584,7 @@ def handle_checksum_body(http_response, response, context, operation_model):
         return
 
     logger.debug(
-        'Skipping checksum validation. Response did not contain one of the following algorithms: %s.',
+        "Skipping checksum validation. Response did not contain one of the following algorithms: %s.",
         algorithms,
     )
 
@@ -654,18 +648,16 @@ if HAS_CRT:
 
     _CHECKSUM_CLS.update(_CRT_CHECKSUM_CLS)
     # Validate this list isn't out of sync with _CRT_CHECKSUM_ALGORITHMS keys
-    assert all(
-        name in _CRT_CHECKSUM_ALGORITHMS for name in _CRT_CHECKSUM_CLS.keys()
-    )
+    assert all(name in _CRT_CHECKSUM_ALGORITHMS for name in _CRT_CHECKSUM_CLS.keys())
 _SUPPORTED_CHECKSUM_ALGORITHMS = list(_CHECKSUM_CLS.keys())
 _ALGORITHMS_PRIORITY_LIST = [
-    'xxhash128',
-    'xxhash3',
-    'crc64nvme',
-    'xxhash64',
-    'crc32c',
-    'crc32',
-    'sha1',
-    'sha256',
-    'sha512',
+    "xxhash128",
+    "xxhash3",
+    "crc64nvme",
+    "xxhash64",
+    "crc32c",
+    "crc32",
+    "sha1",
+    "sha256",
+    "sha512",
 ]

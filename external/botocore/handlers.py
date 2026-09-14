@@ -88,20 +88,20 @@ REGISTER_LAST = object()
 # to be as long as 255 characters, and bucket names can contain any
 # combination of uppercase letters, lowercase letters, numbers, periods
 # (.), hyphens (-), and underscores (_).
-VALID_BUCKET = re.compile(r'^[a-zA-Z0-9.\-_]{1,255}$')
+VALID_BUCKET = re.compile(r"^[a-zA-Z0-9.\-_]{1,255}$")
 _ACCESSPOINT_ARN = (
-    r'^arn:(aws).*:(s3|s3-object-lambda):[a-z\-0-9]*:[0-9]{12}:accesspoint[/:]'
-    r'[a-zA-Z0-9\-.]{1,63}$'
+    r"^arn:(aws).*:(s3|s3-object-lambda):[a-z\-0-9]*:[0-9]{12}:accesspoint[/:]"
+    r"[a-zA-Z0-9\-.]{1,63}$"
 )
 _OUTPOST_ARN = (
-    r'^arn:(aws).*:s3-outposts:[a-z\-0-9]+:[0-9]{12}:outpost[/:]'
-    r'[a-zA-Z0-9\-]{1,63}[/:]accesspoint[/:][a-zA-Z0-9\-]{1,63}$'
+    r"^arn:(aws).*:s3-outposts:[a-z\-0-9]+:[0-9]{12}:outpost[/:]"
+    r"[a-zA-Z0-9\-]{1,63}[/:]accesspoint[/:][a-zA-Z0-9\-]{1,63}$"
 )
-VALID_S3_ARN = re.compile('|'.join([_ACCESSPOINT_ARN, _OUTPOST_ARN]))
+VALID_S3_ARN = re.compile("|".join([_ACCESSPOINT_ARN, _OUTPOST_ARN]))
 # signing names used for the services s3 and s3-control, for example in
 # botocore/data/s3/2006-03-01/endpoints-rule-set-1.json
-S3_SIGNING_NAMES = ('s3', 's3-outposts', 's3-object-lambda', 's3express')
-VERSION_ID_SUFFIX = re.compile(r'\?versionId=[^\s]+$')
+S3_SIGNING_NAMES = ("s3", "s3-outposts", "s3-object-lambda", "s3express")
+VERSION_ID_SUFFIX = re.compile(r"\?versionId=[^\s]+$")
 
 
 def handle_service_name_alias(service_name, **kwargs):
@@ -109,12 +109,12 @@ def handle_service_name_alias(service_name, **kwargs):
 
 
 def add_recursion_detection_header(params, **kwargs):
-    has_lambda_name = 'AWS_LAMBDA_FUNCTION_NAME' in os.environ
-    trace_id = os.environ.get('_X_AMZN_TRACE_ID')
+    has_lambda_name = "AWS_LAMBDA_FUNCTION_NAME" in os.environ
+    trace_id = os.environ.get("_X_AMZN_TRACE_ID")
     if has_lambda_name and trace_id:
-        headers = params['headers']
-        if 'X-Amzn-Trace-Id' not in headers:
-            headers['X-Amzn-Trace-Id'] = quote(trace_id, safe='-=;:+&[]{}"\',')
+        headers = params["headers"]
+        if "X-Amzn-Trace-Id" not in headers:
+            headers["X-Amzn-Trace-Id"] = quote(trace_id, safe="-=;:+&[]{}\"',")
 
 
 def escape_xml_payload(params, **kwargs):
@@ -124,13 +124,13 @@ def escape_xml_payload(params, **kwargs):
     # but it doesn't allow us to override entity escaping for text fields. For
     # this operation \r and \n can only appear in the XML document if they were
     # passed as part of the customer input.
-    body = params['body']
-    if b'\r' in body:
-        body = body.replace(b'\r', b'&#xD;')
-    if b'\n' in body:
-        body = body.replace(b'\n', b'&#xA;')
+    body = params["body"]
+    if b"\r" in body:
+        body = body.replace(b"\r", b"&#xD;")
+    if b"\n" in body:
+        body = body.replace(b"\n", b"&#xA;")
 
-    params['body'] = body
+    params["body"] = body
 
 
 def check_for_200_error(response, **kwargs):
@@ -155,9 +155,7 @@ def check_for_200_error(response, **kwargs):
         # trying to retrieve the response.  See Endpoint._get_response().
         return
     http_response, parsed = response
-    if _looks_like_special_case_error(
-        http_response.status_code, http_response.content
-    ):
+    if _looks_like_special_case_error(http_response.status_code, http_response.content):
         logger.debug(
             "Error found for response with 200 status code, "
             "errors: %s, changing status code to "
@@ -170,9 +168,7 @@ def check_for_200_error(response, **kwargs):
 def _looks_like_special_case_error(status_code, body):
     if status_code == 200 and body:
         try:
-            parser = ETree.XMLParser(
-                target=ETree.TreeBuilder(), encoding='utf-8'
-            )
+            parser = ETree.XMLParser(target=ETree.TreeBuilder(), encoding="utf-8")
             parser.feed(body)
             root = parser.close()
         except XMLParseError:
@@ -180,7 +176,7 @@ def _looks_like_special_case_error(status_code, body):
             # streamed response from S3. We need to treat these cases as
             # 500 Service Errors and try again.
             return True
-        if root.tag == 'Error':
+        if root.tag == "Error":
             return True
     return False
 
@@ -193,7 +189,7 @@ def set_operation_specific_signer(context, signing_name, **kwargs):
     authenticated at all, but can include other auth modes such as sigv4
     without body signing.
     """
-    auth_type = context.get('auth_type')
+    auth_type = context.get("auth_type")
 
     # Auth type will be None if the operation doesn't have a configured auth
     # type.
@@ -202,31 +198,31 @@ def set_operation_specific_signer(context, signing_name, **kwargs):
 
     # Auth type will be the string value 'none' if the operation should not
     # be signed at all.
-    if auth_type == 'none':
+    if auth_type == "none":
         return botocore.UNSIGNED
 
-    if auth_type == 'bearer':
-        return 'bearer'
+    if auth_type == "bearer":
+        return "bearer"
 
     # If the operation needs an unsigned body, we set additional context
     # allowing the signer to be aware of this.
-    if context.get('unsigned_payload') or auth_type == 'v4-unsigned-body':
-        context['payload_signing_enabled'] = False
+    if context.get("unsigned_payload") or auth_type == "v4-unsigned-body":
+        context["payload_signing_enabled"] = False
 
-    if auth_type.startswith('v4'):
-        if auth_type == 'v4-s3express':
+    if auth_type.startswith("v4"):
+        if auth_type == "v4-s3express":
             return auth_type
 
-        if auth_type == 'v4a':
+        if auth_type == "v4a":
             _set_sigv4a_signing_context(context, signing_name)
-            signature_version = 'v4a'
+            signature_version = "v4a"
         else:
-            signature_version = 'v4'
+            signature_version = "v4"
 
         # Signing names used by s3 and s3-control use customized signers "s3v4"
         # and "s3v4a".
         if signing_name in S3_SIGNING_NAMES:
-            signature_version = f's3{signature_version}'
+            signature_version = f"s3{signature_version}"
 
         return signature_version
 
@@ -246,41 +242,41 @@ def _handle_sqs_compatible_error(parsed, context, **kwargs):
         return
 
     if query_code := parsed_error.get("QueryErrorCode"):
-        context['error_code_override'] = query_code
+        context["error_code_override"] = query_code
 
 
 def _resolve_sigv4a_region(context):
     region = None
-    if 'client_config' in context:
-        region = context['client_config'].sigv4a_signing_region_set
-    if not region and context.get('signing', {}).get('region'):
-        region = context['signing']['region']
-    return region or '*'
+    if "client_config" in context:
+        region = context["client_config"].sigv4a_signing_region_set
+    if not region and context.get("signing", {}).get("region"):
+        region = context["signing"]["region"]
+    return region or "*"
 
 
 def _set_sigv4a_signing_context(context, signing_name):
     # SigV4A signs for a region set rather than a single credential scope
     # region, so ensure the request context reflects the configured region set.
     region = _resolve_sigv4a_region(context)
-    signing = {'region': region, 'signing_name': signing_name}
-    if 'signing' in context:
-        context['signing'].update(signing)
+    signing = {"region": region, "signing_name": signing_name}
+    if "signing" in context:
+        context["signing"].update(signing)
     else:
-        context['signing'] = signing
+        context["signing"] = signing
 
 
 def decode_console_output(parsed, **kwargs):
-    if 'Output' in parsed:
+    if "Output" in parsed:
         try:
             # We're using 'replace' for errors because it is
             # possible that console output contains non string
             # chars we can't utf-8 decode.
-            value = base64.b64decode(
-                bytes(parsed['Output'], 'latin-1')
-            ).decode('utf-8', 'replace')
-            parsed['Output'] = value
+            value = base64.b64decode(bytes(parsed["Output"], "latin-1")).decode(
+                "utf-8", "replace"
+            )
+            parsed["Output"] = value
         except (ValueError, TypeError, AttributeError):
-            logger.debug('Error decoding base64', exc_info=True)
+            logger.debug("Error decoding base64", exc_info=True)
 
 
 def generate_idempotent_uuid(params, model, **kwargs):
@@ -298,25 +294,23 @@ def decode_quoted_jsondoc(value):
     try:
         value = json.loads(unquote(value))
     except (ValueError, TypeError):
-        logger.debug('Error loading quoted JSON', exc_info=True)
+        logger.debug("Error loading quoted JSON", exc_info=True)
     return value
 
 
 def json_decode_template_body(parsed, **kwargs):
-    if 'TemplateBody' in parsed:
+    if "TemplateBody" in parsed:
         try:
-            value = json.loads(
-                parsed['TemplateBody'], object_pairs_hook=OrderedDict
-            )
-            parsed['TemplateBody'] = value
+            value = json.loads(parsed["TemplateBody"], object_pairs_hook=OrderedDict)
+            parsed["TemplateBody"] = value
         except (ValueError, TypeError):
-            logger.debug('error loading JSON', exc_info=True)
+            logger.debug("error loading JSON", exc_info=True)
 
 
 def validate_bucket_name(params, **kwargs):
-    if 'Bucket' not in params:
+    if "Bucket" not in params:
         return
-    bucket = params['Bucket']
+    bucket = params["Bucket"]
     if not VALID_BUCKET.search(bucket) and not VALID_S3_ARN.search(bucket):
         error_msg = (
             f'Invalid bucket name "{bucket}": Bucket name must match '
@@ -333,7 +327,7 @@ def sse_md5(params, **kwargs):
     encryption key. This handler does both if the MD5 has not been set by
     the caller.
     """
-    _sse_md5(params, 'SSECustomer')
+    _sse_md5(params, "SSECustomer")
 
 
 def copy_source_sse_md5(params, **kwargs):
@@ -343,29 +337,29 @@ def copy_source_sse_md5(params, **kwargs):
     encryption key. This handler does both if the MD5 has not been set by
     the caller specifically if the parameter is for the copy-source sse-c key.
     """
-    _sse_md5(params, 'CopySourceSSECustomer')
+    _sse_md5(params, "CopySourceSSECustomer")
 
 
-def _sse_md5(params, sse_member_prefix='SSECustomer'):
+def _sse_md5(params, sse_member_prefix="SSECustomer"):
     if not _needs_s3_sse_customization(params, sse_member_prefix):
         return
 
-    sse_key_member = sse_member_prefix + 'Key'
-    sse_md5_member = sse_member_prefix + 'KeyMD5'
+    sse_key_member = sse_member_prefix + "Key"
+    sse_md5_member = sse_member_prefix + "KeyMD5"
     key_as_bytes = params[sse_key_member]
     if isinstance(key_as_bytes, str):
-        key_as_bytes = key_as_bytes.encode('utf-8')
+        key_as_bytes = key_as_bytes.encode("utf-8")
     md5_val = get_md5(key_as_bytes, usedforsecurity=False).digest()
-    key_md5_str = base64.b64encode(md5_val).decode('utf-8')
-    key_b64_encoded = base64.b64encode(key_as_bytes).decode('utf-8')
+    key_md5_str = base64.b64encode(md5_val).decode("utf-8")
+    key_b64_encoded = base64.b64encode(key_as_bytes).decode("utf-8")
     params[sse_key_member] = key_b64_encoded
     params[sse_md5_member] = key_md5_str
 
 
 def _needs_s3_sse_customization(params, sse_member_prefix):
     return (
-        params.get(sse_member_prefix + 'Key') is not None
-        and sse_member_prefix + 'KeyMD5' not in params
+        params.get(sse_member_prefix + "Key") is not None
+        and sse_member_prefix + "KeyMD5" not in params
     )
 
 
@@ -378,14 +372,14 @@ def disable_signing(**kwargs):
 
 
 def add_expect_header(model, params, **kwargs):
-    if model.http.get('method', '') not in ['PUT', 'POST']:
+    if model.http.get("method", "") not in ["PUT", "POST"]:
         return
-    if 'body' in params:
-        body = params['body']
-        if hasattr(body, 'read'):
+    if "body" in params:
+        body = params["body"]
+        if hasattr(body, "read"):
             check_body = utils.ensure_boolean(
                 os.environ.get(
-                    'BOTO_EXPERIMENTAL__NO_EMPTY_CONTINUE',
+                    "BOTO_EXPERIMENTAL__NO_EMPTY_CONTINUE",
                     False,
                 )
             )
@@ -394,7 +388,7 @@ def add_expect_header(model, params, **kwargs):
             # Any file like object will use an expect 100-continue
             # header regardless of size.
             logger.debug("Adding expect 100 continue header to request.")
-            params['headers']['Expect'] = '100-continue'
+            params["headers"]["Expect"] = "100-continue"
 
 
 class DeprecatedServiceDocumenter:
@@ -403,31 +397,30 @@ class DeprecatedServiceDocumenter:
 
     def inject_deprecation_notice(self, section, event_name, **kwargs):
         section.style.start_important()
-        section.write('This service client is deprecated. Please use ')
+        section.write("This service client is deprecated. Please use ")
         section.style.ref(
             self._replacement_service_name,
             self._replacement_service_name,
         )
-        section.write(' instead.')
+        section.write(" instead.")
         section.style.end_important()
 
 
 def document_copy_source_form(section, event_name, **kwargs):
-    if 'request-example' in event_name:
-        parent = section.get_section('structure-value')
-        param_line = parent.get_section('CopySource')
-        value_portion = param_line.get_section('member-value')
+    if "request-example" in event_name:
+        parent = section.get_section("structure-value")
+        param_line = parent.get_section("CopySource")
+        value_portion = param_line.get_section("member-value")
         value_portion.clear_text()
         value_portion.write(
-            "'string' or {'Bucket': 'string', "
-            "'Key': 'string', 'VersionId': 'string'}"
+            "'string' or {'Bucket': 'string', 'Key': 'string', 'VersionId': 'string'}"
         )
-    elif 'request-params' in event_name:
-        param_section = section.get_section('CopySource')
-        type_section = param_section.get_section('param-type')
+    elif "request-params" in event_name:
+        param_section = section.get_section("CopySource")
+        type_section = param_section.get_section("param-type")
         type_section.clear_text()
-        type_section.write(':type CopySource: str or dict')
-        doc_section = param_section.get_section('param-documentation')
+        type_section.write(":type CopySource: str or dict")
+        doc_section = param_section.get_section("param-documentation")
         doc_section.clear_text()
         doc_section.write(
             "The name of the source bucket, key name of the source object, "
@@ -464,44 +457,42 @@ def handle_copy_source_param(params, **kwargs):
           and correctly sent to S3.
 
     """
-    source = params.get('CopySource')
+    source = params.get("CopySource")
     if source is None:
         # The call will eventually fail but we'll let the
         # param validator take care of this.  It will
         # give a better error message.
         return
     if isinstance(source, str):
-        params['CopySource'] = _quote_source_header(source)
+        params["CopySource"] = _quote_source_header(source)
     elif isinstance(source, dict):
-        params['CopySource'] = _quote_source_header_from_dict(source)
+        params["CopySource"] = _quote_source_header_from_dict(source)
 
 
 def _quote_source_header_from_dict(source_dict):
     try:
-        bucket = source_dict['Bucket']
-        key = source_dict['Key']
-        version_id = source_dict.get('VersionId')
+        bucket = source_dict["Bucket"]
+        key = source_dict["Key"]
+        version_id = source_dict.get("VersionId")
         if VALID_S3_ARN.search(bucket):
-            final = f'{bucket}/object/{key}'
+            final = f"{bucket}/object/{key}"
         else:
-            final = f'{bucket}/{key}'
+            final = f"{bucket}/{key}"
     except KeyError as e:
-        raise ParamValidationError(
-            report=f'Missing required parameter: {str(e)}'
-        )
-    final = percent_encode(final, safe=SAFE_CHARS + '/')
+        raise ParamValidationError(report=f"Missing required parameter: {str(e)}")
+    final = percent_encode(final, safe=SAFE_CHARS + "/")
     if version_id is not None:
-        final += f'?versionId={version_id}'
+        final += f"?versionId={version_id}"
     return final
 
 
 def _quote_source_header(value):
     result = VERSION_ID_SUFFIX.search(value)
     if result is None:
-        return percent_encode(value, safe=SAFE_CHARS + '/')
+        return percent_encode(value, safe=SAFE_CHARS + "/")
     else:
         first, version_id = value[: result.start()], value[result.start() :]
-        return percent_encode(first, safe=SAFE_CHARS + '/') + version_id
+        return percent_encode(first, safe=SAFE_CHARS + "/") + version_id
 
 
 def _get_cross_region_presigned_url(
@@ -516,12 +507,12 @@ def _get_cross_region_presigned_url(
     # I think eventually we should try to plumb through something
     # that allows us to resolve endpoints from regions.
     request_dict_copy = copy.deepcopy(request_dict)
-    request_dict_copy['body']['DestinationRegion'] = destination_region
-    request_dict_copy['url'] = request_dict['url'].replace(
+    request_dict_copy["body"]["DestinationRegion"] = destination_region
+    request_dict_copy["url"] = request_dict["url"].replace(
         destination_region, source_region
     )
-    request_dict_copy['method'] = 'GET'
-    request_dict_copy['headers'] = {}
+    request_dict_copy["method"] = "GET"
+    request_dict_copy["headers"] = {}
     return request_signer.generate_presigned_url(
         request_dict_copy, region_name=source_region, operation_name=model.name
     )
@@ -530,48 +521,44 @@ def _get_cross_region_presigned_url(
 def _get_presigned_url_source_and_destination_regions(request_signer, params):
     # Gets the source and destination regions to be used
     destination_region = request_signer._region_name
-    source_region = params.get('SourceRegion')
+    source_region = params.get("SourceRegion")
     return source_region, destination_region
 
 
 def inject_presigned_url_ec2(params, request_signer, model, **kwargs):
     # The customer can still provide this, so we should pass if they do.
-    if 'PresignedUrl' in params['body']:
+    if "PresignedUrl" in params["body"]:
         return
     src, dest = _get_presigned_url_source_and_destination_regions(
-        request_signer, params['body']
+        request_signer, params["body"]
     )
-    url = _get_cross_region_presigned_url(
-        request_signer, params, model, src, dest
-    )
-    params['body']['PresignedUrl'] = url
+    url = _get_cross_region_presigned_url(request_signer, params, model, src, dest)
+    params["body"]["PresignedUrl"] = url
     # EC2 Requires that the destination region be sent over the wire in
     # addition to the source region.
-    params['body']['DestinationRegion'] = dest
+    params["body"]["DestinationRegion"] = dest
 
 
 def inject_presigned_url_rds(params, request_signer, model, **kwargs):
     # SourceRegion is not required for RDS operations, so it's possible that
     # it isn't set. In that case it's probably a local copy so we don't need
     # to do anything else.
-    if 'SourceRegion' not in params['body']:
+    if "SourceRegion" not in params["body"]:
         return
 
     src, dest = _get_presigned_url_source_and_destination_regions(
-        request_signer, params['body']
+        request_signer, params["body"]
     )
 
     # Since SourceRegion isn't actually modeled for RDS, it needs to be
     # removed from the request params before we send the actual request.
-    del params['body']['SourceRegion']
+    del params["body"]["SourceRegion"]
 
-    if 'PreSignedUrl' in params['body']:
+    if "PreSignedUrl" in params["body"]:
         return
 
-    url = _get_cross_region_presigned_url(
-        request_signer, params, model, src, dest
-    )
-    params['body']['PreSignedUrl'] = url
+    url = _get_cross_region_presigned_url(request_signer, params, model, src, dest)
+    params["body"]["PreSignedUrl"] = url
 
 
 def json_decode_policies(parsed, model, **kwargs):
@@ -589,20 +576,18 @@ def json_decode_policies(parsed, model, **kwargs):
 def _decode_policy_types(parsed, shape):
     # IAM consistently uses the policyDocumentType shape to indicate
     # strings that have policy documents.
-    shape_name = 'policyDocumentType'
-    if shape.type_name == 'structure':
+    shape_name = "policyDocumentType"
+    if shape.type_name == "structure":
         for member_name, member_shape in shape.members.items():
             if (
-                member_shape.type_name == 'string'
+                member_shape.type_name == "string"
                 and member_shape.name == shape_name
                 and member_name in parsed
             ):
-                parsed[member_name] = decode_quoted_jsondoc(
-                    parsed[member_name]
-                )
+                parsed[member_name] = decode_quoted_jsondoc(parsed[member_name])
             elif member_name in parsed:
                 _decode_policy_types(parsed[member_name], member_shape)
-    if shape.type_name == 'list':
+    if shape.type_name == "list":
         shape_member = shape.member
         for item in parsed:
             _decode_policy_types(item, shape_member)
@@ -617,28 +602,26 @@ def parse_get_bucket_location(parsed, http_response, **kwargs):
     if http_response.raw is None:
         return
     response_body = http_response.content
-    parser = ETree.XMLParser(target=ETree.TreeBuilder(), encoding='utf-8')
+    parser = ETree.XMLParser(target=ETree.TreeBuilder(), encoding="utf-8")
     parser.feed(response_body)
     root = parser.close()
     region = root.text
-    parsed['LocationConstraint'] = region
+    parsed["LocationConstraint"] = region
 
 
 def base64_encode_user_data(params, **kwargs):
-    if 'UserData' in params:
-        if isinstance(params['UserData'], str):
+    if "UserData" in params:
+        if isinstance(params["UserData"], str):
             # Encode it to bytes if it is text.
-            params['UserData'] = params['UserData'].encode('utf-8')
-        params['UserData'] = base64.b64encode(params['UserData']).decode(
-            'utf-8'
-        )
+            params["UserData"] = params["UserData"].encode("utf-8")
+        params["UserData"] = base64.b64encode(params["UserData"]).decode("utf-8")
 
 
 def document_base64_encoding(param):
     description = (
-        '**This value will be base64 encoded automatically. Do '
-        'not base64 encode this value prior to performing the '
-        'operation.**'
+        "**This value will be base64 encoded automatically. Do "
+        "not base64 encode this value prior to performing the "
+        "operation.**"
     )
     append = AppendParamDocumentation(param, description)
     return append.append_documentation
@@ -654,7 +637,7 @@ def validate_ascii_metadata(params, **kwargs):
     browser-based uploads via POST."
 
     """
-    metadata = params.get('Metadata')
+    metadata = params.get("Metadata")
     if not metadata or not isinstance(metadata, dict):
         # We have to at least type check the metadata as a dict type
         # because this handler is called before param validation.
@@ -664,13 +647,13 @@ def validate_ascii_metadata(params, **kwargs):
         return
     for key, value in metadata.items():
         try:
-            key.encode('ascii')
-            value.encode('ascii')
+            key.encode("ascii")
+            value.encode("ascii")
         except UnicodeEncodeError:
             error_msg = (
-                'Non ascii characters found in S3 metadata '
+                "Non ascii characters found in S3 metadata "
                 f'for key "{key}", value: "{value}".  \nS3 metadata can only '
-                'contain ASCII characters. '
+                "contain ASCII characters. "
             )
             raise ParamValidationError(report=error_msg)
 
@@ -683,42 +666,40 @@ def fix_route53_ids(params, model, **kwargs):
     operation (e.g. it expects just ``'1234'``).
     """
     input_shape = model.input_shape
-    if not input_shape or not hasattr(input_shape, 'members'):
+    if not input_shape or not hasattr(input_shape, "members"):
         return
 
     members = [
         name
         for (name, shape) in input_shape.members.items()
-        if shape.name in ['ResourceId', 'DelegationSetId', 'ChangeId']
+        if shape.name in ["ResourceId", "DelegationSetId", "ChangeId"]
     ]
 
     for name in members:
         if name in params:
             orig_value = params[name]
-            params[name] = orig_value.split('/')[-1]
-            logger.debug('%s %s -> %s', name, orig_value, params[name])
+            params[name] = orig_value.split("/")[-1]
+            logger.debug("%s %s -> %s", name, orig_value, params[name])
 
 
 def inject_account_id(params, **kwargs):
-    if params.get('accountId') is None:
+    if params.get("accountId") is None:
         # Glacier requires accountId, but allows you
         # to specify '-' for the current owners account.
         # We add this default value if the user does not
         # provide the accountId as a convenience.
-        params['accountId'] = '-'
+        params["accountId"] = "-"
 
 
 def add_glacier_version(model, params, **kwargs):
     request_dict = params
-    request_dict['headers']['x-amz-glacier-version'] = model.metadata[
-        'apiVersion'
-    ]
+    request_dict["headers"]["x-amz-glacier-version"] = model.metadata["apiVersion"]
 
 
 def add_accept_header(model, params, **kwargs):
-    if params['headers'].get('Accept', None) is None:
+    if params["headers"].get("Accept", None) is None:
         request_dict = params
-        request_dict['headers']['Accept'] = 'application/json'
+        request_dict["headers"]["Accept"] = "application/json"
 
 
 def add_glacier_checksums(params, **kwargs):
@@ -734,8 +715,8 @@ def add_glacier_checksums(params, **kwargs):
 
     """
     request_dict = params
-    headers = request_dict['headers']
-    body = request_dict['body']
+    headers = request_dict["headers"]
+    body = request_dict["body"]
     if isinstance(body, bytes):
         # If the user provided a bytes type instead of a file
         # like object, we're temporarily create a BytesIO object
@@ -744,18 +725,16 @@ def add_glacier_checksums(params, **kwargs):
         # we're not actually changing the body in the request_dict.
         body = BytesIO(body)
     starting_position = body.tell()
-    if 'x-amz-content-sha256' not in headers:
-        headers['x-amz-content-sha256'] = utils.calculate_sha256(
-            body, as_hex=True
-        )
+    if "x-amz-content-sha256" not in headers:
+        headers["x-amz-content-sha256"] = utils.calculate_sha256(body, as_hex=True)
     body.seek(starting_position)
-    if 'x-amz-sha256-tree-hash' not in headers:
-        headers['x-amz-sha256-tree-hash'] = utils.calculate_tree_hash(body)
+    if "x-amz-sha256-tree-hash" not in headers:
+        headers["x-amz-sha256-tree-hash"] = utils.calculate_tree_hash(body)
     body.seek(starting_position)
 
 
 def document_glacier_tree_hash_checksum():
-    doc = '''
+    doc = """
         This is a required field.
 
         Ideally you will want to compute this value with checksums from
@@ -767,28 +746,26 @@ def document_glacier_tree_hash_checksum():
 
             checksum = calculate_tree_hash(open('your_file.txt', 'rb'))
 
-        '''
-    return AppendParamDocumentation('checksum', doc).append_documentation
+        """
+    return AppendParamDocumentation("checksum", doc).append_documentation
 
 
-def document_cloudformation_get_template_return_type(
-    section, event_name, **kwargs
-):
-    if 'response-params' in event_name:
-        template_body_section = section.get_section('TemplateBody')
-        type_section = template_body_section.get_section('param-type')
+def document_cloudformation_get_template_return_type(section, event_name, **kwargs):
+    if "response-params" in event_name:
+        template_body_section = section.get_section("TemplateBody")
+        type_section = template_body_section.get_section("param-type")
         type_section.clear_text()
-        type_section.write('(*dict*) --')
-    elif 'response-example' in event_name:
-        parent = section.get_section('structure-value')
-        param_line = parent.get_section('TemplateBody')
-        value_portion = param_line.get_section('member-value')
+        type_section.write("(*dict*) --")
+    elif "response-example" in event_name:
+        parent = section.get_section("structure-value")
+        param_line = parent.get_section("TemplateBody")
+        value_portion = param_line.get_section("member-value")
         value_portion.clear_text()
-        value_portion.write('{}')
+        value_portion.write("{}")
 
 
 def switch_host_machinelearning(request, **kwargs):
-    switch_host_with_param(request, 'PredictEndpoint')
+    switch_host_with_param(request, "PredictEndpoint")
 
 
 def check_openssl_supports_tls_version_1_2(**kwargs):
@@ -798,10 +775,10 @@ def check_openssl_supports_tls_version_1_2(**kwargs):
         openssl_version_tuple = ssl.OPENSSL_VERSION_INFO
         if openssl_version_tuple < (1, 0, 1):
             warnings.warn(
-                f'Currently installed openssl version: {ssl.OPENSSL_VERSION} does not '
-                'support TLS 1.2, which is required for use of iot-data. '
-                'Please use python installed with openssl version 1.0.1 or '
-                'higher.',
+                f"Currently installed openssl version: {ssl.OPENSSL_VERSION} does not "
+                "support TLS 1.2, which is required for use of iot-data. "
+                "Please use python installed with openssl version 1.0.1 or "
+                "higher.",
                 UnsupportedTLSVersionWarning,
             )
     # We cannot check the openssl version on python2.6, so we should just
@@ -813,18 +790,18 @@ def check_openssl_supports_tls_version_1_2(**kwargs):
 def change_get_to_post(request, **kwargs):
     # This is useful when we need to change a potentially large GET request
     # into a POST with x-www-form-urlencoded encoding.
-    if request.method == 'GET' and '?' in request.url:
-        request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-        request.method = 'POST'
-        request.url, request.data = request.url.split('?', 1)
+    if request.method == "GET" and "?" in request.url:
+        request.headers["Content-Type"] = "application/x-www-form-urlencoded"
+        request.method = "POST"
+        request.url, request.data = request.url.split("?", 1)
 
 
 def set_list_objects_encoding_type_url(params, context, **kwargs):
-    if 'EncodingType' not in params:
+    if "EncodingType" not in params:
         # We set this context so that we know it wasn't the customer that
         # requested the encoding.
-        context['encoding_type_auto_set'] = True
-        params['EncodingType'] = 'url'
+        context["encoding_type_auto_set"] = True
+        params["EncodingType"] = "url"
 
 
 def decode_list_object(parsed, context, **kwargs):
@@ -837,8 +814,8 @@ def decode_list_object(parsed, context, **kwargs):
     # name values in the following response elements:
     # Delimiter, Marker, Prefix, NextMarker, Key.
     _decode_list_object(
-        top_level_keys=['Delimiter', 'Marker', 'NextMarker'],
-        nested_keys=[('Contents', 'Key'), ('CommonPrefixes', 'Prefix')],
+        top_level_keys=["Delimiter", "Marker", "NextMarker"],
+        nested_keys=[("Contents", "Key"), ("CommonPrefixes", "Prefix")],
         parsed=parsed,
         context=context,
     )
@@ -850,8 +827,8 @@ def decode_list_object_v2(parsed, context, **kwargs):
     # name values in the following response elements:
     # Delimiter, Prefix, ContinuationToken, Key, and StartAfter.
     _decode_list_object(
-        top_level_keys=['Delimiter', 'Prefix', 'StartAfter'],
-        nested_keys=[('Contents', 'Key'), ('CommonPrefixes', 'Prefix')],
+        top_level_keys=["Delimiter", "Prefix", "StartAfter"],
+        nested_keys=[("Contents", "Key"), ("CommonPrefixes", "Prefix")],
         parsed=parsed,
         context=context,
     )
@@ -864,15 +841,15 @@ def decode_list_object_versions(parsed, context, **kwargs):
     # KeyMarker, NextKeyMarker, Prefix, Key, and Delimiter.
     _decode_list_object(
         top_level_keys=[
-            'KeyMarker',
-            'NextKeyMarker',
-            'Prefix',
-            'Delimiter',
+            "KeyMarker",
+            "NextKeyMarker",
+            "Prefix",
+            "Delimiter",
         ],
         nested_keys=[
-            ('Versions', 'Key'),
-            ('DeleteMarkers', 'Key'),
-            ('CommonPrefixes', 'Prefix'),
+            ("Versions", "Key"),
+            ("DeleteMarkers", "Key"),
+            ("CommonPrefixes", "Prefix"),
         ],
         parsed=parsed,
         context=context,
@@ -880,9 +857,7 @@ def decode_list_object_versions(parsed, context, **kwargs):
 
 
 def _decode_list_object(top_level_keys, nested_keys, parsed, context):
-    if parsed.get('EncodingType') == 'url' and context.get(
-        'encoding_type_auto_set'
-    ):
+    if parsed.get("EncodingType") == "url" and context.get("encoding_type_auto_set"):
         # URL decode top-level keys in the response if present.
         for key in top_level_keys:
             if key in parsed:
@@ -895,11 +870,11 @@ def _decode_list_object(top_level_keys, nested_keys, parsed, context):
 
 
 def convert_body_to_file_like_object(params, **kwargs):
-    if 'Body' in params:
-        if isinstance(params['Body'], str):
-            params['Body'] = BytesIO(ensure_bytes(params['Body']))
-        elif isinstance(params['Body'], bytes):
-            params['Body'] = BytesIO(params['Body'])
+    if "Body" in params:
+        if isinstance(params["Body"], str):
+            params["Body"] = BytesIO(ensure_bytes(params["Body"]))
+        elif isinstance(params["Body"], bytes):
+            params["Body"] = BytesIO(params["Body"])
 
 
 def _add_parameter_aliases(handler_list):
@@ -909,13 +884,13 @@ def _add_parameter_aliases(handler_list):
     # The last part is the original parameter name and the value is the
     # alias to expose in documentation.
     aliases = {
-        'ec2.*.Filter': 'Filters',
-        'logs.CreateExportTask.from': 'fromTime',
-        'cloudsearchdomain.Search.return': 'returnFields',
+        "ec2.*.Filter": "Filters",
+        "logs.CreateExportTask.from": "fromTime",
+        "cloudsearchdomain.Search.return": "returnFields",
     }
 
     for original, new_name in aliases.items():
-        event_portion, original_name = original.rsplit('.', 1)
+        event_portion, original_name = original.rsplit(".", 1)
         parameter_alias = ParameterAlias(original_name, new_name)
 
         # Add the handlers to the list of handlers.
@@ -923,12 +898,12 @@ def _add_parameter_aliases(handler_list):
         # The other handler is to update the documentation to show only
         # the alias.
         parameter_build_event_handler_tuple = (
-            'before-parameter-build.' + event_portion,
+            "before-parameter-build." + event_portion,
             parameter_alias.alias_parameter_in_call,
             REGISTER_FIRST,
         )
         docs_event_handler_tuple = (
-            'docs.*.' + event_portion + '.complete-section',
+            "docs.*." + event_portion + ".complete-section",
             parameter_alias.alias_parameter_in_documentation,
         )
         handler_list.append(parameter_build_event_handler_tuple)
@@ -957,19 +932,19 @@ class ParameterAlias:
                     params[self._original_name] = params.pop(self._alias_name)
 
     def alias_parameter_in_documentation(self, event_name, section, **kwargs):
-        if event_name.startswith('docs.request-params'):
+        if event_name.startswith("docs.request-params"):
             if self._original_name not in section.available_sections:
                 return
             # Replace the name for parameter type
             param_section = section.get_section(self._original_name)
-            param_type_section = param_section.get_section('param-type')
+            param_type_section = param_section.get_section("param-type")
             self._replace_content(param_type_section)
 
             # Replace the name for the parameter description
-            param_name_section = param_section.get_section('param-name')
+            param_name_section = param_section.get_section("param-name")
             self._replace_content(param_name_section)
-        elif event_name.startswith('docs.request-example'):
-            section = section.get_section('structure-value')
+        elif event_name.startswith("docs.request-example"):
+            section = section.get_section("structure-value")
             if self._original_name not in section.available_sections:
                 return
             # Replace the name for the example
@@ -977,10 +952,8 @@ class ParameterAlias:
             self._replace_content(param_section)
 
     def _replace_content(self, section):
-        content = section.getvalue().decode('utf-8')
-        updated_content = content.replace(
-            self._original_name, self._alias_name
-        )
+        content = section.getvalue().decode("utf-8")
+        updated_content = content.replace(self._original_name, self._alias_name)
         section.clear_text()
         section.write(updated_content)
 
@@ -1002,7 +975,7 @@ class ClientMethodAlias:
 class HeaderToHostHoister:
     """Takes a header and moves it to the front of the hoststring."""
 
-    _VALID_HOSTNAME = re.compile(r'(?!-)[a-z\d-]{1,63}(?<!-)$', re.IGNORECASE)
+    _VALID_HOSTNAME = re.compile(r"(?!-)[a-z\d-]{1,63}(?<!-)$", re.IGNORECASE)
 
     def __init__(self, header_name):
         self._header_name = header_name
@@ -1014,35 +987,35 @@ class HeaderToHostHoister:
         it. The original header should be removed from the header map. This
         method is intended to be used as a target for the before-call event.
         """
-        if self._header_name not in params['headers']:
+        if self._header_name not in params["headers"]:
             return
-        header_value = params['headers'][self._header_name]
+        header_value = params["headers"][self._header_name]
         self._ensure_header_is_valid_host(header_value)
-        original_url = params['url']
+        original_url = params["url"]
         new_url = self._prepend_to_host(original_url, header_value)
-        params['url'] = new_url
+        params["url"] = new_url
 
     def _ensure_header_is_valid_host(self, header):
         match = self._VALID_HOSTNAME.match(header)
         if not match:
             raise ParamValidationError(
                 report=(
-                    'Hostnames must contain only - and alphanumeric characters, '
-                    'and between 1 and 63 characters long.'
+                    "Hostnames must contain only - and alphanumeric characters, "
+                    "and between 1 and 63 characters long."
                 )
             )
 
     def _prepend_to_host(self, url, prefix):
         url_components = urlsplit(url)
-        parts = url_components.netloc.split('.')
+        parts = url_components.netloc.split(".")
         parts = [prefix] + parts
-        new_netloc = '.'.join(parts)
+        new_netloc = ".".join(parts)
         new_components = (
             url_components.scheme,
             new_netloc,
             url_components.path,
             url_components.query,
-            '',
+            "",
         )
         new_url = urlunsplit(new_components)
         return new_url
@@ -1051,61 +1024,61 @@ class HeaderToHostHoister:
 def inject_api_version_header_if_needed(model, params, **kwargs):
     if not model.is_endpoint_discovery_operation:
         return
-    params['headers']['x-amz-api-version'] = model.service_model.api_version
+    params["headers"]["x-amz-api-version"] = model.service_model.api_version
 
 
 def remove_lex_v2_start_conversation(class_attributes, **kwargs):
     """Operation requires h2 which is currently unsupported in Python"""
-    if 'start_conversation' in class_attributes:
-        del class_attributes['start_conversation']
+    if "start_conversation" in class_attributes:
+        del class_attributes["start_conversation"]
 
 
 def remove_qbusiness_chat(class_attributes, **kwargs):
     """Operation requires h2 which is currently unsupported in Python"""
-    if 'chat' in class_attributes:
-        del class_attributes['chat']
+    if "chat" in class_attributes:
+        del class_attributes["chat"]
 
 
 def remove_bedrock_runtime_invoke_model_with_bidirectional_stream(
     class_attributes, **kwargs
 ):
     """Operation requires h2 which is currently unsupported in Python"""
-    if 'invoke_model_with_bidirectional_stream' in class_attributes:
-        del class_attributes['invoke_model_with_bidirectional_stream']
+    if "invoke_model_with_bidirectional_stream" in class_attributes:
+        del class_attributes["invoke_model_with_bidirectional_stream"]
 
 
 def remove_connecthealth_start_medical_scribe_listening_session(
     class_attributes, **kwargs
 ):
     """Operation requires h2 which is currently unsupported in Python"""
-    if 'start_medical_scribe_listening_session' in class_attributes:
-        del class_attributes['start_medical_scribe_listening_session']
+    if "start_medical_scribe_listening_session" in class_attributes:
+        del class_attributes["start_medical_scribe_listening_session"]
 
 
 def remove_polly_start_speech_synthesis_stream(class_attributes, **kwargs):
     """Operation requires h2 which is currently unsupported in Python"""
-    if 'start_speech_synthesis_stream' in class_attributes:
-        del class_attributes['start_speech_synthesis_stream']
+    if "start_speech_synthesis_stream" in class_attributes:
+        del class_attributes["start_speech_synthesis_stream"]
 
 
 def enable_millisecond_timestamp_precision(serializer_kwargs, **kwargs):
     """Event handler to enable millisecond precision"""
-    serializer_kwargs['timestamp_precision'] = TIMESTAMP_PRECISION_MILLISECOND
+    serializer_kwargs["timestamp_precision"] = TIMESTAMP_PRECISION_MILLISECOND
 
 
 def add_retry_headers(request, **kwargs):
-    retries_context = request.context.get('retries')
+    retries_context = request.context.get("retries")
     if not retries_context:
         return
     headers = request.headers
-    headers['amz-sdk-invocation-id'] = retries_context['invocation-id']
-    sdk_retry_keys = ('ttl', 'attempt', 'max')
+    headers["amz-sdk-invocation-id"] = retries_context["invocation-id"]
+    sdk_retry_keys = ("ttl", "attempt", "max")
     sdk_request_headers = [
-        f'{key}={retries_context[key]}'
+        f"{key}={retries_context[key]}"
         for key in sdk_retry_keys
         if key in retries_context
     ]
-    headers['amz-sdk-request'] = '; '.join(sdk_request_headers)
+    headers["amz-sdk-request"] = "; ".join(sdk_request_headers)
 
 
 def remove_bucket_from_url_paths_from_model(params, model, context, **kwargs):
@@ -1127,19 +1100,19 @@ def remove_bucket_from_url_paths_from_model(params, model, context, **kwargs):
     endpoint resolution, the problem exists in ALL URLs that contain a bucket
     name and can therefore be addressed before the URL gets assembled.
     """
-    req_uri = model.http['requestUri']
-    bucket_path = '/{Bucket}'
+    req_uri = model.http["requestUri"]
+    bucket_path = "/{Bucket}"
     if req_uri.startswith(bucket_path):
-        model.http['requestUri'] = req_uri[len(bucket_path) :]
+        model.http["requestUri"] = req_uri[len(bucket_path) :]
         # Strip query off the requestUri before using as authPath. The
         # HmacV1Auth signer will append query params to the authPath during
         # signing.
-        req_uri = req_uri.split('?')[0]
+        req_uri = req_uri.split("?")[0]
         # If the request URI is ONLY a bucket, the auth_path must be
         # terminated with a '/' character to generate a signature that the
         # server will accept.
         needs_slash = req_uri == bucket_path
-        model.http['authPath'] = f'{req_uri}/' if needs_slash else req_uri
+        model.http["authPath"] = f"{req_uri}/" if needs_slash else req_uri
 
 
 def remove_accid_host_prefix_from_model(params, model, context, **kwargs):
@@ -1156,43 +1129,39 @@ def remove_accid_host_prefix_from_model(params, model, context, **kwargs):
     `RequiresAccountId` static context parameter in place.
     """
     has_ctx_param = any(
-        ctx_param.name == 'RequiresAccountId' and ctx_param.value is True
+        ctx_param.name == "RequiresAccountId" and ctx_param.value is True
         for ctx_param in model.static_context_parameters
     )
     if (
         model.endpoint is not None
-        and model.endpoint.get('hostPrefix') == '{AccountId}.'
+        and model.endpoint.get("hostPrefix") == "{AccountId}."
         and has_ctx_param
     ):
-        del model.endpoint['hostPrefix']
+        del model.endpoint["hostPrefix"]
 
 
 def remove_arn_from_signing_path(request, **kwargs):
     auth_path = request.auth_path
-    if isinstance(auth_path, str) and auth_path.startswith('/arn%3A'):
-        auth_path_parts = auth_path.split('/')
-        if len(auth_path_parts) > 1 and ArnParser.is_arn(
-            unquote(auth_path_parts[1])
-        ):
-            request.auth_path = '/'.join(['', *auth_path_parts[2:]])
+    if isinstance(auth_path, str) and auth_path.startswith("/arn%3A"):
+        auth_path_parts = auth_path.split("/")
+        if len(auth_path_parts) > 1 and ArnParser.is_arn(unquote(auth_path_parts[1])):
+            request.auth_path = "/".join(["", *auth_path_parts[2:]])
 
 
-def customize_endpoint_resolver_builtins(
-    builtins, model, params, context, **kwargs
-):
+def customize_endpoint_resolver_builtins(builtins, model, params, context, **kwargs):
     """Modify builtin parameter values for endpoint resolver
 
     Modifies the builtins dict in place. Changes are in effect for one call.
     The corresponding event is emitted only if at least one builtin parameter
     value is required for endpoint resolution for the operation.
     """
-    bucket_name = params.get('Bucket')
+    bucket_name = params.get("Bucket")
     bucket_is_arn = bucket_name is not None and ArnParser.is_arn(bucket_name)
     # In some situations the host will return AuthorizationHeaderMalformed
     # when the signing region of a sigv4 request is not the bucket's
     # region (which is likely unknown by the user of GetBucketLocation).
     # Avoid this by always using path-style addressing.
-    if model.name == 'GetBucketLocation':
+    if model.name == "GetBucketLocation":
         builtins[EndpointResolverBuiltins.AWS_S3_FORCE_PATH_STYLE] = True
     # All situations where the bucket name is an ARN are not compatible
     # with path style addressing.
@@ -1202,41 +1171,39 @@ def customize_endpoint_resolver_builtins(
     # Bucket names that are invalid host labels require path-style addressing.
     # If path-style addressing was specifically requested, the default builtin
     # value is already set.
-    path_style_required = (
-        bucket_name is not None and not VALID_HOST_LABEL_RE.match(bucket_name)
+    path_style_required = bucket_name is not None and not VALID_HOST_LABEL_RE.match(
+        bucket_name
     )
-    path_style_requested = builtins[
-        EndpointResolverBuiltins.AWS_S3_FORCE_PATH_STYLE
-    ]
+    path_style_requested = builtins[EndpointResolverBuiltins.AWS_S3_FORCE_PATH_STYLE]
 
     # Path-style addressing is incompatible with the global endpoint for
     # presigned URLs. If the bucket name is an ARN, the ARN's region should be
     # used in the endpoint.
     if (
-        context.get('use_global_endpoint')
+        context.get("use_global_endpoint")
         and not path_style_required
         and not path_style_requested
         and not bucket_is_arn
         and not utils.is_s3express_bucket(bucket_name)
     ):
-        builtins[EndpointResolverBuiltins.AWS_REGION] = 'aws-global'
+        builtins[EndpointResolverBuiltins.AWS_REGION] = "aws-global"
         builtins[EndpointResolverBuiltins.AWS_S3_USE_GLOBAL_ENDPOINT] = True
 
 
 def remove_content_type_header_for_presigning(request, **kwargs):
     if (
-        request.context.get('is_presign_request') is True
-        and 'Content-Type' in request.headers
+        request.context.get("is_presign_request") is True
+        and "Content-Type" in request.headers
     ):
-        del request.headers['Content-Type']
+        del request.headers["Content-Type"]
 
 
 def handle_expires_header(
     operation_model, response_dict, customized_response_dict, **kwargs
 ):
     if _has_expires_shape(operation_model.output_shape):
-        if expires_value := response_dict.get('headers', {}).get('Expires'):
-            customized_response_dict['ExpiresString'] = expires_value
+        if expires_value := response_dict.get("headers", {}).get("Expires"):
+            customized_response_dict["ExpiresString"] = expires_value
             try:
                 utils.parse_timestamp(expires_value)
             except (ValueError, RuntimeError):
@@ -1245,15 +1212,15 @@ def handle_expires_header(
                     'The unparsed value is available in the response under "ExpiresString".',
                     expires_value,
                 )
-                del response_dict['headers']['Expires']
+                del response_dict["headers"]["Expires"]
 
 
 def _has_expires_shape(shape):
     if not shape:
         return False
     return any(
-        member_shape.name == 'Expires'
-        and member_shape.serialization.get('name') == 'Expires'
+        member_shape.name == "Expires"
+        and member_shape.serialization.get("name") == "Expires"
         for member_shape in shape.members.values()
     )
 
@@ -1262,37 +1229,35 @@ def document_expires_shape(section, event_name, **kwargs):
     # Updates the documentation for S3 operations that include the 'Expires' member
     # in their response structure. Documents a synthetic member 'ExpiresString' and
     # includes a deprecation notice for 'Expires'.
-    if 'response-example' in event_name:
-        if not section.has_section('structure-value'):
+    if "response-example" in event_name:
+        if not section.has_section("structure-value"):
             return
-        parent = section.get_section('structure-value')
-        if not parent.has_section('Expires'):
+        parent = section.get_section("structure-value")
+        if not parent.has_section("Expires"):
             return
-        param_line = parent.get_section('Expires')
-        param_line.add_new_section('ExpiresString')
-        new_param_line = param_line.get_section('ExpiresString')
+        param_line = parent.get_section("Expires")
+        param_line.add_new_section("ExpiresString")
+        new_param_line = param_line.get_section("ExpiresString")
         new_param_line.write("'ExpiresString': 'string',")
         new_param_line.style.new_line()
-    elif 'response-params' in event_name:
-        if not section.has_section('Expires'):
+    elif "response-params" in event_name:
+        if not section.has_section("Expires"):
             return
-        param_section = section.get_section('Expires')
+        param_section = section.get_section("Expires")
         # Add a deprecation notice for the "Expires" param
-        doc_section = param_section.get_section('param-documentation')
+        doc_section = param_section.get_section("param-documentation")
         doc_section.style.start_note()
         doc_section.write(
-            'This member has been deprecated. Please use ``ExpiresString`` instead.'
+            "This member has been deprecated. Please use ``ExpiresString`` instead."
         )
         doc_section.style.end_note()
         # Document the "ExpiresString" param
-        new_param_section = param_section.add_new_section('ExpiresString')
+        new_param_section = param_section.add_new_section("ExpiresString")
         new_param_section.style.new_paragraph()
-        new_param_section.write('- **ExpiresString** *(string) --*')
+        new_param_section.write("- **ExpiresString** *(string) --*")
         new_param_section.style.indent()
         new_param_section.style.new_paragraph()
-        new_param_section.write(
-            'The raw, unparsed value of the ``Expires`` field.'
-        )
+        new_param_section.write("The raw, unparsed value of the ``Expires`` field.")
 
 
 def _handle_200_error(operation_model, response_dict, **kwargs):
@@ -1303,27 +1268,23 @@ def _handle_200_error(operation_model, response_dict, **kwargs):
         # can't be reliably distinguished from an S3 error.
         return
     if _looks_like_special_case_error(
-        response_dict['status_code'], response_dict['body']
+        response_dict["status_code"], response_dict["body"]
     ):
-        response_dict['status_code'] = 500
+        response_dict["status_code"] = 500
         logger.debug(
             "Error found for response with 200 status code: %s.",
-            response_dict['body'],
+            response_dict["body"],
         )
 
 
 def _should_handle_200_error(operation_model, response_dict):
     output_shape = operation_model.output_shape
-    if (
-        not response_dict
-        or operation_model.has_event_stream_output
-        or not output_shape
-    ):
+    if not response_dict or operation_model.has_event_stream_output or not output_shape:
         return False
-    payload = output_shape.serialization.get('payload')
+    payload = output_shape.serialization.get("payload")
     if payload is not None:
         payload_shape = output_shape.members[payload]
-        if payload_shape.type_name in ('blob', 'string'):
+        if payload_shape.type_name in ("blob", "string"):
             return False
     return True
 
@@ -1332,13 +1293,13 @@ def _map_oauth2_errors(response_dict, **kwargs):
     # SSO OIDC follows the OAuth2 standard, which returns error messages in
     # 'error_description' instead of the 'Message' field botocore expects.
     try:
-        if response_dict.get('status_code') < 400:
+        if response_dict.get("status_code") < 400:
             return
-        body = json.loads(response_dict.get('body', b'{}'))
-        if message := body.get('error_description'):
-            if not body.get('Message', body.get("message")):
-                body['Message'] = message
-                response_dict['body'] = json.dumps(body).encode('utf-8')
+        body = json.loads(response_dict.get("body", b"{}"))
+        if message := body.get("error_description"):
+            if not body.get("Message", body.get("message")):
+                body["Message"] = message
+                response_dict["body"] = json.dumps(body).encode("utf-8")
     except (ValueError, AttributeError, TypeError):
         pass
 
@@ -1349,8 +1310,8 @@ def _update_status_code(response, **kwargs):
     if response is None:
         return
     http_response, parsed = response
-    parsed_status_code = parsed.get('ResponseMetadata', {}).get(
-        'HTTPStatusCode', http_response.status_code
+    parsed_status_code = parsed.get("ResponseMetadata", {}).get(
+        "HTTPStatusCode", http_response.status_code
     )
     if http_response.status_code != parsed_status_code:
         http_response.status_code = parsed_status_code
@@ -1363,16 +1324,11 @@ def _handle_request_validation_mode_member(params, model, **kwargs):
     response_checksum_validation = client_config.response_checksum_validation
     http_checksum = model.http_checksum
     mode_member = http_checksum.get("requestValidationModeMember")
-    if (
-        mode_member is not None
-        and response_checksum_validation == "when_supported"
-    ):
+    if mode_member is not None and response_checksum_validation == "when_supported":
         params.setdefault(mode_member, "ENABLED")
 
 
-def _set_extra_headers_for_unsigned_request(
-    request, signature_version, **kwargs
-):
+def _set_extra_headers_for_unsigned_request(request, signature_version, **kwargs):
     # When sending a checksum in the trailer of an unsigned chunked request, S3
     # requires us to set the "X-Amz-Content-SHA256" header to "STREAMING-UNSIGNED-PAYLOAD-TRAILER".
     checksum_context = request.context.get("checksum", {})
@@ -1388,21 +1344,19 @@ def _set_auth_scheme_preference_signer(context, signing_name, **kwargs):
     Determines the appropriate signer to use based on the client configuration,
     authentication scheme preferences, and the availability of a bearer token.
     """
-    client_config = context.get('client_config')
+    client_config = context.get("client_config")
     if client_config is None:
         return
 
     signature_version = client_config.signature_version
     auth_scheme_preference = client_config.auth_scheme_preference
-    auth_options = context.get('auth_options')
+    auth_options = context.get("auth_options")
 
     signature_version_set_in_code = (
         isinstance(signature_version, ClientConfigString)
         or signature_version is botocore.UNSIGNED
     )
-    auth_preference_set_in_code = isinstance(
-        auth_scheme_preference, ClientConfigString
-    )
+    auth_preference_set_in_code = isinstance(auth_scheme_preference, ClientConfigString)
     has_in_code_configuration = (
         signature_version_set_in_code or auth_preference_set_in_code
     )
@@ -1412,17 +1366,13 @@ def _set_auth_scheme_preference_signer(context, signing_name, **kwargs):
     # If signature version was not set in code, but an auth scheme preference
     # is available, resolve it based on the preferred schemes and supported auth
     # options for this service.
-    if (
-        not signature_version_set_in_code
-        and auth_scheme_preference
-        and auth_options
-    ):
-        preferred_schemes = auth_scheme_preference.split(',')
+    if not signature_version_set_in_code and auth_scheme_preference and auth_options:
+        preferred_schemes = auth_scheme_preference.split(",")
         resolved = botocore.auth.resolve_auth_scheme_preference(
             preferred_schemes, auth_options
         )
         resolved_signature_version = (
-            botocore.UNSIGNED if resolved == 'none' else resolved
+            botocore.UNSIGNED if resolved == "none" else resolved
         )
 
     # Prefer 'bearer' signature version if a bearer token is available, and it
@@ -1434,10 +1384,10 @@ def _set_auth_scheme_preference_signer(context, signing_name, **kwargs):
         resolved_signature_version,
         auth_options,
     ):
-        register_feature_id('BEARER_SERVICE_ENV_VARS')
-        resolved_signature_version = 'bearer'
+        register_feature_id("BEARER_SERVICE_ENV_VARS")
+        resolved_signature_version = "bearer"
 
-    if resolved_signature_version == 'v4a':
+    if resolved_signature_version == "v4a":
         _set_sigv4a_signing_context(context, signing_name)
 
     if resolved_signature_version == signature_version:
@@ -1454,7 +1404,7 @@ def _should_prefer_bearer_auth(
     if signing_name not in get_bearer_auth_supported_services():
         return False
 
-    if not auth_options or 'smithy.api#httpBearerAuth' not in auth_options:
+    if not auth_options or "smithy.api#httpBearerAuth" not in auth_options:
         return False
 
     has_token = get_token_from_environment(signing_name) is not None
@@ -1463,7 +1413,7 @@ def _should_prefer_bearer_auth(
     #   Bearer was already resolved, or
     #   No auth-related values were explicitly set in code
     return has_token and (
-        resolved_signature_version == 'bearer' or not has_in_code_configuration
+        resolved_signature_version == "bearer" or not has_in_code_configuration
     )
 
 
@@ -1477,7 +1427,7 @@ def get_bearer_auth_supported_services():
     including removal, in any botocore release. It is not intended for external use,
     and its usage outside of botocore is not advised or supported.
     """
-    return {'bedrock'}
+    return {"bedrock"}
 
 
 # This is a list of (event_name, handler).
@@ -1485,300 +1435,298 @@ def get_bearer_auth_supported_services():
 # automatically registered with that Session.
 
 BUILTIN_HANDLERS = [
-    ('choose-service-name', handle_service_name_alias),
+    ("choose-service-name", handle_service_name_alias),
     (
-        'getattr.mturk.list_hi_ts_for_qualification_type',
-        ClientMethodAlias('list_hits_for_qualification_type'),
+        "getattr.mturk.list_hi_ts_for_qualification_type",
+        ClientMethodAlias("list_hits_for_qualification_type"),
     ),
     (
-        'getattr.socialmessaging.delete_whatsapp_media_message',
-        ClientMethodAlias('delete_whatsapp_message_media'),
+        "getattr.socialmessaging.delete_whatsapp_media_message",
+        ClientMethodAlias("delete_whatsapp_message_media"),
     ),
     (
-        'getattr.cloudwatch.get_o_tel_enrichment',
-        ClientMethodAlias('get_otel_enrichment'),
+        "getattr.cloudwatch.get_o_tel_enrichment",
+        ClientMethodAlias("get_otel_enrichment"),
     ),
     (
-        'getattr.cloudwatch.start_o_tel_enrichment',
-        ClientMethodAlias('start_otel_enrichment'),
+        "getattr.cloudwatch.start_o_tel_enrichment",
+        ClientMethodAlias("start_otel_enrichment"),
     ),
     (
-        'getattr.cloudwatch.stop_o_tel_enrichment',
-        ClientMethodAlias('stop_otel_enrichment'),
+        "getattr.cloudwatch.stop_o_tel_enrichment",
+        ClientMethodAlias("stop_otel_enrichment"),
     ),
     (
-        'before-parameter-build.s3.UploadPart',
+        "before-parameter-build.s3.UploadPart",
         convert_body_to_file_like_object,
         REGISTER_LAST,
     ),
     (
-        'before-parameter-build.s3.PutObject',
+        "before-parameter-build.s3.PutObject",
         convert_body_to_file_like_object,
         REGISTER_LAST,
     ),
-    ('creating-client-class', add_generate_presigned_url),
-    ('creating-client-class.s3', add_generate_presigned_post),
-    ('creating-client-class.iot-data', check_openssl_supports_tls_version_1_2),
-    ('creating-client-class.lex-runtime-v2', remove_lex_v2_start_conversation),
-    ('creating-client-class.qbusiness', remove_qbusiness_chat),
+    ("creating-client-class", add_generate_presigned_url),
+    ("creating-client-class.s3", add_generate_presigned_post),
+    ("creating-client-class.iot-data", check_openssl_supports_tls_version_1_2),
+    ("creating-client-class.lex-runtime-v2", remove_lex_v2_start_conversation),
+    ("creating-client-class.qbusiness", remove_qbusiness_chat),
     (
-        'creating-client-class.bedrock-runtime',
+        "creating-client-class.bedrock-runtime",
         remove_bedrock_runtime_invoke_model_with_bidirectional_stream,
     ),
     (
-        'creating-client-class.connecthealth',
+        "creating-client-class.connecthealth",
         remove_connecthealth_start_medical_scribe_listening_session,
     ),
     (
-        'creating-client-class.polly',
+        "creating-client-class.polly",
         remove_polly_start_speech_synthesis_stream,
     ),
     (
-        'creating-serializer.bedrock-agentcore',
+        "creating-serializer.bedrock-agentcore",
         enable_millisecond_timestamp_precision,
     ),
-    ('after-call.iam', json_decode_policies),
-    ('after-call.ec2.GetConsoleOutput', decode_console_output),
-    ('after-call.cloudformation.GetTemplate', json_decode_template_body),
-    ('after-call.s3.GetBucketLocation', parse_get_bucket_location),
+    ("after-call.iam", json_decode_policies),
+    ("after-call.ec2.GetConsoleOutput", decode_console_output),
+    ("after-call.cloudformation.GetTemplate", json_decode_template_body),
+    ("after-call.s3.GetBucketLocation", parse_get_bucket_location),
     (
-        'after-call.sqs.*',
+        "after-call.sqs.*",
         _handle_sqs_compatible_error,
     ),
-    ('before-parse.s3.*', handle_expires_header),
-    ('before-parse.s3.*', _handle_200_error, REGISTER_FIRST),
-    ('before-parse.sso-oidc.*', _map_oauth2_errors),
-    ('before-parameter-build', generate_idempotent_uuid),
-    ('before-parameter-build', _handle_request_validation_mode_member),
-    ('before-parameter-build.s3', validate_bucket_name),
-    ('before-parameter-build.s3', remove_bucket_from_url_paths_from_model),
+    ("before-parse.s3.*", handle_expires_header),
+    ("before-parse.s3.*", _handle_200_error, REGISTER_FIRST),
+    ("before-parse.sso-oidc.*", _map_oauth2_errors),
+    ("before-parameter-build", generate_idempotent_uuid),
+    ("before-parameter-build", _handle_request_validation_mode_member),
+    ("before-parameter-build.s3", validate_bucket_name),
+    ("before-parameter-build.s3", remove_bucket_from_url_paths_from_model),
     (
-        'before-parameter-build.s3.ListObjects',
+        "before-parameter-build.s3.ListObjects",
         set_list_objects_encoding_type_url,
     ),
     (
-        'before-parameter-build.s3.ListObjectsV2',
+        "before-parameter-build.s3.ListObjectsV2",
         set_list_objects_encoding_type_url,
     ),
     (
-        'before-parameter-build.s3.ListObjectVersions',
+        "before-parameter-build.s3.ListObjectVersions",
         set_list_objects_encoding_type_url,
     ),
-    ('before-parameter-build.s3.CopyObject', handle_copy_source_param),
-    ('before-parameter-build.s3.UploadPartCopy', handle_copy_source_param),
-    ('before-parameter-build.s3.CopyObject', validate_ascii_metadata),
-    ('before-parameter-build.s3.PutObject', validate_ascii_metadata),
+    ("before-parameter-build.s3.CopyObject", handle_copy_source_param),
+    ("before-parameter-build.s3.UploadPartCopy", handle_copy_source_param),
+    ("before-parameter-build.s3.CopyObject", validate_ascii_metadata),
+    ("before-parameter-build.s3.PutObject", validate_ascii_metadata),
     (
-        'before-parameter-build.s3.CreateMultipartUpload',
+        "before-parameter-build.s3.CreateMultipartUpload",
         validate_ascii_metadata,
     ),
-    ('before-parameter-build.s3-control', remove_accid_host_prefix_from_model),
-    ('docs.*.s3.CopyObject.complete-section', document_copy_source_form),
-    ('docs.*.s3.UploadPartCopy.complete-section', document_copy_source_form),
-    ('docs.response-example.s3.*.complete-section', document_expires_shape),
-    ('docs.response-params.s3.*.complete-section', document_expires_shape),
-    ('before-endpoint-resolution.s3', customize_endpoint_resolver_builtins),
-    ('before-call', add_recursion_detection_header),
-    ('before-call.s3', add_expect_header),
-    ('before-call.glacier', add_glacier_version),
-    ('before-call.apigateway', add_accept_header),
-    ('before-call.s3.DeleteObjects', escape_xml_payload),
-    ('before-call.s3.PutBucketLifecycleConfiguration', escape_xml_payload),
-    ('before-call.glacier.UploadArchive', add_glacier_checksums),
-    ('before-call.glacier.UploadMultipartPart', add_glacier_checksums),
-    ('before-call.ec2.CopySnapshot', inject_presigned_url_ec2),
-    ('request-created', add_retry_headers),
-    ('request-created.machinelearning.Predict', switch_host_machinelearning),
-    ('needs-retry.s3.*', _update_status_code, REGISTER_FIRST),
-    ('choose-signer.cognito-identity.GetId', disable_signing),
-    ('choose-signer.cognito-identity.GetOpenIdToken', disable_signing),
-    ('choose-signer.cognito-identity.UnlinkIdentity', disable_signing),
+    ("before-parameter-build.s3-control", remove_accid_host_prefix_from_model),
+    ("docs.*.s3.CopyObject.complete-section", document_copy_source_form),
+    ("docs.*.s3.UploadPartCopy.complete-section", document_copy_source_form),
+    ("docs.response-example.s3.*.complete-section", document_expires_shape),
+    ("docs.response-params.s3.*.complete-section", document_expires_shape),
+    ("before-endpoint-resolution.s3", customize_endpoint_resolver_builtins),
+    ("before-call", add_recursion_detection_header),
+    ("before-call.s3", add_expect_header),
+    ("before-call.glacier", add_glacier_version),
+    ("before-call.apigateway", add_accept_header),
+    ("before-call.s3.DeleteObjects", escape_xml_payload),
+    ("before-call.s3.PutBucketLifecycleConfiguration", escape_xml_payload),
+    ("before-call.glacier.UploadArchive", add_glacier_checksums),
+    ("before-call.glacier.UploadMultipartPart", add_glacier_checksums),
+    ("before-call.ec2.CopySnapshot", inject_presigned_url_ec2),
+    ("request-created", add_retry_headers),
+    ("request-created.machinelearning.Predict", switch_host_machinelearning),
+    ("needs-retry.s3.*", _update_status_code, REGISTER_FIRST),
+    ("choose-signer.cognito-identity.GetId", disable_signing),
+    ("choose-signer.cognito-identity.GetOpenIdToken", disable_signing),
+    ("choose-signer.cognito-identity.UnlinkIdentity", disable_signing),
     (
-        'choose-signer.cognito-identity.GetCredentialsForIdentity',
+        "choose-signer.cognito-identity.GetCredentialsForIdentity",
         disable_signing,
     ),
-    ('choose-signer.sts.AssumeRoleWithSAML', disable_signing),
-    ('choose-signer.sts.AssumeRoleWithWebIdentity', disable_signing),
-    ('choose-signer', set_operation_specific_signer),
-    ('choose-signer', _set_auth_scheme_preference_signer),
-    ('before-parameter-build.s3.HeadObject', sse_md5),
-    ('before-parameter-build.s3.GetObject', sse_md5),
-    ('before-parameter-build.s3.PutObject', sse_md5),
-    ('before-parameter-build.s3.CopyObject', sse_md5),
-    ('before-parameter-build.s3.CopyObject', copy_source_sse_md5),
-    ('before-parameter-build.s3.CreateMultipartUpload', sse_md5),
-    ('before-parameter-build.s3.UploadPart', sse_md5),
-    ('before-parameter-build.s3.UploadPartCopy', sse_md5),
-    ('before-parameter-build.s3.UploadPartCopy', copy_source_sse_md5),
-    ('before-parameter-build.s3.CompleteMultipartUpload', sse_md5),
-    ('before-parameter-build.s3.SelectObjectContent', sse_md5),
-    ('before-parameter-build.ec2.RunInstances', base64_encode_user_data),
+    ("choose-signer.sts.AssumeRoleWithSAML", disable_signing),
+    ("choose-signer.sts.AssumeRoleWithWebIdentity", disable_signing),
+    ("choose-signer", set_operation_specific_signer),
+    ("choose-signer", _set_auth_scheme_preference_signer),
+    ("before-parameter-build.s3.HeadObject", sse_md5),
+    ("before-parameter-build.s3.GetObject", sse_md5),
+    ("before-parameter-build.s3.PutObject", sse_md5),
+    ("before-parameter-build.s3.CopyObject", sse_md5),
+    ("before-parameter-build.s3.CopyObject", copy_source_sse_md5),
+    ("before-parameter-build.s3.CreateMultipartUpload", sse_md5),
+    ("before-parameter-build.s3.UploadPart", sse_md5),
+    ("before-parameter-build.s3.UploadPartCopy", sse_md5),
+    ("before-parameter-build.s3.UploadPartCopy", copy_source_sse_md5),
+    ("before-parameter-build.s3.CompleteMultipartUpload", sse_md5),
+    ("before-parameter-build.s3.SelectObjectContent", sse_md5),
+    ("before-parameter-build.ec2.RunInstances", base64_encode_user_data),
     (
-        'before-parameter-build.autoscaling.CreateLaunchConfiguration',
+        "before-parameter-build.autoscaling.CreateLaunchConfiguration",
         base64_encode_user_data,
     ),
-    ('before-parameter-build.route53', fix_route53_ids),
-    ('before-parameter-build.glacier', inject_account_id),
-    ('before-sign.s3', remove_arn_from_signing_path),
-    ('before-sign.s3', _set_extra_headers_for_unsigned_request),
+    ("before-parameter-build.route53", fix_route53_ids),
+    ("before-parameter-build.glacier", inject_account_id),
+    ("before-sign.s3", remove_arn_from_signing_path),
+    ("before-sign.s3", _set_extra_headers_for_unsigned_request),
     (
-        'before-sign.polly.SynthesizeSpeech',
+        "before-sign.polly.SynthesizeSpeech",
         remove_content_type_header_for_presigning,
     ),
-    ('after-call.s3.ListObjects', decode_list_object),
-    ('after-call.s3.ListObjectsV2', decode_list_object_v2),
-    ('after-call.s3.ListObjectVersions', decode_list_object_versions),
+    ("after-call.s3.ListObjects", decode_list_object),
+    ("after-call.s3.ListObjectsV2", decode_list_object_v2),
+    ("after-call.s3.ListObjectVersions", decode_list_object_versions),
     # Cloudsearchdomain search operation will be sent by HTTP POST
-    ('request-created.cloudsearchdomain.Search', change_get_to_post),
+    ("request-created.cloudsearchdomain.Search", change_get_to_post),
     # Glacier documentation customizations
     (
-        'docs.*.glacier.*.complete-section',
+        "docs.*.glacier.*.complete-section",
         AutoPopulatedParam(
-            'accountId',
+            "accountId",
             'Note: this parameter is set to "-" by'
-            'default if no value is not specified.',
+            "default if no value is not specified.",
         ).document_auto_populated_param,
     ),
     (
-        'docs.*.glacier.UploadArchive.complete-section',
-        AutoPopulatedParam('checksum').document_auto_populated_param,
+        "docs.*.glacier.UploadArchive.complete-section",
+        AutoPopulatedParam("checksum").document_auto_populated_param,
     ),
     (
-        'docs.*.glacier.UploadMultipartPart.complete-section',
-        AutoPopulatedParam('checksum').document_auto_populated_param,
+        "docs.*.glacier.UploadMultipartPart.complete-section",
+        AutoPopulatedParam("checksum").document_auto_populated_param,
     ),
     (
-        'docs.request-params.glacier.CompleteMultipartUpload.complete-section',
+        "docs.request-params.glacier.CompleteMultipartUpload.complete-section",
         document_glacier_tree_hash_checksum(),
     ),
     # Cloudformation documentation customizations
     (
-        'docs.*.cloudformation.GetTemplate.complete-section',
+        "docs.*.cloudformation.GetTemplate.complete-section",
         document_cloudformation_get_template_return_type,
     ),
     # UserData base64 encoding documentation customizations
     (
-        'docs.*.ec2.RunInstances.complete-section',
-        document_base64_encoding('UserData'),
+        "docs.*.ec2.RunInstances.complete-section",
+        document_base64_encoding("UserData"),
     ),
     (
-        'docs.*.autoscaling.CreateLaunchConfiguration.complete-section',
-        document_base64_encoding('UserData'),
+        "docs.*.autoscaling.CreateLaunchConfiguration.complete-section",
+        document_base64_encoding("UserData"),
     ),
     # EC2 CopySnapshot documentation customizations
     (
-        'docs.*.ec2.CopySnapshot.complete-section',
-        AutoPopulatedParam('PresignedUrl').document_auto_populated_param,
+        "docs.*.ec2.CopySnapshot.complete-section",
+        AutoPopulatedParam("PresignedUrl").document_auto_populated_param,
     ),
     (
-        'docs.*.ec2.CopySnapshot.complete-section',
-        AutoPopulatedParam('DestinationRegion').document_auto_populated_param,
+        "docs.*.ec2.CopySnapshot.complete-section",
+        AutoPopulatedParam("DestinationRegion").document_auto_populated_param,
     ),
     # S3 SSE documentation modifications
     (
-        'docs.*.s3.*.complete-section',
-        AutoPopulatedParam('SSECustomerKeyMD5').document_auto_populated_param,
+        "docs.*.s3.*.complete-section",
+        AutoPopulatedParam("SSECustomerKeyMD5").document_auto_populated_param,
     ),
     # S3 SSE Copy Source documentation modifications
     (
-        'docs.*.s3.*.complete-section',
-        AutoPopulatedParam(
-            'CopySourceSSECustomerKeyMD5'
-        ).document_auto_populated_param,
+        "docs.*.s3.*.complete-section",
+        AutoPopulatedParam("CopySourceSSECustomerKeyMD5").document_auto_populated_param,
     ),
     # Add base64 information to Lambda
     (
-        'docs.*.lambda.UpdateFunctionCode.complete-section',
-        document_base64_encoding('ZipFile'),
+        "docs.*.lambda.UpdateFunctionCode.complete-section",
+        document_base64_encoding("ZipFile"),
     ),
     # The following S3 operations cannot actually accept a ContentMD5
     (
-        'docs.*.s3.*.complete-section',
+        "docs.*.s3.*.complete-section",
         HideParamFromOperations(
-            's3',
-            'ContentMD5',
+            "s3",
+            "ContentMD5",
             [
-                'DeleteObjects',
-                'PutBucketAcl',
-                'PutBucketCors',
-                'PutBucketLifecycle',
-                'PutBucketLogging',
-                'PutBucketNotification',
-                'PutBucketPolicy',
-                'PutBucketReplication',
-                'PutBucketRequestPayment',
-                'PutBucketTagging',
-                'PutBucketVersioning',
-                'PutBucketWebsite',
-                'PutObjectAcl',
+                "DeleteObjects",
+                "PutBucketAcl",
+                "PutBucketCors",
+                "PutBucketLifecycle",
+                "PutBucketLogging",
+                "PutBucketNotification",
+                "PutBucketPolicy",
+                "PutBucketReplication",
+                "PutBucketRequestPayment",
+                "PutBucketTagging",
+                "PutBucketVersioning",
+                "PutBucketWebsite",
+                "PutObjectAcl",
             ],
         ).hide_param,
     ),
     #############
     # DSQL
     #############
-    ('creating-client-class.dsql', add_dsql_generate_db_auth_token_methods),
+    ("creating-client-class.dsql", add_dsql_generate_db_auth_token_methods),
     #############
     # RDS
     #############
-    ('creating-client-class.rds', add_generate_db_auth_token),
-    ('before-call.rds.CopyDBClusterSnapshot', inject_presigned_url_rds),
-    ('before-call.rds.CreateDBCluster', inject_presigned_url_rds),
-    ('before-call.rds.CopyDBSnapshot', inject_presigned_url_rds),
-    ('before-call.rds.CreateDBInstanceReadReplica', inject_presigned_url_rds),
+    ("creating-client-class.rds", add_generate_db_auth_token),
+    ("before-call.rds.CopyDBClusterSnapshot", inject_presigned_url_rds),
+    ("before-call.rds.CreateDBCluster", inject_presigned_url_rds),
+    ("before-call.rds.CopyDBSnapshot", inject_presigned_url_rds),
+    ("before-call.rds.CreateDBInstanceReadReplica", inject_presigned_url_rds),
     (
-        'before-call.rds.StartDBInstanceAutomatedBackupsReplication',
+        "before-call.rds.StartDBInstanceAutomatedBackupsReplication",
         inject_presigned_url_rds,
     ),
     # RDS PresignedUrl documentation customizations
     (
-        'docs.*.rds.CopyDBClusterSnapshot.complete-section',
-        AutoPopulatedParam('PreSignedUrl').document_auto_populated_param,
+        "docs.*.rds.CopyDBClusterSnapshot.complete-section",
+        AutoPopulatedParam("PreSignedUrl").document_auto_populated_param,
     ),
     (
-        'docs.*.rds.CreateDBCluster.complete-section',
-        AutoPopulatedParam('PreSignedUrl').document_auto_populated_param,
+        "docs.*.rds.CreateDBCluster.complete-section",
+        AutoPopulatedParam("PreSignedUrl").document_auto_populated_param,
     ),
     (
-        'docs.*.rds.CopyDBSnapshot.complete-section',
-        AutoPopulatedParam('PreSignedUrl').document_auto_populated_param,
+        "docs.*.rds.CopyDBSnapshot.complete-section",
+        AutoPopulatedParam("PreSignedUrl").document_auto_populated_param,
     ),
     (
-        'docs.*.rds.CreateDBInstanceReadReplica.complete-section',
-        AutoPopulatedParam('PreSignedUrl').document_auto_populated_param,
+        "docs.*.rds.CreateDBInstanceReadReplica.complete-section",
+        AutoPopulatedParam("PreSignedUrl").document_auto_populated_param,
     ),
     (
-        'docs.*.rds.StartDBInstanceAutomatedBackupsReplication.complete-section',
-        AutoPopulatedParam('PreSignedUrl').document_auto_populated_param,
+        "docs.*.rds.StartDBInstanceAutomatedBackupsReplication.complete-section",
+        AutoPopulatedParam("PreSignedUrl").document_auto_populated_param,
     ),
     #############
     # Neptune
     #############
-    ('before-call.neptune.CopyDBClusterSnapshot', inject_presigned_url_rds),
-    ('before-call.neptune.CreateDBCluster', inject_presigned_url_rds),
+    ("before-call.neptune.CopyDBClusterSnapshot", inject_presigned_url_rds),
+    ("before-call.neptune.CreateDBCluster", inject_presigned_url_rds),
     # Neptune PresignedUrl documentation customizations
     (
-        'docs.*.neptune.CopyDBClusterSnapshot.complete-section',
-        AutoPopulatedParam('PreSignedUrl').document_auto_populated_param,
+        "docs.*.neptune.CopyDBClusterSnapshot.complete-section",
+        AutoPopulatedParam("PreSignedUrl").document_auto_populated_param,
     ),
     (
-        'docs.*.neptune.CreateDBCluster.complete-section',
-        AutoPopulatedParam('PreSignedUrl').document_auto_populated_param,
+        "docs.*.neptune.CreateDBCluster.complete-section",
+        AutoPopulatedParam("PreSignedUrl").document_auto_populated_param,
     ),
     #############
     # DocDB
     #############
-    ('before-call.docdb.CopyDBClusterSnapshot', inject_presigned_url_rds),
-    ('before-call.docdb.CreateDBCluster', inject_presigned_url_rds),
+    ("before-call.docdb.CopyDBClusterSnapshot", inject_presigned_url_rds),
+    ("before-call.docdb.CreateDBCluster", inject_presigned_url_rds),
     # DocDB PresignedUrl documentation customizations
     (
-        'docs.*.docdb.CopyDBClusterSnapshot.complete-section',
-        AutoPopulatedParam('PreSignedUrl').document_auto_populated_param,
+        "docs.*.docdb.CopyDBClusterSnapshot.complete-section",
+        AutoPopulatedParam("PreSignedUrl").document_auto_populated_param,
     ),
     (
-        'docs.*.docdb.CreateDBCluster.complete-section',
-        AutoPopulatedParam('PreSignedUrl').document_auto_populated_param,
+        "docs.*.docdb.CreateDBCluster.complete-section",
+        AutoPopulatedParam("PreSignedUrl").document_auto_populated_param,
     ),
-    ('before-call', inject_api_version_header_if_needed),
+    ("before-call", inject_api_version_header_if_needed),
 ]
 _add_parameter_aliases(BUILTIN_HANDLERS)

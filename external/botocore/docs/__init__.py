@@ -14,7 +14,7 @@ import os
 
 from botocore.docs.service import ServiceDocumenter
 
-DEPRECATED_SERVICE_NAMES = {'sms-voice'}
+DEPRECATED_SERVICE_NAMES = {"sms-voice"}
 
 
 def generate_docs(root_dir, session):
@@ -28,7 +28,7 @@ def generate_docs(root_dir, session):
         root_dir/reference/services/service-name.rst
     """
     # Create the root directory where all service docs live.
-    services_dir_path = os.path.join(root_dir, 'reference', 'services')
+    services_dir_path = os.path.join(root_dir, "reference", "services")
     if not os.path.exists(services_dir_path):
         os.makedirs(services_dir_path)
 
@@ -47,8 +47,6 @@ def generate_docs(root_dir, session):
 
         # Write the main service documentation page.
         # Path: <root>/reference/services/<service>/index.rst
-        service_file_path = os.path.join(
-            services_dir_path, f'{service_name}.rst'
-        )
-        with open(service_file_path, 'wb') as f:
+        service_file_path = os.path.join(services_dir_path, f"{service_name}.rst")
+        with open(service_file_path, "wb") as f:
             f.write(docs)

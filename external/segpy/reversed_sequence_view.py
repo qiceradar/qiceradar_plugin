@@ -2,7 +2,6 @@ from collections.abc import Sequence
 
 
 class ReversedSequenceView(Sequence):
-
     def __init__(self, sequence):
         self._sequence = sequence
 

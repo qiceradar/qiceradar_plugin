@@ -35,9 +35,9 @@ from .exception import NoMatches
 
 LOG = logging.getLogger(__name__)
 
-T = TypeVar('T')
-U = TypeVar('U')
-P = ParamSpec('P')
+T = TypeVar("T")
+U = TypeVar("U")
+P = ParamSpec("P")
 
 
 class Extension(Generic[T]):
@@ -96,15 +96,13 @@ class Extension(Generic[T]):
 #: the underlying entrypoint instance, and the exception raised during
 #: attempted loading.
 OnLoadFailureCallbackT: TypeAlias = Callable[
-    ['ExtensionManager[T]', importlib.metadata.EntryPoint, BaseException], None
+    ["ExtensionManager[T]", importlib.metadata.EntryPoint, BaseException], None
 ]
 
 #: ConflictResolver defines the type for conflict resolution callables. The
 #: callable should expect the extension namespace, extension name, and a list
 #: of the entrypoints themselves.
-ConflictResolverT: TypeAlias = Callable[
-    [str, str, list[Extension[T]]], Extension[T]
-]
+ConflictResolverT: TypeAlias = Callable[[str, str, list[Extension[T]]], Extension[T]]
 
 
 def ignore_conflicts(
@@ -114,11 +112,9 @@ def ignore_conflicts(
         "multiple implementations found for the '%(name)s' extension in "
         "%(namespace)s namespace: %(conflicts)s",
         {
-            'name': name,
-            'namespace': namespace,
-            'conflicts': ', '.join(
-                ep.plugin.__qualname__ for ep in entrypoints
-            ),
+            "name": name,
+            "namespace": namespace,
+            "conflicts": ", ".join(ep.plugin.__qualname__ for ep in entrypoints),
         },
     )
     # use the most last found entrypoint
@@ -133,7 +129,7 @@ def error_on_conflict(
         "{namespace} namespace: {conflicts}".format(
             name=name,
             namespace=namespace,
-            conflicts=', '.join(ep.plugin.__qualname__ for ep in entrypoints),
+            conflicts=", ".join(ep.plugin.__qualname__ for ep in entrypoints),
         )
     )
 
@@ -173,18 +169,18 @@ class ExtensionManager(Generic[T]):
         invoke_args: tuple[Any, ...] | None = None,
         invoke_kwds: dict[str, Any] | None = None,
         propagate_map_exceptions: bool = False,
-        on_load_failure_callback: 'OnLoadFailureCallbackT[T] | None' = None,
+        on_load_failure_callback: "OnLoadFailureCallbackT[T] | None" = None,
         verify_requirements: bool | None = None,
         *,
-        conflict_resolver: 'ConflictResolverT[T]' = ignore_conflicts,
+        conflict_resolver: "ConflictResolverT[T]" = ignore_conflicts,
     ) -> None:
         invoke_args = () if invoke_args is None else invoke_args
         invoke_kwds = {} if invoke_kwds is None else invoke_kwds
 
         if verify_requirements is not None:
             warnings.warn(
-                'The verify_requirements argument is now a no-op and is '
-                'deprecated for removal. Remove the argument from calls.',
+                "The verify_requirements argument is now a no-op and is "
+                "deprecated for removal. Remove the argument from calls.",
                 DeprecationWarning,
             )
 
@@ -193,9 +189,7 @@ class ExtensionManager(Generic[T]):
         self._on_load_failure_callback = on_load_failure_callback
         self._conflict_resolver = conflict_resolver
 
-        extensions = self._load_plugins(
-            invoke_on_load, invoke_args, invoke_kwds
-        )
+        extensions = self._load_plugins(invoke_on_load, invoke_args, invoke_kwds)
 
         self._init_plugins(extensions)
 
@@ -203,12 +197,12 @@ class ExtensionManager(Generic[T]):
     def make_test_instance(
         cls,
         extensions: list[Extension[T]],
-        namespace: str = 'TESTING',
+        namespace: str = "TESTING",
         propagate_map_exceptions: bool = False,
-        on_load_failure_callback: 'OnLoadFailureCallbackT[T] | None' = None,
+        on_load_failure_callback: "OnLoadFailureCallbackT[T] | None" = None,
         verify_requirements: bool | None = None,
         *,
-        conflict_resolver: 'ConflictResolverT[T]' = ignore_conflicts,
+        conflict_resolver: "ConflictResolverT[T]" = ignore_conflicts,
     ) -> Self:
         """Construct a test ExtensionManager
 
@@ -235,8 +229,8 @@ class ExtensionManager(Generic[T]):
         """
         if verify_requirements is not None:
             warnings.warn(
-                'The verify_requirements argument is now a no-op and is '
-                'deprecated for removal. Remove the argument from calls.',
+                "The verify_requirements argument is now a no-op and is "
+                "deprecated for removal. Remove the argument from calls.",
                 DeprecationWarning,
             )
 
@@ -261,9 +255,7 @@ class ExtensionManager(Generic[T]):
             ):
                 extensions = list(_extensions)
                 if len(extensions) > 1:
-                    ext = self._conflict_resolver(
-                        self.namespace, name, extensions
-                    )
+                    ext = self._conflict_resolver(self.namespace, name, extensions)
                 else:
                     ext = extensions[0]
 
@@ -295,7 +287,7 @@ class ExtensionManager(Generic[T]):
     ) -> list[Extension[T]]:
         extensions = []
         for ep in self.list_entry_points():
-            LOG.debug('found extension %r', ep)
+            LOG.debug("found extension %r", ep)
             try:
                 ext = self._load_one_plugin(
                     ep, invoke_on_load, invoke_args, invoke_kwds
@@ -316,7 +308,7 @@ class ExtensionManager(Generic[T]):
                     # enabled for our logger, provide the full
                     # traceback.
                     LOG.error(
-                        'Could not load %r: %s',
+                        "Could not load %r: %s",
                         ep.name,
                         err,
                         exc_info=LOG.isEnabledFor(logging.DEBUG),
@@ -374,7 +366,7 @@ class ExtensionManager(Generic[T]):
         """
         if not self.extensions:
             # FIXME: Use a more specific exception class here.
-            raise NoMatches(f'No {self.namespace} extensions found')
+            raise NoMatches(f"No {self.namespace} extensions found")
         response: list[U] = []
         for e in self.extensions:
             self._invoke_one_plugin(response.append, func, e, *args, **kwds)
@@ -405,9 +397,7 @@ class ExtensionManager(Generic[T]):
         :param kwds: Keyword arguments to pass to method
         :returns: List of values returned from methods
         """
-        return self.map(
-            self._call_extension_method, method_name, *args, **kwds
-        )
+        return self.map(self._call_extension_method, method_name, *args, **kwds)
 
     def _invoke_one_plugin(
         self,
@@ -423,7 +413,7 @@ class ExtensionManager(Generic[T]):
             if self.propagate_map_exceptions:
                 raise
             else:
-                LOG.error('error calling %r: %s', e.name, err)
+                LOG.error("error calling %r: %s", e.name, err)
                 LOG.exception(err)
 
     def items(self) -> ItemsView[str, Extension[T]]:

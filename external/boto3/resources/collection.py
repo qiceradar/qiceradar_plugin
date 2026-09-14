@@ -51,10 +51,10 @@ class ResourceCollection:
         self._params = copy.deepcopy(kwargs)
 
     def __repr__(self):
-        return '{}({}, {})'.format(
+        return "{}({}, {})".format(
             self.__class__.__name__,
             self._parent,
-            f'{self._parent.meta.service_name}.{self._model.resource.type}',
+            f"{self._parent.meta.service_name}.{self._model.resource.type}",
         )
 
     def __iter__(self):
@@ -73,7 +73,7 @@ class ResourceCollection:
             'key2'
 
         """
-        limit = self._params.get('limit', None)
+        limit = self._params.get("limit", None)
 
         count = 0
         for page in self.pages():
@@ -105,9 +105,7 @@ class ResourceCollection:
         """
         params = copy.deepcopy(self._params)
         merge_dicts(params, kwargs, append_lists=True)
-        clone = self.__class__(
-            self._model, self._parent, self._handler, **params
-        )
+        clone = self.__class__(self._model, self._parent, self._handler, **params)
         return clone
 
     def pages(self):
@@ -132,8 +130,8 @@ class ResourceCollection:
         """
         client = self._parent.meta.client
         cleaned_params = self._params.copy()
-        limit = cleaned_params.pop('limit', None)
-        page_size = cleaned_params.pop('page_size', None)
+        limit = cleaned_params.pop("limit", None)
+        page_size = cleaned_params.pop("page_size", None)
         params = create_request_parameters(self._parent, self._model.request)
         merge_dicts(params, cleaned_params, append_lists=True)
 
@@ -144,19 +142,19 @@ class ResourceCollection:
         # the page size parameter.
         if client.can_paginate(self._py_operation_name):
             logger.debug(
-                'Calling paginated %s:%s with %r',
+                "Calling paginated %s:%s with %r",
                 self._parent.meta.service_name,
                 self._py_operation_name,
                 params,
             )
             paginator = client.get_paginator(self._py_operation_name)
             pages = paginator.paginate(
-                PaginationConfig={'MaxItems': limit, 'PageSize': page_size},
+                PaginationConfig={"MaxItems": limit, "PageSize": page_size},
                 **params,
             )
         else:
             logger.debug(
-                'Calling %s:%s with %r',
+                "Calling %s:%s with %r",
                 self._parent.meta.service_name,
                 self._py_operation_name,
                 params,
@@ -322,10 +320,10 @@ class CollectionManager:
         )
 
     def __repr__(self):
-        return '{}({}, {})'.format(
+        return "{}({}, {})".format(
             self.__class__.__name__,
             self._parent,
-            f'{self._parent.meta.service_name}.{self._model.resource.type}',
+            f"{self._parent.meta.service_name}.{self._model.resource.type}",
         )
 
     def iterator(self, **kwargs):
@@ -335,9 +333,7 @@ class CollectionManager:
         :rtype: :py:class:`ResourceCollection`
         :return: An iterable representing the collection of resources
         """
-        return self._collection_cls(
-            self._model, self._parent, self._handler, **kwargs
-        )
+        return self._collection_cls(self._model, self._parent, self._handler, **kwargs)
 
     # Set up some methods to proxy ResourceCollection methods
     def all(self):
@@ -420,11 +416,9 @@ class CollectionFactory:
         )
 
         if service_context.service_name == resource_name:
-            cls_name = (
-                f'{service_context.service_name}.{collection_name}Collection'
-            )
+            cls_name = f"{service_context.service_name}.{collection_name}Collection"
         else:
-            cls_name = f'{service_context.service_name}.{resource_name}.{collection_name}Collection'
+            cls_name = f"{service_context.service_name}.{resource_name}.{collection_name}Collection"
 
         collection_cls = type(str(cls_name), (ResourceCollection,), attrs)
 
@@ -437,8 +431,8 @@ class CollectionFactory:
             event_emitter=event_emitter,
             base_class=CollectionManager,
         )
-        attrs['_collection_cls'] = collection_cls
-        cls_name += 'Manager'
+        attrs["_collection_cls"] = collection_cls
+        cls_name += "Manager"
 
         return type(str(cls_name), (CollectionManager,), attrs)
 
@@ -486,13 +480,13 @@ class CollectionFactory:
 
         all.__doc__ = docstring.CollectionMethodDocstring(
             resource_name=resource_name,
-            action_name='all',
+            action_name="all",
             event_emitter=event_emitter,
             collection_model=collection_model,
             service_model=service_model,
             include_signature=False,
         )
-        attrs['all'] = all
+        attrs["all"] = all
 
         # The collection's filter() method.
         def filter(self, **kwargs):
@@ -500,13 +494,13 @@ class CollectionFactory:
 
         filter.__doc__ = docstring.CollectionMethodDocstring(
             resource_name=resource_name,
-            action_name='filter',
+            action_name="filter",
             event_emitter=event_emitter,
             collection_model=collection_model,
             service_model=service_model,
             include_signature=False,
         )
-        attrs['filter'] = filter
+        attrs["filter"] = filter
 
         # The collection's limit method.
         def limit(self, count):
@@ -514,13 +508,13 @@ class CollectionFactory:
 
         limit.__doc__ = docstring.CollectionMethodDocstring(
             resource_name=resource_name,
-            action_name='limit',
+            action_name="limit",
             event_emitter=event_emitter,
             collection_model=collection_model,
             service_model=service_model,
             include_signature=False,
         )
-        attrs['limit'] = limit
+        attrs["limit"] = limit
 
         # The collection's page_size method.
         def page_size(self, count):
@@ -528,13 +522,13 @@ class CollectionFactory:
 
         page_size.__doc__ = docstring.CollectionMethodDocstring(
             resource_name=resource_name,
-            action_name='page_size',
+            action_name="page_size",
             event_emitter=event_emitter,
             collection_model=collection_model,
             service_model=service_model,
             include_signature=False,
         )
-        attrs['page_size'] = page_size
+        attrs["page_size"] = page_size
 
     def _create_batch_action(
         factory_self,

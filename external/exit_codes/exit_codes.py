@@ -86,7 +86,6 @@ class ExitCode(Base):
     """Configuration error"""
     CONFIG = 78
 
-
     # Aliases which have the same name as those in the standard
     # library os module, without the leading EX_. These are to
     # allow for easier porting as EX_FOO may be globally replaced

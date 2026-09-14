@@ -25,10 +25,10 @@ from .extension import OnLoadFailureCallbackT
 
 LOG = logging.getLogger(__name__)
 
-T = TypeVar('T')
-U = TypeVar('U')
-P = ParamSpec('P')
-Q = ParamSpec('Q')
+T = TypeVar("T")
+U = TypeVar("U")
+P = ParamSpec("P")
+Q = ParamSpec("Q")
 
 
 class DispatchExtensionManager(EnabledExtensionManager[T]):
@@ -92,13 +92,11 @@ class DispatchExtensionManager(EnabledExtensionManager[T]):
         """
         if not self.extensions:
             # FIXME: Use a more specific exception class here.
-            raise NoMatches(f'No {self.namespace} extensions found')
+            raise NoMatches(f"No {self.namespace} extensions found")
         response: list[U] = []
         for e in self.extensions:
             if filter_func(e, *args, **kwds):
-                self._invoke_one_plugin(
-                    response.append, func, e, *args, **kwds
-                )
+                self._invoke_one_plugin(response.append, func, e, *args, **kwds)
         return response
 
     def map_method(  # type: ignore[override]
@@ -177,7 +175,7 @@ class NameDispatchExtensionManager(DispatchExtensionManager[T]):
         invoke_args: tuple[Any, ...] | None = None,
         invoke_kwds: dict[str, Any] | None = None,
         propagate_map_exceptions: bool = False,
-        on_load_failure_callback: 'OnLoadFailureCallbackT[T] | None' = None,
+        on_load_failure_callback: "OnLoadFailureCallbackT[T] | None" = None,
         verify_requirements: bool | None = None,
     ):
         invoke_args = () if invoke_args is None else invoke_args
@@ -230,11 +228,9 @@ class NameDispatchExtensionManager(DispatchExtensionManager[T]):
             try:
                 e = self.by_name[name]
             except KeyError:
-                LOG.debug('Missing extension %r being ignored', name)
+                LOG.debug("Missing extension %r being ignored", name)
             else:
-                self._invoke_one_plugin(
-                    response.append, func, e, *args, **kwds
-                )
+                self._invoke_one_plugin(response.append, func, e, *args, **kwds)
         return response
 
     def map_method(  # type: ignore[override]
@@ -260,6 +256,4 @@ class NameDispatchExtensionManager(DispatchExtensionManager[T]):
         :param kwds: Keyword arguments to pass to method
         :returns: List of values returned from methods
         """
-        return self.map(
-            names, self._call_extension_method, method_name, *args, **kwds
-        )
+        return self.map(names, self._call_extension_method, method_name, *args, **kwds)

@@ -4,27 +4,27 @@ from numbers import Real, Rational
 from segpy.util import four_bytes
 
 
-IBM_ZERO_BYTES = b'\x00\x00\x00\x00'
-IBM_NEGATIVE_ONE_BYTES = b'\xc1\x10\x00\x00'
-IBM_POSITIVE_ONE_BYTES = b'A\x10\x00\x00'
+IBM_ZERO_BYTES = b"\x00\x00\x00\x00"
+IBM_NEGATIVE_ONE_BYTES = b"\xc1\x10\x00\x00"
+IBM_POSITIVE_ONE_BYTES = b"A\x10\x00\x00"
 
-MIN_IBM_FLOAT = -7.2370051459731155e+75
+MIN_IBM_FLOAT = -7.2370051459731155e75
 LARGEST_NEGATIVE_NORMAL_IBM_FLOAT = -5.397605346934028e-79
 SMALLEST_POSITIVE_NORMAL_IBM_FLOAT = 5.397605346934028e-79
-MAX_IBM_FLOAT = 7.2370051459731155e+75
+MAX_IBM_FLOAT = 7.2370051459731155e75
 
 MAX_BITS_PRECISION_IBM_FLOAT = 24
 MIN_BITS_PRECISION_IBM_FLOAT = 21  # The first 3 bits of the mantissa may be zero
 EPSILON_IBM_FLOAT = pow(2.0, -(MIN_BITS_PRECISION_IBM_FLOAT - 1))
-_L24 = 2 ** MAX_BITS_PRECISION_IBM_FLOAT
+_L24 = 2**MAX_BITS_PRECISION_IBM_FLOAT
 _F24 = float(pow(2, MAX_BITS_PRECISION_IBM_FLOAT))
 
-_L21 = 2 ** MIN_BITS_PRECISION_IBM_FLOAT
+_L21 = 2**MIN_BITS_PRECISION_IBM_FLOAT
 
 EXPONENT_BASE = 16
 EXPONENT_BIAS = 64
 
-MIN_EXACT_INTEGER_IBM_FLOAT = -2**MAX_BITS_PRECISION_IBM_FLOAT
+MIN_EXACT_INTEGER_IBM_FLOAT = -(2**MAX_BITS_PRECISION_IBM_FLOAT)
 MAX_EXACT_INTEGER_IBM_FLOAT = 2**MIN_BITS_PRECISION_IBM_FLOAT
 
 
@@ -43,7 +43,7 @@ def ibm2ieee(big_endian_bytes):
         return 0.0
 
     sign = -1 if (a & 0x80) else 1
-    exponent_16_biased = a & 0x7f
+    exponent_16_biased = a & 0x7F
     mantissa = ((b << 16) | (c << 8) | d) / _F24
 
     value = sign * mantissa * pow(EXPONENT_BASE, exponent_16_biased - EXPONENT_BIAS)
@@ -70,7 +70,7 @@ def ieee2ibm(f):
     """
     if f == 0:
         # There are many potential representations of zero - this is the standard one
-        return b'\x00\x00\x00\x00'
+        return b"\x00\x00\x00\x00"
 
     if isnan(f):
         raise ValueError("NaN cannot be represented in IBM floating point")
@@ -79,12 +79,16 @@ def ieee2ibm(f):
         raise ValueError("Infinities cannot be represented in IBM floating point")
 
     if f < MIN_IBM_FLOAT:
-        raise OverflowError("IEEE Floating point value {} is less than the "
-                            "representable minimum for IBM floats.".format(f))
+        raise OverflowError(
+            "IEEE Floating point value {} is less than the "
+            "representable minimum for IBM floats.".format(f)
+        )
 
     if f > MAX_IBM_FLOAT:
-        raise OverflowError("IEEE Floating point value {} is greater than the "
-                            "representable maximum for IBM floats".format(f))
+        raise OverflowError(
+            "IEEE Floating point value {} is greater than the "
+            "representable maximum for IBM floats".format(f)
+        )
 
     # Now compute m and e to satisfy:
     #
@@ -113,29 +117,34 @@ def ieee2ibm(f):
         mantissa >>= shift
         exponent += shift
 
-    exponent_16 = exponent >> 2            # Divide by four to convert to base 16
+    exponent_16 = exponent >> 2  # Divide by four to convert to base 16
     exponent_16_biased = exponent_16 + EXPONENT_BIAS  # Add the exponent bias of 64
 
     # If the biased exponent is negative, we try to use a subnormal representation
     if exponent_16_biased < 0:
         shift_16 = 0 - exponent_16_biased
-        exponent_16_biased += shift_16  # An increment of the base-16 exponent must be balanced by
-        mantissa >>= 4 * shift_16       # A division by 16 (four binary places) in the mantissa
+        exponent_16_biased += (
+            shift_16  # An increment of the base-16 exponent must be balanced by
+        )
+        mantissa >>= (
+            4 * shift_16
+        )  # A division by 16 (four binary places) in the mantissa
         if mantissa == 0:
-            raise FloatingPointError("IEEE Floating point value {} is smaller than the "
-                                     "smallest subnormal number for IBM floats.".format(f))
+            raise FloatingPointError(
+                "IEEE Floating point value {} is smaller than the "
+                "smallest subnormal number for IBM floats.".format(f)
+            )
 
     a = sign | exponent_16_biased
-    b = (mantissa >> 16) & 0xff
-    c = (mantissa >> 8) & 0xff
-    d = mantissa & 0xff
+    b = (mantissa >> 16) & 0xFF
+    c = (mantissa >> 8) & 0xFF
+    d = mantissa & 0xFF
 
     return bytes((a, b, c, d))
 
 
 class IBMFloat(Real):
-
-    __slots__ = ['_data']
+    __slots__ = ["_data"]
 
     def __new__(cls, b):
         obj = object.__new__(cls)
@@ -143,7 +152,11 @@ class IBMFloat(Real):
         data = bytes(b)
         num_bytes = len(data)
         if num_bytes != 4:
-            raise ValueError("{} cannot be constructed from {} values".format(cls.__name__, num_bytes))
+            raise ValueError(
+                "{} cannot be constructed from {} values".format(
+                    cls.__name__, num_bytes
+                )
+            )
         obj._data = data
         return obj
 
@@ -230,8 +243,9 @@ class IBMFloat(Real):
     def __repr__(self):
         return "{}(bytes([{}])) ≈ {!r}".format(
             self.__class__.__name__,
-            ', '.join('0x{:02x}'.format(b) for b in self._data),
-            float(self))
+            ", ".join("0x{:02x}".format(b) for b in self._data),
+            float(self),
+        )
 
     def __str__(self):
         return str(float(self))
@@ -272,7 +286,7 @@ class IBMFloat(Real):
             denominator = _L24
         else:
             numerator = self.int_mantissa
-            denominator = _L24 * EXPONENT_BASE**abs(self.exp16)
+            denominator = _L24 * EXPONENT_BASE ** abs(self.exp16)
         divisor = gcd(numerator, denominator)
         reduced_numerator = sign * numerator // divisor
         reduced_denominator = denominator // divisor
@@ -286,20 +300,14 @@ class IBMFloat(Real):
             return IBM_FLOAT_ZERO
 
         data = self._data
-        return IBMFloat((data[0] ^ 0b10000000,
-                         data[1],
-                         data[2],
-                         data[3]))
+        return IBMFloat((data[0] ^ 0b10000000, data[1], data[2], data[3]))
 
     def __abs__(self):
         if self.is_zero():
             return IBM_FLOAT_ZERO
 
         data = self._data
-        return IBMFloat((data[0] & 0b01111111,
-                         data[1],
-                         data[2],
-                         data[3]))
+        return IBMFloat((data[0] & 0b01111111, data[1], data[2], data[3]))
 
     def __eq__(self, rhs):
         lhs = self
@@ -312,11 +320,15 @@ class IBMFloat(Real):
                 return 0.0 == rhs
             lhs_numerator, lhs_denominator = lhs.as_integer_ratio()
             rhs_numerator, rhs_denominator = rhs.as_integer_ratio()
-            return (lhs_numerator == rhs_numerator) and (lhs_denominator == rhs_denominator)
+            return (lhs_numerator == rhs_numerator) and (
+                lhs_denominator == rhs_denominator
+            )
 
         if isinstance(rhs, Rational):
             lhs_numerator, lhs_denominator = lhs.as_integer_ratio()
-            return (lhs_numerator == rhs.numerator) and (lhs_denominator == rhs.denominator)
+            return (lhs_numerator == rhs.numerator) and (
+                lhs_denominator == rhs.denominator
+            )
 
         if not isinstance(rhs, IBMFloat):
             return NotImplemented
@@ -360,7 +372,7 @@ class IBMFloat(Real):
     @property
     def exp16(self):
         """The base 16 exponent."""
-        exponent_16_biased = self._data[0] & 0x7f
+        exponent_16_biased = self._data[0] & 0x7F
         exponent_16 = exponent_16_biased - EXPONENT_BIAS
         return exponent_16
 
@@ -374,13 +386,20 @@ class IBMFloat(Real):
         exponent_16 = self.exp16
         mantissa = self.int_mantissa
 
-        num_nybbles_to_preserve = min(exponent_16, MAX_BITS_PRECISION_IBM_FLOAT // BITS_PER_NYBBLE)
-        num_bits_to_clear = MAX_BITS_PRECISION_IBM_FLOAT - num_nybbles_to_preserve * BITS_PER_NYBBLE
+        num_nybbles_to_preserve = min(
+            exponent_16, MAX_BITS_PRECISION_IBM_FLOAT // BITS_PER_NYBBLE
+        )
+        num_bits_to_clear = (
+            MAX_BITS_PRECISION_IBM_FLOAT - num_nybbles_to_preserve * BITS_PER_NYBBLE
+        )
         clear_mask = 2**num_bits_to_clear - 1
         preserve_mask = (2**MAX_BITS_PRECISION_IBM_FLOAT - 1) & ~clear_mask
 
         truncated_mantissa = mantissa & preserve_mask
-        magnitude = int(truncated_mantissa * pow(EXPONENT_BASE, exponent_16)) >> MAX_BITS_PRECISION_IBM_FLOAT
+        magnitude = (
+            int(truncated_mantissa * pow(EXPONENT_BASE, exponent_16))
+            >> MAX_BITS_PRECISION_IBM_FLOAT
+        )
         return sign * magnitude
 
     def normalize(self):
@@ -401,7 +420,11 @@ class IBMFloat(Real):
         while mantissa < (1 << 20):
             new_exponent_16 = exponent_16 - 1
             if not (-64 <= new_exponent_16 < 64):
-                raise FloatingPointError("Could not normalize {!r} without causing exponent overflow.".format(self))
+                raise FloatingPointError(
+                    "Could not normalize {!r} without causing exponent overflow.".format(
+                        self
+                    )
+                )
 
             mantissa <<= 4
             exponent_16 = new_exponent_16
@@ -411,9 +434,9 @@ class IBMFloat(Real):
         sign = int(self.signbit) << 7
 
         a = sign | exponent_16_biased
-        b = (mantissa >> 16) & 0xff
-        c = (mantissa >> 8) & 0xff
-        d = mantissa & 0xff
+        b = (mantissa >> 16) & 0xFF
+        c = (mantissa >> 8) & 0xFF
+        d = mantissa & 0xFF
 
         return IBMFloat.from_bytes((a, b, c, d))
 
@@ -438,7 +461,9 @@ class IBMFloat(Real):
         # Python's 64-bit float has much more precision than this
         # 32-bit IBM float and is much faster, so delegate
         q = float(self) / float(rhs)
-        return IBMFloat.from_float_without_underflow(q) if isinstance(rhs, IBMFloat) else q
+        return (
+            IBMFloat.from_float_without_underflow(q) if isinstance(rhs, IBMFloat) else q
+        )
 
     def __rtruediv__(self, lhs):
         # Python's 64-bit float has much more precision than this
@@ -469,7 +494,9 @@ class IBMFloat(Real):
     def __mod__(self, rhs):
         """a % b"""
         p = float(self) % float(rhs)
-        return IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+        return (
+            IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+        )
 
     def __rmod__(self, lhs):
         """a % b"""
@@ -479,7 +506,9 @@ class IBMFloat(Real):
         # Python's 64-bit float has much more precision than this
         # 32-bit IBM float and is much faster, so delegate
         p = float(self) * float(rhs)
-        return IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+        return (
+            IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+        )
 
     def __rmul__(self, lhs):
         # Python's 64-bit float has much more precision than this
@@ -491,7 +520,9 @@ class IBMFloat(Real):
         # Python's 64-bit float has much more precision than this
         # 32-bit IBM float and is much faster, so delegate
         p = float(self) + float(rhs)
-        return IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+        return (
+            IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+        )
 
     def __radd__(self, lhs):
         # Python's 64-bit float has much more precision than this
@@ -502,7 +533,9 @@ class IBMFloat(Real):
         # Python's 64-bit float has much more precision than this
         # 32-bit IBM float and is much faster, so delegate
         p = float(self) - float(rhs)
-        return IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+        return (
+            IBMFloat.from_float_without_underflow(p) if isinstance(rhs, IBMFloat) else p
+        )
 
     def __rsub__(self, lhs):
         # Python's 64-bit float has much more precision than this
