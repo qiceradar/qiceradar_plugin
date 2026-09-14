@@ -34,46 +34,42 @@ class Bar(Base): ...
 class TestCallback(utils.TestCase):
     def test_detect_plugins(self):
         em: driver.DriverManager[Any]
-        em = driver.DriverManager('stevedore.test.extension', 't1')
+        em = driver.DriverManager("stevedore.test.extension", "t1")
         names = sorted(em.names())
-        self.assertEqual(names, ['t1'])
+        self.assertEqual(names, ["t1"])
 
     def test_call(self):
         def invoke(ext, /, *args, **kwds):
             return (ext.name, args, kwds)
 
         em: driver.DriverManager[Any]
-        em = driver.DriverManager('stevedore.test.extension', 't1')
-        result = em(invoke, 'a', b='C')
-        self.assertEqual(result, ('t1', ('a',), {'b': 'C'}))
+        em = driver.DriverManager("stevedore.test.extension", "t1")
+        result = em(invoke, "a", b="C")
+        self.assertEqual(result, ("t1", ("a",), {"b": "C"}))
 
     def test_driver_property_not_invoked_on_load(self):
         em: driver.DriverManager[Any]
         em = driver.DriverManager(
-            'stevedore.test.extension', 't1', invoke_on_load=False
+            "stevedore.test.extension", "t1", invoke_on_load=False
         )
         d = em.driver
         self.assertIs(d, test_extension.FauxExtension)
 
     def test_driver_property_invoked_on_load(self):
         em: driver.DriverManager[Any]
-        em = driver.DriverManager(
-            'stevedore.test.extension', 't1', invoke_on_load=True
-        )
+        em = driver.DriverManager("stevedore.test.extension", "t1", invoke_on_load=True)
         d = em.driver
         self.assertIsInstance(d, test_extension.FauxExtension)
 
     def test_no_drivers(self):
         try:
-            driver.DriverManager('stevedore.test.extension.none', 't1')
+            driver.DriverManager("stevedore.test.extension.none", "t1")
         except exception.NoMatches as err:
-            self.assertIn(
-                "No 'stevedore.test.extension.none' driver found", str(err)
-            )
+            self.assertIn("No 'stevedore.test.extension.none' driver found", str(err))
 
     def test_bad_driver(self):
         try:
-            driver.DriverManager('stevedore.test.extension', 'e2')
+            driver.DriverManager("stevedore.test.extension", "e2")
         except ImportError:
             pass
         else:
@@ -84,18 +80,14 @@ class TestCallback(utils.TestCase):
         # https://gist.github.com/clayg/6311348
         extensions: list[extension.Extension[Any]] = [
             extension.Extension(
-                'backend',
-                importlib.metadata.EntryPoint(
-                    'backend', 'pkg1:driver', 'backend'
-                ),
+                "backend",
+                importlib.metadata.EntryPoint("backend", "pkg1:driver", "backend"),
                 Foo,
                 None,
             ),
             extension.Extension(
-                'backend',
-                importlib.metadata.EntryPoint(
-                    'backend', 'pkg2:driver', 'backend'
-                ),
+                "backend",
+                importlib.metadata.EntryPoint("backend", "pkg2:driver", "backend"),
                 Bar,
                 None,
             ),
@@ -107,4 +99,4 @@ class TestCallback(utils.TestCase):
         except exception.MultipleMatches as err:
             self.assertIn("Multiple", str(err))
         else:
-            self.fail('Should have had an error')
+            self.fail("Should have had an error")

@@ -56,21 +56,21 @@ def convert_to_response_dict(http_response, operation_model):
 
     """
     response_dict = {
-        'headers': http_response.headers,
-        'status_code': http_response.status_code,
-        'context': {
-            'operation_name': operation_model.name,
+        "headers": http_response.headers,
+        "status_code": http_response.status_code,
+        "context": {
+            "operation_name": operation_model.name,
         },
     }
-    if response_dict['status_code'] >= 300:
-        response_dict['body'] = http_response.content
+    if response_dict["status_code"] >= 300:
+        response_dict["body"] = http_response.content
     elif operation_model.has_event_stream_output:
-        response_dict['body'] = http_response.raw
+        response_dict["body"] = http_response.raw
     elif operation_model.has_streaming_output:
-        length = response_dict['headers'].get('content-length')
-        response_dict['body'] = StreamingBody(http_response.raw, length)
+        length = response_dict["headers"].get("content-length")
+        response_dict["body"] = StreamingBody(http_response.raw, length)
     else:
-        response_dict['body'] = http_response.content
+        response_dict["body"] = http_response.content
     return response_dict
 
 
@@ -105,7 +105,7 @@ class Endpoint:
             self.http_session = URLLib3Session()
 
     def __repr__(self):
-        return f'{self._endpoint_prefix}({self.host})'
+        return f"{self._endpoint_prefix}({self.host})"
 
     def close(self):
         self.http_session.close()
@@ -128,7 +128,7 @@ class Endpoint:
                 ]
             )
             service_id = operation_model.service_model.service_id.hyphenize()
-            event_name = f'request-created.{service_id}.{operation_model.name}'
+            event_name = f"request-created.{service_id}.{operation_model.name}"
             self._event_emitter.emit(
                 event_name,
                 request=request,
@@ -141,34 +141,30 @@ class Endpoint:
         # In place encoding of headers to utf-8 if they are unicode.
         for key, value in headers.items():
             if isinstance(value, str):
-                headers[key] = value.encode('utf-8')
+                headers[key] = value.encode("utf-8")
 
     def prepare_request(self, request):
         self._encode_headers(request.headers)
         return request.prepare()
 
-    def _calculate_ttl(
-        self, response_received_timestamp, date_header, read_timeout
-    ):
+    def _calculate_ttl(self, response_received_timestamp, date_header, read_timeout):
         local_timestamp = get_current_datetime()
         date_conversion = datetime.datetime.strptime(
             date_header, "%a, %d %b %Y %H:%M:%S %Z"
         )
         estimated_skew = date_conversion - response_received_timestamp
         ttl = (
-            local_timestamp
-            + datetime.timedelta(seconds=read_timeout)
-            + estimated_skew
+            local_timestamp + datetime.timedelta(seconds=read_timeout) + estimated_skew
         )
-        return ttl.strftime('%Y%m%dT%H%M%SZ')
+        return ttl.strftime("%Y%m%dT%H%M%SZ")
 
     def _set_ttl(self, retries_context, read_timeout, success_response):
-        response_date_header = success_response[0].headers.get('Date')
-        has_streaming_input = retries_context.get('has_streaming_input')
+        response_date_header = success_response[0].headers.get("Date")
+        has_streaming_input = retries_context.get("has_streaming_input")
         if response_date_header and not has_streaming_input:
             try:
                 response_received_timestamp = get_current_datetime()
-                retries_context['ttl'] = self._calculate_ttl(
+                retries_context["ttl"] = self._calculate_ttl(
                     response_received_timestamp,
                     response_date_header,
                     read_timeout,
@@ -180,18 +176,18 @@ class Endpoint:
                 )
 
     def _update_retries_context(self, context, attempt, success_response=None):
-        retries_context = context.setdefault('retries', {})
-        retries_context['attempt'] = attempt
-        if 'invocation-id' not in retries_context:
-            retries_context['invocation-id'] = str(uuid.uuid4())
+        retries_context = context.setdefault("retries", {})
+        retries_context["attempt"] = attempt
+        if "invocation-id" not in retries_context:
+            retries_context["invocation-id"] = str(uuid.uuid4())
 
         if success_response:
-            read_timeout = context['client_config'].read_timeout
+            read_timeout = context["client_config"].read_timeout
             self._set_ttl(retries_context, read_timeout, success_response)
 
     def _send_request(self, request_dict, operation_model):
         attempts = 1
-        context = request_dict['context']
+        context = request_dict["context"]
         self._update_retries_context(context, attempts)
         request = self.create_request(request_dict, operation_model)
         success_response, exception = self._get_response(
@@ -216,15 +212,10 @@ class Endpoint:
             success_response, exception = self._get_response(
                 request, operation_model, context
             )
-        if (
-            success_response is not None
-            and 'ResponseMetadata' in success_response[1]
-        ):
+        if success_response is not None and "ResponseMetadata" in success_response[1]:
             # We want to share num retries, not num attempts.
             total_retries = attempts - 1
-            success_response[1]['ResponseMetadata']['RetryAttempts'] = (
-                total_retries
-            )
+            success_response[1]["ResponseMetadata"]["RetryAttempts"] = total_retries
         if exception is not None:
             raise exception
         else:
@@ -240,15 +231,15 @@ class Endpoint:
             request, operation_model, context
         )
         kwargs_to_emit = {
-            'response_dict': None,
-            'parsed_response': None,
-            'context': context,
-            'exception': exception,
+            "response_dict": None,
+            "parsed_response": None,
+            "context": context,
+            "exception": exception,
         }
         if success_response is not None:
             http_response, parsed_response = success_response
-            kwargs_to_emit['parsed_response'] = parsed_response
-            kwargs_to_emit['response_dict'] = convert_to_response_dict(
+            kwargs_to_emit["parsed_response"] = parsed_response
+            kwargs_to_emit["response_dict"] = convert_to_response_dict(
                 http_response, operation_model
             )
         service_id = operation_model.service_model.service_id.hyphenize()
@@ -262,13 +253,13 @@ class Endpoint:
         try:
             logger.debug("Sending http request: %s", request)
             history_recorder.record(
-                'HTTP_REQUEST',
+                "HTTP_REQUEST",
                 {
-                    'method': request.method,
-                    'headers': request.headers,
-                    'streaming': operation_model.has_streaming_input,
-                    'url': request.url,
-                    'body': request.body,
+                    "method": request.method,
+                    "headers": request.headers,
+                    "streaming": operation_model.has_streaming_input,
+                    "url": request.url,
+                    "body": request.body,
                 },
             )
             service_id = operation_model.service_model.service_id.hyphenize()
@@ -280,14 +271,10 @@ class Endpoint:
         except HTTPClientError as e:
             return (None, e)
         except Exception as e:
-            logger.debug(
-                "Exception received when sending HTTP request.", exc_info=True
-            )
+            logger.debug("Exception received when sending HTTP request.", exc_info=True)
             return (None, e)
         # This returns the http_response and the parsed_data.
-        response_dict = convert_to_response_dict(
-            http_response, operation_model
-        )
+        response_dict = convert_to_response_dict(http_response, operation_model)
         handle_checksum_body(
             http_response,
             response_dict,
@@ -296,10 +283,8 @@ class Endpoint:
         )
 
         http_response_record_dict = response_dict.copy()
-        http_response_record_dict['streaming'] = (
-            operation_model.has_streaming_output
-        )
-        history_recorder.record('HTTP_RESPONSE', http_response_record_dict)
+        http_response_record_dict["streaming"] = operation_model.has_streaming_output
+        history_recorder.record("HTTP_RESPONSE", http_response_record_dict)
 
         protocol = operation_model.service_model.resolved_protocol
         customized_response_dict = {}
@@ -310,9 +295,7 @@ class Endpoint:
             customized_response_dict=customized_response_dict,
         )
         parser = self._response_parser_factory.create_parser(protocol)
-        parsed_response = parser.parse(
-            response_dict, operation_model.output_shape
-        )
+        parsed_response = parser.parse(response_dict, operation_model.output_shape)
         parsed_response.update(customized_response_dict)
         # Do a second parsing pass to pick up on any modeled error fields
         # NOTE: Ideally, we would push this down into the parser classes but
@@ -326,7 +309,7 @@ class Endpoint:
                 operation_model,
                 parser,
             )
-        history_recorder.record('PARSED_RESPONSE', parsed_response)
+        history_recorder.record("PARSED_RESPONSE", parsed_response)
         return (http_response, parsed_response), None
 
     def _add_modeled_error_fields(
@@ -402,16 +385,16 @@ class EndpointCreator:
         client_cert=None,
         proxies_config=None,
     ):
-        if not is_valid_endpoint_url(
+        if not is_valid_endpoint_url(endpoint_url) and not is_valid_ipv6_endpoint_url(
             endpoint_url
-        ) and not is_valid_ipv6_endpoint_url(endpoint_url):
+        ):
             raise ValueError(f"Invalid endpoint: {endpoint_url}")
 
         if proxies is None:
             proxies = self._get_proxies(endpoint_url)
         endpoint_prefix = service_model.endpoint_prefix
 
-        logger.debug('Setting %s timeout as %s', endpoint_prefix, timeout)
+        logger.debug("Setting %s timeout as %s", endpoint_prefix, timeout)
         http_session = http_session_cls(
             timeout=timeout,
             proxies=proxies,
@@ -446,4 +429,4 @@ class EndpointCreator:
             return verify
         # Otherwise use the value from REQUESTS_CA_BUNDLE, or default to
         # True if the env var does not exist.
-        return os.environ.get('REQUESTS_CA_BUNDLE', True)
+        return os.environ.get("REQUESTS_CA_BUNDLE", True)

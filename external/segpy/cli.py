@@ -26,7 +26,7 @@ from segpy.reader import create_reader
 
 
 def common_option_handler(config):
-    log_level = config['--log-level']
+    log_level = config["--log-level"]
     try:
         segpy.log.setLevel(log_level)
     except ValueError:
@@ -34,17 +34,21 @@ def common_option_handler(config):
 
     handler = logging.StreamHandler(stream=sys.stderr)
     handler.setLevel(log_level)
-    handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    )
     segpy.log.addHandler(handler)
 
 
-commands = Subcommands(program='segpy',
-                       version='segpy-{}'.format(segpy.__version__),
-                       doc_template=__doc__,
-                       common_option_handler=common_option_handler)
+commands = Subcommands(
+    program="segpy",
+    version="segpy-{}".format(segpy.__version__),
+    doc_template=__doc__,
+    common_option_handler=common_option_handler,
+)
 
 
-@commands.command('metadata')
+@commands.command("metadata")
 def handle_metadata(args):
     """Usage: {program} {command} <filename>
 
@@ -53,33 +57,32 @@ def handle_metadata(args):
 
     result = {}
 
-    filename = args['<filename>']
-    with open(filename, 'rb') as fh:
+    filename = args["<filename>"]
+    with open(filename, "rb") as fh:
         reader = create_reader(fh)
-        result['num_traces'] = reader.num_traces()
-        result['dimensionality'] = reader.dimensionality
-        result['data_sample_format'] = reader.data_sample_format
-        result['max_num_trace_samples'] = reader.max_num_trace_samples()
+        result["num_traces"] = reader.num_traces()
+        result["dimensionality"] = reader.dimensionality
+        result["data_sample_format"] = reader.data_sample_format
+        result["max_num_trace_samples"] = reader.max_num_trace_samples()
 
     print(json.dumps(result))
 
 
-@commands.command('report')
+@commands.command("report")
 def report(args):
     """Usage: {program} {command} <filename>
 
     Print a human-readable report of the file contents.
     """
-    filename = args['<filename>']
+    filename = args["<filename>"]
 
-    with open(filename, 'rb') as segy_file:
+    with open(filename, "rb") as segy_file:
         segy_reader = create_reader(segy_file)
         print()
         print("Filename:             ", segy_reader.filename)
         print("SEG Y revision:       ", segy_reader.revision)
         print("Number of traces:     ", segy_reader.num_traces())
-        print("Data format:          ",
-              segy_reader.data_sample_format_description)
+        print("Data format:          ", segy_reader.data_sample_format_description)
         print("Dimensionality:       ", segy_reader.dimensionality)
 
         try:

@@ -10,7 +10,6 @@ From the specification:
 # version 1.1 would be represented as 0x0101, or whether it is in fixed-point binary, in which case we can't represent
 # version 1.1.  Until I learn otherwise, I'm going for the BCD interpretation.
 
-
 from decimal import Decimal
 from enum import IntEnum
 
@@ -23,8 +22,9 @@ class SegYRevision(IntEnum):
 VARIANTS = {
     SegYRevision.REVISION_0: SegYRevision.REVISION_0,  # Ensure that SEGY_REVISION_0 maps to itself
     SegYRevision.REVISION_1: SegYRevision.REVISION_1,  # Ensure that SEGY_REVISION_1 maps to itself
-    1: SegYRevision.REVISION_1,                # Common, but erroneous, decimal one
-    100: SegYRevision.REVISION_1}              # Common, but erroneous, decimal one-hundred
+    1: SegYRevision.REVISION_1,  # Common, but erroneous, decimal one
+    100: SegYRevision.REVISION_1,
+}  # Common, but erroneous, decimal one-hundred
 
 
 class SegYRevisionError(Exception):
@@ -49,8 +49,11 @@ def canonicalize_revision(revision):
     try:
         return VARIANTS[revision]
     except KeyError:
-        raise SegYRevisionError("Unknown SEG Y Revision raw={!r} hex={} decimal={}".format(
-            revision, hex(revision), integer_to_decimal_revision(revision)))
+        raise SegYRevisionError(
+            "Unknown SEG Y Revision raw={!r} hex={} decimal={}".format(
+                revision, hex(revision), integer_to_decimal_revision(revision)
+            )
+        )
 
 
 def integer_to_decimal_revision(revision):
@@ -65,4 +68,4 @@ def integer_to_decimal_revision(revision):
     """
     lo = revision & 0xFF
     hi = (revision >> 8) & 0xFF
-    return Decimal(hi) + Decimal(lo)/Decimal(10)
+    return Decimal(hi) + Decimal(lo) / Decimal(10)

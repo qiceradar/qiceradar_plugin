@@ -16,7 +16,7 @@ from boto3.docs.utils import get_identifier_description
 
 
 class ResourceShapeDocumenter(ResponseParamsDocumenter):
-    EVENT_NAME = 'resource-shape'
+    EVENT_NAME = "resource-shape"
 
 
 def document_attribute(
@@ -53,10 +53,8 @@ def document_identifier(
             f"{section.context.get('qualifier', '')}{identifier_model.name}"
         )
         section.style.start_sphinx_py_attr(full_identifier_name)
-    description = get_identifier_description(
-        resource_name, identifier_model.name
-    )
-    section.write(f'*(string)* {description}')
+    description = get_identifier_description(resource_name, identifier_model.name)
+    section.write(f"*(string)* {description}")
 
 
 def document_reference(section, reference_model, include_signature=True):
@@ -65,8 +63,8 @@ def document_reference(section, reference_model, include_signature=True):
             f"{section.context.get('qualifier', '')}{reference_model.name}"
         )
         section.style.start_sphinx_py_attr(full_reference_name)
-    reference_type = f'(:py:class:`{reference_model.resource.type}`) '
+    reference_type = f"(:py:class:`{reference_model.resource.type}`) "
     section.write(reference_type)
     section.include_doc_string(
-        f'The related {reference_model.name} if set, otherwise ``None``.'
+        f"The related {reference_model.name} if set, otherwise ``None``."
     )

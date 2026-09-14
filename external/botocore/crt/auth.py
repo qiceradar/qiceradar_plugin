@@ -37,10 +37,10 @@ from botocore.utils import percent_encode_sequence
 class CrtSigV4Auth(BaseSigner):
     REQUIRES_REGION = True
     _PRESIGNED_HEADERS_BLOCKLIST = [
-        'Authorization',
-        'X-Amz-Date',
-        'X-Amz-Content-SHA256',
-        'X-Amz-Security-Token',
+        "Authorization",
+        "X-Amz-Date",
+        "X-Amz-Content-SHA256",
+        "X-Amz-Security-Token",
     ]
     _SIGNATURE_TYPE = awscrt.auth.AwsSignatureType.HTTP_REQUEST_HEADERS
     _USE_DOUBLE_URI_ENCODE = True
@@ -53,9 +53,9 @@ class CrtSigV4Auth(BaseSigner):
         self._expiration_in_seconds = None
 
     def _is_streaming_checksum_payload(self, request):
-        checksum_context = request.context.get('checksum', {})
-        algorithm = checksum_context.get('request_algorithm')
-        return isinstance(algorithm, dict) and algorithm.get('in') == 'trailer'
+        checksum_context = request.context.get("checksum", {})
+        algorithm = checksum_context.get("request_algorithm")
+        return isinstance(algorithm, dict) and algorithm.get("in") == "trailer"
 
     def add_auth(self, request):
         if self.credentials is None:
@@ -85,9 +85,7 @@ class CrtSigV4Auth(BaseSigner):
             explicit_payload = UNSIGNED_PAYLOAD
 
         if self._should_add_content_sha256_header(explicit_payload):
-            body_header = (
-                awscrt.auth.AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA_256
-            )
+            body_header = awscrt.auth.AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA_256
         else:
             body_header = awscrt.auth.AwsSignedBodyHeaderType.NONE
 
@@ -112,22 +110,22 @@ class CrtSigV4Auth(BaseSigner):
 
     def _crt_request_from_aws_request(self, aws_request):
         url_parts = urlsplit(aws_request.url)
-        crt_path = url_parts.path if url_parts.path else '/'
+        crt_path = url_parts.path if url_parts.path else "/"
         if aws_request.params:
             array = []
             for param, value in aws_request.params.items():
                 value = str(value)
-                array.append(f'{param}={value}')
-            crt_path = crt_path + '?' + '&'.join(array)
+                array.append(f"{param}={value}")
+            crt_path = crt_path + "?" + "&".join(array)
         elif url_parts.query:
-            crt_path = f'{crt_path}?{url_parts.query}'
+            crt_path = f"{crt_path}?{url_parts.query}"
 
         crt_headers = awscrt.http.HttpHeaders(aws_request.headers.items())
 
         # CRT requires body (if it exists) to be an I/O stream.
         crt_body_stream = None
         if aws_request.body:
-            if hasattr(aws_request.body, 'seek'):
+            if hasattr(aws_request.body, "seek"):
                 crt_body_stream = aws_request.body
             else:
                 crt_body_stream = BytesIO(aws_request.body)
@@ -142,9 +140,7 @@ class CrtSigV4Auth(BaseSigner):
 
     def _apply_signing_changes(self, aws_request, signed_crt_request):
         # Apply changes from signed CRT request to the AWSRequest
-        aws_request.headers = HTTPHeaders.from_pairs(
-            list(signed_crt_request.headers)
-        )
+        aws_request.headers = HTTPHeaders.from_pairs(list(signed_crt_request.headers))
 
     def _should_sign_header(self, name, **kwargs):
         return name.lower() not in SIGNED_HEADERS_BLACKLIST
@@ -156,21 +152,21 @@ class CrtSigV4Auth(BaseSigner):
             if h in request.headers:
                 del request.headers[h]
         # If necessary, add the host header
-        if 'host' not in request.headers:
-            request.headers['host'] = _host_from_url(request.url)
+        if "host" not in request.headers:
+            request.headers["host"] = _host_from_url(request.url)
 
     def _get_existing_sha256(self, request):
-        return request.headers.get('X-Amz-Content-SHA256')
+        return request.headers.get("X-Amz-Content-SHA256")
 
     def _should_sha256_sign_payload(self, request):
         # Payloads will always be signed over insecure connections.
-        if not request.url.startswith('https'):
+        if not request.url.startswith("https"):
             return True
 
         # Certain operations may have payload signing disabled by default.
         # Since we don't have access to the operation model, we pass in this
         # bit of metadata through the request context.
-        return request.context.get('payload_signing_enabled', True)
+        return request.context.get("payload_signing_enabled", True)
 
     def _should_add_content_sha256_header(self, explicit_payload):
         # only add X-Amz-Content-SHA256 header if payload is explicitly set
@@ -190,8 +186,8 @@ class CrtS3SigV4Auth(CrtSigV4Auth):
         # S3 allows optional body signing, so to minimize the performance
         # impact, we opt to not SHA256 sign the body on streaming uploads,
         # provided that we're on https.
-        client_config = request.context.get('client_config')
-        s3_config = getattr(client_config, 's3', None)
+        client_config = request.context.get("client_config")
+        s3_config = getattr(client_config, "s3", None)
 
         # The config could be None if it isn't set, or if the customer sets it
         # to None.
@@ -200,7 +196,7 @@ class CrtS3SigV4Auth(CrtSigV4Auth):
 
         # The explicit configuration takes precedence over any implicit
         # configuration.
-        sign_payload = s3_config.get('payload_signing_enabled', None)
+        sign_payload = s3_config.get("payload_signing_enabled", None)
         if sign_payload is not None:
             return sign_payload
 
@@ -208,19 +204,19 @@ class CrtS3SigV4Auth(CrtSigV4Auth):
         # to implicitly disable body signing. The combination of TLS and
         # a checksum is sufficiently secure and durable for us to be
         # confident in the request without body signing.
-        checksum_header = 'Content-MD5'
-        checksum_context = request.context.get('checksum', {})
-        algorithm = checksum_context.get('request_algorithm')
-        if isinstance(algorithm, dict) and algorithm.get('in') == 'header':
-            checksum_header = algorithm['name']
+        checksum_header = "Content-MD5"
+        checksum_context = request.context.get("checksum", {})
+        algorithm = checksum_context.get("request_algorithm")
+        if isinstance(algorithm, dict) and algorithm.get("in") == "header":
+            checksum_header = algorithm["name"]
         if (
-            not request.url.startswith('https')
+            not request.url.startswith("https")
             or checksum_header not in request.headers
         ):
             return True
 
         # If the input is streaming we disable body signing by default.
-        if request.context.get('has_streaming_input', False):
+        if request.context.get("has_streaming_input", False):
             return False
 
         # If the S3-specific checks had no results, delegate to the generic
@@ -235,10 +231,10 @@ class CrtS3SigV4Auth(CrtSigV4Auth):
 class CrtSigV4AsymAuth(BaseSigner):
     REQUIRES_REGION = True
     _PRESIGNED_HEADERS_BLOCKLIST = [
-        'Authorization',
-        'X-Amz-Date',
-        'X-Amz-Content-SHA256',
-        'X-Amz-Security-Token',
+        "Authorization",
+        "X-Amz-Date",
+        "X-Amz-Content-SHA256",
+        "X-Amz-Security-Token",
     ]
     _SIGNATURE_TYPE = awscrt.auth.AwsSignatureType.HTTP_REQUEST_HEADERS
     _USE_DOUBLE_URI_ENCODE = True
@@ -279,9 +275,7 @@ class CrtSigV4AsymAuth(BaseSigner):
             explicit_payload = UNSIGNED_PAYLOAD
 
         if self._should_add_content_sha256_header(explicit_payload):
-            body_header = (
-                awscrt.auth.AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA_256
-            )
+            body_header = awscrt.auth.AwsSignedBodyHeaderType.X_AMZ_CONTENT_SHA_256
         else:
             body_header = awscrt.auth.AwsSignedBodyHeaderType.NONE
 
@@ -306,22 +300,22 @@ class CrtSigV4AsymAuth(BaseSigner):
 
     def _crt_request_from_aws_request(self, aws_request):
         url_parts = urlsplit(aws_request.url)
-        crt_path = url_parts.path if url_parts.path else '/'
+        crt_path = url_parts.path if url_parts.path else "/"
         if aws_request.params:
             array = []
             for param, value in aws_request.params.items():
                 value = str(value)
-                array.append(f'{param}={value}')
-            crt_path = crt_path + '?' + '&'.join(array)
+                array.append(f"{param}={value}")
+            crt_path = crt_path + "?" + "&".join(array)
         elif url_parts.query:
-            crt_path = f'{crt_path}?{url_parts.query}'
+            crt_path = f"{crt_path}?{url_parts.query}"
 
         crt_headers = awscrt.http.HttpHeaders(aws_request.headers.items())
 
         # CRT requires body (if it exists) to be an I/O stream.
         crt_body_stream = None
         if aws_request.body:
-            if hasattr(aws_request.body, 'seek'):
+            if hasattr(aws_request.body, "seek"):
                 crt_body_stream = aws_request.body
             else:
                 crt_body_stream = BytesIO(aws_request.body)
@@ -336,9 +330,7 @@ class CrtSigV4AsymAuth(BaseSigner):
 
     def _apply_signing_changes(self, aws_request, signed_crt_request):
         # Apply changes from signed CRT request to the AWSRequest
-        aws_request.headers = HTTPHeaders.from_pairs(
-            list(signed_crt_request.headers)
-        )
+        aws_request.headers = HTTPHeaders.from_pairs(list(signed_crt_request.headers))
 
     def _should_sign_header(self, name, **kwargs):
         return name.lower() not in SIGNED_HEADERS_BLACKLIST
@@ -350,26 +342,26 @@ class CrtSigV4AsymAuth(BaseSigner):
             if h in request.headers:
                 del request.headers[h]
         # If necessary, add the host header
-        if 'host' not in request.headers:
-            request.headers['host'] = _host_from_url(request.url)
+        if "host" not in request.headers:
+            request.headers["host"] = _host_from_url(request.url)
 
     def _get_existing_sha256(self, request):
-        return request.headers.get('X-Amz-Content-SHA256')
+        return request.headers.get("X-Amz-Content-SHA256")
 
     def _is_streaming_checksum_payload(self, request):
-        checksum_context = request.context.get('checksum', {})
-        algorithm = checksum_context.get('request_algorithm')
-        return isinstance(algorithm, dict) and algorithm.get('in') == 'trailer'
+        checksum_context = request.context.get("checksum", {})
+        algorithm = checksum_context.get("request_algorithm")
+        return isinstance(algorithm, dict) and algorithm.get("in") == "trailer"
 
     def _should_sha256_sign_payload(self, request):
         # Payloads will always be signed over insecure connections.
-        if not request.url.startswith('https'):
+        if not request.url.startswith("https"):
             return True
 
         # Certain operations may have payload signing disabled by default.
         # Since we don't have access to the operation model, we pass in this
         # bit of metadata through the request context.
-        return request.context.get('payload_signing_enabled', True)
+        return request.context.get("payload_signing_enabled", True)
 
     def _should_add_content_sha256_header(self, explicit_payload):
         # only add X-Amz-Content-SHA256 header if payload is explicitly set
@@ -389,8 +381,8 @@ class CrtS3SigV4AsymAuth(CrtSigV4AsymAuth):
         # S3 allows optional body signing, so to minimize the performance
         # impact, we opt to not SHA256 sign the body on streaming uploads,
         # provided that we're on https.
-        client_config = request.context.get('client_config')
-        s3_config = getattr(client_config, 's3', None)
+        client_config = request.context.get("client_config")
+        s3_config = getattr(client_config, "s3", None)
 
         # The config could be None if it isn't set, or if the customer sets it
         # to None.
@@ -399,7 +391,7 @@ class CrtS3SigV4AsymAuth(CrtSigV4AsymAuth):
 
         # The explicit configuration takes precedence over any implicit
         # configuration.
-        sign_payload = s3_config.get('payload_signing_enabled', None)
+        sign_payload = s3_config.get("payload_signing_enabled", None)
         if sign_payload is not None:
             return sign_payload
 
@@ -407,14 +399,11 @@ class CrtS3SigV4AsymAuth(CrtSigV4AsymAuth):
         # to implicitly disable body signing. The combination of TLS and
         # content-md5 is sufficiently secure and durable for us to be
         # confident in the request without body signing.
-        if (
-            not request.url.startswith('https')
-            or 'Content-MD5' not in request.headers
-        ):
+        if not request.url.startswith("https") or "Content-MD5" not in request.headers:
             return True
 
         # If the input is streaming we disable body signing by default.
-        if request.context.get('has_streaming_input', False):
+        if request.context.get("has_streaming_input", False):
             return False
 
         # If the S3-specific checks had no results, delegate to the generic
@@ -430,9 +419,7 @@ class CrtSigV4AsymQueryAuth(CrtSigV4AsymAuth):
     DEFAULT_EXPIRES = 3600
     _SIGNATURE_TYPE = awscrt.auth.AwsSignatureType.HTTP_REQUEST_QUERY_PARAMS
 
-    def __init__(
-        self, credentials, service_name, region_name, expires=DEFAULT_EXPIRES
-    ):
+    def __init__(self, credentials, service_name, region_name, expires=DEFAULT_EXPIRES):
         super().__init__(credentials, service_name, region_name)
         self._expiration_in_seconds = expires
 
@@ -441,9 +428,9 @@ class CrtSigV4AsymQueryAuth(CrtSigV4AsymAuth):
 
         # We automatically set this header, so if it's the auto-set value we
         # want to get rid of it since it doesn't make sense for presigned urls.
-        content_type = request.headers.get('content-type')
-        if content_type == 'application/x-www-form-urlencoded; charset=utf-8':
-            del request.headers['content-type']
+        content_type = request.headers.get("content-type")
+        if content_type == "application/x-www-form-urlencoded; charset=utf-8":
+            del request.headers["content-type"]
 
         # Now parse the original query string to a dict, inject our new query
         # params, and serialize back to a query string.
@@ -464,7 +451,7 @@ class CrtSigV4AsymQueryAuth(CrtSigV4AsymAuth):
             # We also need to move the body params into the query string. To
             # do this, we first have to convert it to a dict.
             query_dict.update(_get_body_as_dict(request))
-            request.data = ''
+            request.data = ""
         new_query_string = percent_encode_sequence(query_dict)
         # url_parts is a tuple (and therefore immutable) so we need to create
         # a new url_parts with the new query string.
@@ -521,9 +508,7 @@ class CrtSigV4QueryAuth(CrtSigV4Auth):
     DEFAULT_EXPIRES = 3600
     _SIGNATURE_TYPE = awscrt.auth.AwsSignatureType.HTTP_REQUEST_QUERY_PARAMS
 
-    def __init__(
-        self, credentials, service_name, region_name, expires=DEFAULT_EXPIRES
-    ):
+    def __init__(self, credentials, service_name, region_name, expires=DEFAULT_EXPIRES):
         super().__init__(credentials, service_name, region_name)
         self._expiration_in_seconds = expires
 
@@ -532,9 +517,9 @@ class CrtSigV4QueryAuth(CrtSigV4Auth):
 
         # We automatically set this header, so if it's the auto-set value we
         # want to get rid of it since it doesn't make sense for presigned urls.
-        content_type = request.headers.get('content-type')
-        if content_type == 'application/x-www-form-urlencoded; charset=utf-8':
-            del request.headers['content-type']
+        content_type = request.headers.get("content-type")
+        if content_type == "application/x-www-form-urlencoded; charset=utf-8":
+            del request.headers["content-type"]
 
         # Now parse the original query string to a dict, inject our new query
         # params, and serialize back to a query string.
@@ -544,9 +529,7 @@ class CrtSigV4QueryAuth(CrtSigV4Auth):
         # can convert back to scalar values.
         query_dict = {
             k: v[0]
-            for k, v in parse_qs(
-                url_parts.query, keep_blank_values=True
-            ).items()
+            for k, v in parse_qs(url_parts.query, keep_blank_values=True).items()
         }
         if request.params:
             query_dict.update(request.params)
@@ -561,7 +544,7 @@ class CrtSigV4QueryAuth(CrtSigV4Auth):
             # We also need to move the body params into the query string. To
             # do this, we first have to convert it to a dict.
             query_dict.update(_get_body_as_dict(request))
-            request.data = ''
+            request.data = ""
         new_query_string = percent_encode_sequence(query_dict)
         # url_parts is a tuple (and therefore immutable) so we need to create
         # a new url_parts with the new query string.
@@ -619,11 +602,11 @@ class CrtS3SigV4QueryAuth(CrtSigV4QueryAuth):
 # Defined at the bottom of module to ensure all Auth
 # classes are defined.
 CRT_AUTH_TYPE_MAPS = {
-    'v4': CrtSigV4Auth,
-    'v4-query': CrtSigV4QueryAuth,
-    'v4a': CrtSigV4AsymAuth,
-    's3v4': CrtS3SigV4Auth,
-    's3v4-query': CrtS3SigV4QueryAuth,
-    's3v4a': CrtS3SigV4AsymAuth,
-    's3v4a-query': CrtS3SigV4AsymQueryAuth,
+    "v4": CrtSigV4Auth,
+    "v4-query": CrtSigV4QueryAuth,
+    "v4a": CrtSigV4AsymAuth,
+    "s3v4": CrtS3SigV4Auth,
+    "s3v4-query": CrtS3SigV4QueryAuth,
+    "s3v4a": CrtS3SigV4AsymAuth,
+    "s3v4a-query": CrtS3SigV4AsymQueryAuth,
 }

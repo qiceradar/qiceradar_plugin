@@ -23,8 +23,8 @@ from stevedore import extension
 from stevedore.tests import utils
 
 
-ALL_NAMES = ['e1', 't1', 't2']
-WORKING_NAMES = ['t1', 't2']
+ALL_NAMES = ["e1", "t1", "t2"]
+WORKING_NAMES = ["t1", "t2"]
 
 
 class FauxExtension:
@@ -44,55 +44,55 @@ class BrokenExtension:
 class TestCallback(utils.TestCase):
     def test_detect_plugins(self):
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager('stevedore.test.extension')
+        em = extension.ExtensionManager("stevedore.test.extension")
         names = sorted(em.names())
         self.assertEqual(names, ALL_NAMES)
 
     def test_get_by_name(self):
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager('stevedore.test.extension')
-        e = em['t1']
-        self.assertEqual(e.name, 't1')
+        em = extension.ExtensionManager("stevedore.test.extension")
+        e = em["t1"]
+        self.assertEqual(e.name, "t1")
 
     def test_list_entry_points(self):
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager('stevedore.test.extension')
+        em = extension.ExtensionManager("stevedore.test.extension")
         n = em.list_entry_points()
         self.assertEqual(
-            {'e1', 'e2', 't1', 't2'}, set(map(operator.attrgetter("name"), n))
+            {"e1", "e2", "t1", "t2"}, set(map(operator.attrgetter("name"), n))
         )
         self.assertEqual(4, len(n))
 
     def test_list_entry_points_names(self):
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager('stevedore.test.extension')
+        em = extension.ExtensionManager("stevedore.test.extension")
         names = em.entry_points_names()
-        self.assertEqual({'e1', 'e2', 't1', 't2'}, set(names))
+        self.assertEqual({"e1", "e2", "t1", "t2"}, set(names))
         self.assertEqual(4, len(names))
 
     def test_contains_by_name(self):
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager('stevedore.test.extension')
-        self.assertIn('t1', em, True)
+        em = extension.ExtensionManager("stevedore.test.extension")
+        self.assertIn("t1", em, True)
 
     def test_get_by_name_missing(self):
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager('stevedore.test.extension')
+        em = extension.ExtensionManager("stevedore.test.extension")
         try:
-            em['t3']
+            em["t3"]
         except KeyError:
             pass
         else:
-            assert False, 'Failed to raise KeyError'
+            assert False, "Failed to raise KeyError"
 
     def test_load_multiple_times_entry_points(self):
         # We expect to get the same EntryPoint object because we save them
         # in the cache.
         em1: extension.ExtensionManager[Any]
-        em1 = extension.ExtensionManager('stevedore.test.extension')
+        em1 = extension.ExtensionManager("stevedore.test.extension")
         eps1 = [ext.entry_point for ext in em1]
         em2: extension.ExtensionManager[Any]
-        em2 = extension.ExtensionManager('stevedore.test.extension')
+        em2 = extension.ExtensionManager("stevedore.test.extension")
         eps2 = [ext.entry_point for ext in em2]
         self.assertIs(eps1[0], eps2[0])
 
@@ -100,10 +100,10 @@ class TestCallback(utils.TestCase):
         # We expect to get the same plugin object (module or class)
         # because the underlying import machinery will cache the values.
         em1: extension.ExtensionManager[Any]
-        em1 = extension.ExtensionManager('stevedore.test.extension')
+        em1 = extension.ExtensionManager("stevedore.test.extension")
         plugins1 = [ext.plugin for ext in em1]
         em2: extension.ExtensionManager[Any]
-        em2 = extension.ExtensionManager('stevedore.test.extension')
+        em2 = extension.ExtensionManager("stevedore.test.extension")
         plugins2 = [ext.plugin for ext in em2]
         self.assertIs(plugins1[0], plugins2[0])
 
@@ -112,44 +112,42 @@ class TestCallback(utils.TestCase):
         # the manager should not have to call into entrypoints
         # to find the plugins.
         cache = extension.ExtensionManager.ENTRY_POINT_CACHE
-        cache['stevedore.test.faux'] = []
+        cache["stevedore.test.faux"] = []
         with mock.patch(
-            'stevedore._cache.get_group_all',
-            side_effect=AssertionError('called get_group_all'),
+            "stevedore._cache.get_group_all",
+            side_effect=AssertionError("called get_group_all"),
         ):
             em: extension.ExtensionManager[Any]
-            em = extension.ExtensionManager('stevedore.test.faux')
+            em = extension.ExtensionManager("stevedore.test.faux")
             names = em.names()
         self.assertEqual(names, [])
 
     def test_iterable(self):
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager('stevedore.test.extension')
+        em = extension.ExtensionManager("stevedore.test.extension")
         names = sorted(e.name for e in em)
         self.assertEqual(names, ALL_NAMES)
 
     def test_invoke_on_load(self):
         em: extension.ExtensionManager[Any]
         em = extension.ExtensionManager(
-            'stevedore.test.extension',
+            "stevedore.test.extension",
             invoke_on_load=True,
-            invoke_args=('a',),
-            invoke_kwds={'b': 'B'},
+            invoke_args=("a",),
+            invoke_kwds={"b": "B"},
         )
         self.assertEqual(len(em.extensions), 2)
         for e in em.extensions:
             assert e.obj is not None
-            self.assertEqual(e.obj.args, ('a',))
-            self.assertEqual(e.obj.kwds, {'b': 'B'})
+            self.assertEqual(e.obj.args, ("a",))
+            self.assertEqual(e.obj.kwds, {"b": "B"})
 
     def test_map_return_values(self):
         def mapped(ext, /, *args, **kwds):
             return ext.name
 
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager(
-            'stevedore.test.extension', invoke_on_load=True
-        )
+        em = extension.ExtensionManager("stevedore.test.extension", invoke_on_load=True)
         results = em.map(mapped)
         self.assertEqual(sorted(results), WORKING_NAMES)
 
@@ -160,72 +158,66 @@ class TestCallback(utils.TestCase):
             objs.append((ext, args, kwds))
 
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager(
-            'stevedore.test.extension', invoke_on_load=True
-        )
-        em.map(mapped, 1, 2, a='A', b='B')
+        em = extension.ExtensionManager("stevedore.test.extension", invoke_on_load=True)
+        em.map(mapped, 1, 2, a="A", b="B")
         self.assertEqual(len(objs), 2)
         names = sorted([o[0].name for o in objs])
         self.assertEqual(names, WORKING_NAMES)
         for o in objs:
             self.assertEqual(o[1], (1, 2))
-            self.assertEqual(o[2], {'a': 'A', 'b': 'B'})
+            self.assertEqual(o[2], {"a": "A", "b": "B"})
 
     def test_map_eats_errors(self):
         def mapped(ext, /, *args, **kwds):
-            raise RuntimeError('hard coded error')
+            raise RuntimeError("hard coded error")
 
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager(
-            'stevedore.test.extension', invoke_on_load=True
-        )
-        results = em.map(mapped, 1, 2, a='A', b='B')
+        em = extension.ExtensionManager("stevedore.test.extension", invoke_on_load=True)
+        results = em.map(mapped, 1, 2, a="A", b="B")
         self.assertEqual(results, [])
 
     def test_map_propagate_exceptions(self):
         def mapped(ext, /, *args, **kwds):
-            raise RuntimeError('hard coded error')
+            raise RuntimeError("hard coded error")
 
         em: extension.ExtensionManager[Any]
         em = extension.ExtensionManager(
-            'stevedore.test.extension',
+            "stevedore.test.extension",
             invoke_on_load=True,
             propagate_map_exceptions=True,
         )
 
         try:
-            em.map(mapped, 1, 2, a='A', b='B')
+            em.map(mapped, 1, 2, a="A", b="B")
             assert False
         except RuntimeError:
             pass
 
     def test_map_errors_when_no_plugins(self):
-        expected_str = 'No stevedore.test.extension.none extensions found'
+        expected_str = "No stevedore.test.extension.none extensions found"
 
         def mapped(ext, /, *args, **kwds):
             pass
 
         em: extension.ExtensionManager[Any]
         em = extension.ExtensionManager(
-            'stevedore.test.extension.none', invoke_on_load=True
+            "stevedore.test.extension.none", invoke_on_load=True
         )
         try:
-            em.map(mapped, 1, 2, a='A', b='B')
+            em.map(mapped, 1, 2, a="A", b="B")
         except exception.NoMatches as err:
             self.assertEqual(expected_str, str(err))
 
     def test_map_method(self):
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager(
-            'stevedore.test.extension', invoke_on_load=True
-        )
+        em = extension.ExtensionManager("stevedore.test.extension", invoke_on_load=True)
 
-        result = em.map_method('get_args_and_data', 42)
+        result = em.map_method("get_args_and_data", 42)
         self.assertEqual({r[2] for r in result}, {42})
 
     def test_items(self):
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager('stevedore.test.extension')
+        em = extension.ExtensionManager("stevedore.test.extension")
         expected_output = {(name, em[name]) for name in ALL_NAMES}
         self.assertEqual(expected_output, set(em.items()))
 
@@ -250,27 +242,25 @@ class TestConflictResolution(utils.TestCase):
         """Test that ignore_conflicts logs a warning when conflicts exist."""
         extensions: list[extension.Extension[Base]] = [
             extension.Extension(
-                'conflict',
+                "conflict",
                 importlib.metadata.EntryPoint(
-                    'conflict', 'module1:Class1', 'test.group'
+                    "conflict", "module1:Class1", "test.group"
                 ),
                 Foo,
                 None,
             ),
             extension.Extension(
-                'conflict',
+                "conflict",
                 importlib.metadata.EntryPoint(
-                    'conflict', 'module2:Class2', 'test.group'
+                    "conflict", "module2:Class2", "test.group"
                 ),
                 Bar,
                 None,
             ),
         ]
 
-        with self.assertLogs('stevedore.extension', level='WARNING') as log:
-            result = extension.ignore_conflicts(
-                'test.group', 'conflict', extensions
-            )
+        with self.assertLogs("stevedore.extension", level="WARNING") as log:
+            result = extension.ignore_conflicts("test.group", "conflict", extensions)
 
         self.assertIs(result, extensions[-1])
         self.assertEqual(len(log.records), 1)
@@ -283,25 +273,21 @@ class TestConflictResolution(utils.TestCase):
         """Test error_on_conflict raises MultipleMatches exception."""
         extensions: list[extension.Extension[Base]] = [
             extension.Extension(
-                'conflict',
-                importlib.metadata.EntryPoint(
-                    'conflict', 'module1:Foo', 'test.group'
-                ),
+                "conflict",
+                importlib.metadata.EntryPoint("conflict", "module1:Foo", "test.group"),
                 Foo,
                 None,
             ),
             extension.Extension(
-                'conflict',
-                importlib.metadata.EntryPoint(
-                    'conflict', 'module2:Bar', 'test.group'
-                ),
+                "conflict",
+                importlib.metadata.EntryPoint("conflict", "module2:Bar", "test.group"),
                 Bar,
                 None,
             ),
         ]
 
         with self.assertRaises(exception.MultipleMatches) as cm:
-            extension.error_on_conflict('test.group', 'conflict', extensions)
+            extension.error_on_conflict("test.group", "conflict", extensions)
 
         error_msg = str(cm.exception)
         self.assertIn("multiple implementations found", error_msg)
@@ -315,14 +301,14 @@ class TestConflictResolution(utils.TestCase):
             return extensions[0]
 
         ext1 = extension.Extension(
-            'test',
-            importlib.metadata.EntryPoint('test', 'module1:Foo', 'test.group'),
+            "test",
+            importlib.metadata.EntryPoint("test", "module1:Foo", "test.group"),
             Foo,
             None,
         )
         ext2 = extension.Extension(
-            'test',
-            importlib.metadata.EntryPoint('test', 'module2:Bar', 'test.group'),
+            "test",
+            importlib.metadata.EntryPoint("test", "module2:Bar", "test.group"),
             Bar,
             None,
         )
@@ -332,22 +318,20 @@ class TestConflictResolution(utils.TestCase):
         )
 
         # Should get the first extension when accessing by name
-        result = em['test']
+        result = em["test"]
         self.assertIs(result, ext1)
 
 
 class TestDeprecations(utils.TestCase):
     def test_verify_requirements(self):
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            extension.ExtensionManager.make_test_instance(
-                [], verify_requirements=True
-            )
+            warnings.simplefilter("always")
+            extension.ExtensionManager.make_test_instance([], verify_requirements=True)
 
         self.assertEqual(1, len(w))
         self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
         self.assertIn(
-            'The verify_requirements argument is now a no-op',
+            "The verify_requirements argument is now a no-op",
             str(w[-1].message),
         )
 
@@ -355,32 +339,30 @@ class TestDeprecations(utils.TestCase):
 class TestExtensionProperties(utils.TestCase):
     def setUp(self):
         self.ext1 = extension.Extension(
-            'name',
+            "name",
             importlib.metadata.EntryPoint(
-                'name', 'module.name:attribute.name [extra]', 'group_name'
+                "name", "module.name:attribute.name [extra]", "group_name"
             ),
             Foo,
             None,
         )
         self.ext2 = extension.Extension(
-            'name',
-            importlib.metadata.EntryPoint(
-                'name', 'module:attribute', 'group_name'
-            ),
+            "name",
+            importlib.metadata.EntryPoint("name", "module:attribute", "group_name"),
             Bar,
             None,
         )
 
     def test_module_name(self):
-        self.assertEqual('module.name', self.ext1.module_name)
-        self.assertEqual('module', self.ext2.module_name)
+        self.assertEqual("module.name", self.ext1.module_name)
+        self.assertEqual("module", self.ext2.module_name)
 
     def test_attr(self):
-        self.assertEqual('attribute.name', self.ext1.attr)
-        self.assertEqual('attribute', self.ext2.attr)
+        self.assertEqual("attribute.name", self.ext1.attr)
+        self.assertEqual("attribute", self.ext2.attr)
 
     def test_entry_point_target(self):
         self.assertEqual(
-            'module.name:attribute.name [extra]', self.ext1.entry_point_target
+            "module.name:attribute.name [extra]", self.ext1.entry_point_target
         )
-        self.assertEqual('module:attribute', self.ext2.entry_point_target)
+        self.assertEqual("module:attribute", self.ext2.entry_point_target)

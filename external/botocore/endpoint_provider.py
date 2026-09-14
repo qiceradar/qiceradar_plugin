@@ -139,8 +139,7 @@ class RuleSetStandardLibrary:
         :rtype: Any
         """
         func_args = [
-            self.resolve_value(arg, scope_vars)
-            for arg in func_signature["argv"]
+            self.resolve_value(arg, scope_vars) for arg in func_signature["argv"]
         ]
         func_name = self.convert_func_name(func_signature["fn"])
         func = getattr(self, func_name)
@@ -202,7 +201,7 @@ class RuleSetStandardLibrary:
         :type value: str
         :rtype: dict
         """
-        partitions = self.partitions_data['partitions']
+        partitions = self.partitions_data["partitions"]
 
         if value is not None:
             for partition in partitions:
@@ -228,9 +227,7 @@ class RuleSetStandardLibrary:
             return None
 
         # partition, resource, and service are required
-        if not all(
-            (arn_dict["partition"], arn_dict["service"], arn_dict["resource"])
-        ):
+        if not all((arn_dict["partition"], arn_dict["service"], arn_dict["resource"])):
             return None
 
         arn_dict["accountId"] = arn_dict.pop("account")
@@ -254,8 +251,7 @@ class RuleSetStandardLibrary:
 
         if allow_subdomains is True:
             return all(
-                self.is_valid_host_label(label, False)
-                for label in value.split(".")
+                self.is_valid_host_label(label, False) for label in value.split(".")
             )
 
         return VALID_HOST_LABEL_RE.match(value) is not None
@@ -328,7 +324,9 @@ class RuleSetStandardLibrary:
         :rtype: bool
         """
         if not all(isinstance(val, bool) for val in (value1, value2)):
-            msg = f"Both arguments must be bools, not {type(value1)} and {type(value2)}."
+            msg = (
+                f"Both arguments must be bools, not {type(value1)} and {type(value2)}."
+            )
             raise EndpointResolutionError(msg=msg)
         return value1 is value2
 
@@ -398,9 +396,7 @@ class RuleSetStandardLibrary:
         ):
             return False
 
-        return self.is_valid_host_label(
-            value, allow_subdomains=allow_subdomains
-        )
+        return self.is_valid_host_label(value, allow_subdomains=allow_subdomains)
 
 
 # maintains backwards compatibility as `Library` was misspelled
@@ -459,9 +455,7 @@ class EndpointRule(BaseRule):
                 rule_lib,
             )
             headers = self.resolve_headers(scope_vars, rule_lib)
-            return RuleSetEndpoint(
-                url=url, properties=properties, headers=headers
-            )
+            return RuleSetEndpoint(url=url, properties=properties, headers=headers)
 
         return None
 
@@ -595,9 +589,7 @@ class ParameterDefinition:
     ):
         self.name = name
         try:
-            self.parameter_type = getattr(
-                ParameterType, parameter_type.lower()
-            ).value
+            self.parameter_type = getattr(ParameterType, parameter_type.lower()).value
         except AttributeError:
             raise EndpointResolutionError(
                 msg=f"Unknown parameter type: {parameter_type}. "
@@ -651,9 +643,7 @@ class ParameterDefinition:
 class RuleSet:
     """Collection of rules to derive a routable service endpoint."""
 
-    def __init__(
-        self, version, parameters, rules, partitions, documentation=None
-    ):
+    def __init__(self, version, parameters, rules, partitions, documentation=None):
         self.version = version
         self.parameters = self._ingest_parameter_spec(parameters)
         self.rules = [RuleCreator.create(**rule) for rule in rules]

@@ -37,7 +37,7 @@ class _ANY:
         return False
 
     def __repr__(self):
-        return '<ANY>'
+        return "<ANY>"
 
 
 ANY = _ANY()
@@ -170,9 +170,9 @@ class Stubber:
         :param client: The client to add your stubs to.
         """
         self.client = client
-        self._event_id = 'boto_stubber'
-        self._expected_params_event_id = 'boto_stubber_expected_params'
-        self._stub_account_id_event_id = 'boto_stubber_stub_account_id'
+        self._event_id = "boto_stubber"
+        self._expected_params_event_id = "boto_stubber_expected_params"
+        self._stub_account_id_event_id = "boto_stubber_stub_account_id"
         self._queue = deque()
 
     def __enter__(self):
@@ -187,17 +187,17 @@ class Stubber:
         Activates the stubber on the client
         """
         self.client.meta.events.register_first(
-            'before-parameter-build.*.*',
+            "before-parameter-build.*.*",
             self._assert_expected_params,
             unique_id=self._expected_params_event_id,
         )
         self.client.meta.events.register(
-            'before-call.*.*',
+            "before-call.*.*",
             self._get_response_handler,
             unique_id=self._event_id,
         )
         self.client.meta.events.register(
-            'before-endpoint-resolution.*',
+            "before-endpoint-resolution.*",
             self._set_account_id_for_endpoint_resolution,
             unique_id=self._stub_account_id_event_id,
         )
@@ -207,17 +207,17 @@ class Stubber:
         Deactivates the stubber on the client
         """
         self.client.meta.events.unregister(
-            'before-parameter-build.*.*',
+            "before-parameter-build.*.*",
             self._assert_expected_params,
             unique_id=self._expected_params_event_id,
         )
         self.client.meta.events.unregister(
-            'before-call.*.*',
+            "before-call.*.*",
             self._get_response_handler,
             unique_id=self._event_id,
         )
         self.client.meta.events.unregister(
-            'before-endpoint-resolution.*',
+            "before-endpoint-resolution.*",
             self._stub_account_id_event_id,
             unique_id=self._stub_account_id_event_id,
         )
@@ -262,17 +262,17 @@ class Stubber:
 
         # Add the service_response to the queue for returning responses
         response = {
-            'operation_name': operation_name,
-            'response': (http_response, service_response),
-            'expected_params': expected_params,
+            "operation_name": operation_name,
+            "response": (http_response, service_response),
+            "expected_params": expected_params,
         }
         self._queue.append(response)
 
     def add_client_error(
         self,
         method,
-        service_error_code='',
-        service_message='',
+        service_error_code="",
+        service_message="",
         http_status_code=400,
         service_error_meta=None,
         expected_params=None,
@@ -324,15 +324,15 @@ class Stubber:
         # need to know the details of what the HTTP body would need to
         # look like.
         parsed_response = {
-            'ResponseMetadata': {'HTTPStatusCode': http_status_code},
-            'Error': {'Message': service_message, 'Code': service_error_code},
+            "ResponseMetadata": {"HTTPStatusCode": http_status_code},
+            "Error": {"Message": service_message, "Code": service_error_code},
         }
 
         if service_error_meta is not None:
-            parsed_response['Error'].update(service_error_meta)
+            parsed_response["Error"].update(service_error_meta)
 
         if response_meta is not None:
-            parsed_response['ResponseMetadata'].update(response_meta)
+            parsed_response["ResponseMetadata"].update(response_meta)
 
         if modeled_fields is not None:
             service_model = self.client.meta.service_model
@@ -344,9 +344,9 @@ class Stubber:
         # Note that we do not allow for expected_params while
         # adding errors into the queue yet.
         response = {
-            'operation_name': operation_name,
-            'response': (http_response, parsed_response),
-            'expected_params': expected_params,
+            "operation_name": operation_name,
+            "response": (http_response, parsed_response),
+            "expected_params": expected_params,
         }
         self._queue.append(response)
 
@@ -363,17 +363,17 @@ class Stubber:
             raise UnStubbedResponseError(
                 operation_name=model.name,
                 reason=(
-                    'Unexpected API Call: A call was made but no additional '
-                    'calls expected. Either the API Call was not stubbed or '
-                    'it was called multiple times.'
+                    "Unexpected API Call: A call was made but no additional "
+                    "calls expected. Either the API Call was not stubbed or "
+                    "it was called multiple times."
                 ),
             )
 
-        name = self._queue[0]['operation_name']
+        name = self._queue[0]["operation_name"]
         if name != model.name:
             raise StubResponseError(
                 operation_name=model.name,
-                reason=f'Operation mismatch: found response for {name}.',
+                reason=f"Operation mismatch: found response for {name}.",
             )
 
     def _set_account_id_for_endpoint_resolution(self, builtins, **kwargs):
@@ -381,19 +381,19 @@ class Stubber:
         # when it's a builtin.  This breaks any stubber in environments where credentials
         # are not available.  We mock it to be a None value so that we don't attempt to
         # resolve credentials.
-        if 'AWS::Auth::AccountId' in builtins:
-            builtins['AWS::Auth::AccountId'] = None
+        if "AWS::Auth::AccountId" in builtins:
+            builtins["AWS::Auth::AccountId"] = None
 
     def _get_response_handler(self, model, params, context, **kwargs):
         self._assert_expected_call_order(model, params)
         # Pop off the entire response once everything has been validated
-        return self._queue.popleft()['response']
+        return self._queue.popleft()["response"]
 
     def _assert_expected_params(self, model, params, context, **kwargs):
         if self._should_not_stub(context):
             return
         self._assert_expected_call_order(model, params)
-        expected_params = self._queue[0]['expected_params']
+        expected_params = self._queue[0]["expected_params"]
         if expected_params is None:
             return
 
@@ -403,8 +403,8 @@ class Stubber:
                 raise StubAssertionError(
                     operation_name=model.name,
                     reason=(
-                        f'Expected parameters:\n{pformat(expected_params)},\n'
-                        f'but received:\n{pformat(params)}'
+                        f"Expected parameters:\n{pformat(expected_params)},\n"
+                        f"but received:\n{pformat(params)}"
                     ),
                 )
 
@@ -413,8 +413,8 @@ class Stubber:
             raise StubAssertionError(
                 operation_name=model.name,
                 reason=(
-                    f'Expected parameters:\n{pformat(expected_params)},\n'
-                    f'but received:\n{pformat(params)}'
+                    f"Expected parameters:\n{pformat(expected_params)},\n"
+                    f"but received:\n{pformat(params)}"
                 ),
             )
 
@@ -422,7 +422,7 @@ class Stubber:
         # Do not include presign requests when processing stubbed client calls
         # as a presign request will never have an HTTP request sent over the
         # wire for it and therefore not receive a response back.
-        if context and context.get('is_presign_request'):
+        if context and context.get("is_presign_request"):
             return True
 
     def _validate_operation_response(self, operation_name, service_response):
@@ -433,9 +433,9 @@ class Stubber:
         # Remove ResponseMetadata so that the validator doesn't attempt to
         # perform validation on it.
         response = service_response
-        if 'ResponseMetadata' in response:
+        if "ResponseMetadata" in response:
             response = copy.copy(service_response)
-            del response['ResponseMetadata']
+            del response["ResponseMetadata"]
 
         self._validate_response(output_shape, response)
 
@@ -446,7 +446,5 @@ class Stubber:
             # If the output shape is None, that means the response should be
             # empty apart from ResponseMetadata
             raise ParamValidationError(
-                report=(
-                    "Service response should only contain ResponseMetadata."
-                )
+                report=("Service response should only contain ResponseMetadata.")
             )

@@ -180,9 +180,7 @@ class TokenProviderChain:
 class SSOTokenProvider:
     METHOD = "sso"
     _REFRESH_WINDOW = 15 * 60
-    _SSO_TOKEN_CACHE_DIR = os.path.expanduser(
-        os.path.join("~", ".aws", "sso", "cache")
-    )
+    _SSO_TOKEN_CACHE_DIR = os.path.expanduser(os.path.join("~", ".aws", "sso", "cache"))
     _SSO_CONFIG_VARS = [
         "sso_start_url",
         "sso_region",
@@ -190,9 +188,7 @@ class SSOTokenProvider:
     _GRANT_TYPE = "refresh_token"
     DEFAULT_CACHE_CLS = JSONFileCache
 
-    def __init__(
-        self, session, cache=None, time_fetcher=_utc_now, profile_name=None
-    ):
+    def __init__(self, session, cache=None, time_fetcher=_utc_now, profile_name=None):
         self._session = session
         if cache is None:
             cache = self.DEFAULT_CACHE_CLS(
@@ -203,9 +199,7 @@ class SSOTokenProvider:
         self._cache = cache
         self._token_loader = SSOTokenLoader(cache=self._cache)
         self._profile_name = (
-            profile_name
-            or self._session.get_config_variable("profile")
-            or 'default'
+            profile_name or self._session.get_config_variable("profile") or "default"
         )
 
     def _load_sso_config(self):
@@ -324,9 +318,7 @@ class SSOTokenProvider:
                     start_url, token_dict, session_name=session_name
                 )
 
-        return FrozenAuthToken(
-            token_dict["accessToken"], expiration=expiration
-        )
+        return FrozenAuthToken(token_dict["accessToken"], expiration=expiration)
 
     def load_token(self, **kwargs):
         if self._sso_config is None:
@@ -343,7 +335,7 @@ class ScopedEnvTokenProvider:
     a specific `signing_name`.
     """
 
-    METHOD = 'env'
+    METHOD = "env"
 
     def __init__(self, session, environ=None):
         self._session = session

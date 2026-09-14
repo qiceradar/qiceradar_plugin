@@ -31,25 +31,25 @@ class CollectionDocumenter(NestedDocumenter):
         collections_list = []
         add_resource_type_overview(
             section=section,
-            resource_type='Collections',
+            resource_type="Collections",
             description=(
-                'Collections provide an interface to iterate over and '
-                'manipulate groups of resources. '
+                "Collections provide an interface to iterate over and "
+                "manipulate groups of resources. "
             ),
-            intro_link='guide_collections',
+            intro_link="guide_collections",
         )
-        self.member_map['collections'] = collections_list
+        self.member_map["collections"] = collections_list
         for collection in collections:
             collections_list.append(collection.name)
             # Create a new DocumentStructure for each collection and add contents.
-            collection_doc = DocumentStructure(collection.name, target='html')
-            breadcrumb_section = collection_doc.add_new_section('breadcrumb')
-            breadcrumb_section.style.ref(self._resource_class_name, 'index')
-            breadcrumb_section.write(f' / Collection / {collection.name}')
+            collection_doc = DocumentStructure(collection.name, target="html")
+            breadcrumb_section = collection_doc.add_new_section("breadcrumb")
+            breadcrumb_section.style.ref(self._resource_class_name, "index")
+            breadcrumb_section.write(f" / Collection / {collection.name}")
             collection_doc.add_title_section(collection.name)
             collection_section = collection_doc.add_new_section(
                 collection.name,
-                context={'qualifier': f'{self.class_name}.'},
+                context={"qualifier": f"{self.class_name}."},
             )
             self._document_collection(collection_section, collection)
 
@@ -57,15 +57,13 @@ class CollectionDocumenter(NestedDocumenter):
             # Path: <root>/reference/services/<service>/<resource_name>/<collection_name>.rst
             collections_dir_path = os.path.join(
                 self._root_docs_path,
-                f'{self._service_name}',
-                f'{self._resource_sub_path}',
+                f"{self._service_name}",
+                f"{self._resource_sub_path}",
             )
             collection_doc.write_to_file(collections_dir_path, collection.name)
 
     def _document_collection(self, section, collection):
-        methods = get_instance_public_methods(
-            getattr(self._resource, collection.name)
-        )
+        methods = get_instance_public_methods(getattr(self._resource, collection.name))
         document_collection_object(section, collection)
         batch_actions = {}
         for batch_action in collection.batch_actions:
@@ -113,12 +111,12 @@ def document_collection_object(
         )
         section.style.start_sphinx_py_attr(full_collection_name)
     section.include_doc_string(
-        f'A collection of {collection_model.resource.type} resources.'
+        f"A collection of {collection_model.resource.type} resources."
     )
     section.include_doc_string(
-        f'A {collection_model.resource.type} Collection will include all '
-        f'resources by default, and extreme caution should be taken when '
-        f'performing actions on all resources.'
+        f"A {collection_model.resource.type} Collection will include all "
+        f"resources by default, and extreme caution should be taken when "
+        f"performing actions on all resources."
     )
 
 
@@ -154,18 +152,16 @@ def document_batch_action(
     operation_model = service_model.operation_model(
         batch_action_model.request.operation
     )
-    ignore_params = get_resource_ignore_params(
-        batch_action_model.request.params
-    )
+    ignore_params = get_resource_ignore_params(batch_action_model.request.params)
 
-    example_return_value = 'response'
+    example_return_value = "response"
     if batch_action_model.resource:
         example_return_value = xform_name(batch_action_model.resource.type)
 
     example_resource_name = xform_name(resource_name)
     if service_model.service_name == resource_name:
         example_resource_name = resource_name
-    example_prefix = f'{example_return_value} = {example_resource_name}.{collection_model.name}.{batch_action_model.name}'
+    example_prefix = f"{example_return_value} = {example_resource_name}.{collection_model.name}.{batch_action_model.name}"
     document_model_driven_resource_method(
         section=section,
         method_name=batch_action_model.name,
@@ -206,9 +202,7 @@ def document_collection_method(
     :param include_signature: Whether or not to include the signature.
         It is useful for generating docstrings.
     """
-    operation_model = service_model.operation_model(
-        collection_model.request.operation
-    )
+    operation_model = service_model.operation_model(collection_model.request.operation)
 
     underlying_operation_members = []
     if operation_model.input_shape:
@@ -219,62 +213,60 @@ def document_collection_method(
         example_resource_name = resource_name
 
     custom_action_info_dict = {
-        'all': {
-            'method_description': (
-                f'Creates an iterable of all {collection_model.resource.type} '
-                f'resources in the collection.'
+        "all": {
+            "method_description": (
+                f"Creates an iterable of all {collection_model.resource.type} "
+                f"resources in the collection."
             ),
-            'example_prefix': f'{xform_name(collection_model.resource.type)}_iterator = {example_resource_name}.{collection_model.name}.all',
-            'exclude_input': underlying_operation_members,
+            "example_prefix": f"{xform_name(collection_model.resource.type)}_iterator = {example_resource_name}.{collection_model.name}.all",
+            "exclude_input": underlying_operation_members,
         },
-        'filter': {
-            'method_description': (
-                f'Creates an iterable of all {collection_model.resource.type} '
-                f'resources in the collection filtered by kwargs passed to '
-                f'method. A {collection_model.resource.type} collection will '
-                f'include all resources by default if no filters are provided, '
-                f'and extreme caution should be taken when performing actions '
-                f'on all resources.'
+        "filter": {
+            "method_description": (
+                f"Creates an iterable of all {collection_model.resource.type} "
+                f"resources in the collection filtered by kwargs passed to "
+                f"method. A {collection_model.resource.type} collection will "
+                f"include all resources by default if no filters are provided, "
+                f"and extreme caution should be taken when performing actions "
+                f"on all resources."
             ),
-            'example_prefix': f'{xform_name(collection_model.resource.type)}_iterator = {example_resource_name}.{collection_model.name}.filter',
-            'exclude_input': get_resource_ignore_params(
+            "example_prefix": f"{xform_name(collection_model.resource.type)}_iterator = {example_resource_name}.{collection_model.name}.filter",
+            "exclude_input": get_resource_ignore_params(
                 collection_model.request.params
             ),
         },
-        'limit': {
-            'method_description': (
-                f'Creates an iterable up to a specified amount of '
-                f'{collection_model.resource.type} resources in the collection.'
+        "limit": {
+            "method_description": (
+                f"Creates an iterable up to a specified amount of "
+                f"{collection_model.resource.type} resources in the collection."
             ),
-            'example_prefix': f'{xform_name(collection_model.resource.type)}_iterator = {example_resource_name}.{collection_model.name}.limit',
-            'include_input': [
+            "example_prefix": f"{xform_name(collection_model.resource.type)}_iterator = {example_resource_name}.{collection_model.name}.limit",
+            "include_input": [
                 DocumentedShape(
-                    name='count',
-                    type_name='integer',
+                    name="count",
+                    type_name="integer",
                     documentation=(
-                        'The limit to the number of resources in the iterable.'
+                        "The limit to the number of resources in the iterable."
                     ),
                 )
             ],
-            'exclude_input': underlying_operation_members,
+            "exclude_input": underlying_operation_members,
         },
-        'page_size': {
-            'method_description': (
-                f'Creates an iterable of all {collection_model.resource.type} '
-                f'resources in the collection, but limits the number of '
-                f'items returned by each service call by the specified amount.'
+        "page_size": {
+            "method_description": (
+                f"Creates an iterable of all {collection_model.resource.type} "
+                f"resources in the collection, but limits the number of "
+                f"items returned by each service call by the specified amount."
             ),
-            'example_prefix': f'{xform_name(collection_model.resource.type)}_iterator = {example_resource_name}.{collection_model.name}.page_size',
-            'include_input': [
+            "example_prefix": f"{xform_name(collection_model.resource.type)}_iterator = {example_resource_name}.{collection_model.name}.page_size",
+            "include_input": [
                 DocumentedShape(
-                    name='count',
-                    type_name='integer',
-                    documentation=(
-                        'The number of items returned by each service call'
-                    ),
+                    name="count",
+                    type_name="integer",
+                    documentation=("The number of items returned by each service call"),
                 )
             ],
-            'exclude_input': underlying_operation_members,
+            "exclude_input": underlying_operation_members,
         },
     }
     if action_name in custom_action_info_dict:

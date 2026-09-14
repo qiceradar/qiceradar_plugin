@@ -46,20 +46,22 @@ class PackerExtension(metaclass=abc.ABCMeta):
 
 
 class Packer(PackerExtension):
-    """Default implementation of IBM float un/packing.
-    """
+    """Default implementation of IBM float un/packing."""
+
     def pack(self, values):
-        return EMPTY_BYTE_STRING.join(bytes(IBMFloat.from_real(value))
-                                      for value in values)
+        return EMPTY_BYTE_STRING.join(
+            bytes(IBMFloat.from_real(value)) for value in values
+        )
 
     def unpack(self, data, num_items):
-        return [IBMFloat.from_bytes(data[i: i+4])
-                for i in range(0, num_items * 4, 4)]
+        return [
+            IBMFloat.from_bytes(data[i : i + 4]) for i in range(0, num_items * 4, 4)
+        ]
 
 
 _EXTENSION_MANAGER = ExtensionManager(
-    namespace='segpy.ibm_float_packer',
-    invoke_on_load=True)
+    namespace="segpy.ibm_float_packer", invoke_on_load=True
+)
 
 
 # Boolean controller whether the Python implementation of IBM floating points
@@ -72,10 +74,10 @@ force_python_ibm_floats = False
 
 
 def _active_packer():
-    if force_python_ibm_floats or 'cpp' not in _EXTENSION_MANAGER:
+    if force_python_ibm_floats or "cpp" not in _EXTENSION_MANAGER:
         return Packer()
 
-    return _EXTENSION_MANAGER['cpp'].obj
+    return _EXTENSION_MANAGER["cpp"].obj
 
 
 def unpack_ibm_floats(data, num_items):

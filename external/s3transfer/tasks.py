@@ -91,18 +91,18 @@ class Task:
         # These are the general main_kwarg parameters that we want to
         # display in the repr.
         params_to_display = [
-            'bucket',
-            'key',
-            'part_number',
-            'final_filename',
-            'transfer_future',
-            'offset',
-            'extra_args',
+            "bucket",
+            "key",
+            "part_number",
+            "final_filename",
+            "transfer_future",
+            "offset",
+            "extra_args",
         ]
         main_kwargs_to_display = self._get_kwargs_with_params_to_include(
             self._main_kwargs, params_to_display
         )
-        return f'{self.__class__.__name__}(transfer_id={self._transfer_coordinator.transfer_id}, {main_kwargs_to_display})'
+        return f"{self.__class__.__name__}(transfer_id={self._transfer_coordinator.transfer_id}, {main_kwargs_to_display})"
 
     @property
     def transfer_id(self):
@@ -155,7 +155,7 @@ class Task:
     def _execute_main(self, kwargs):
         # Do not display keyword args that should not be printed, especially
         # if they are going to make the logs hard to follow.
-        params_to_exclude = ['data']
+        params_to_exclude = ["data"]
         kwargs_to_display = self._get_kwargs_with_params_to_exclude(
             kwargs, params_to_exclude
         )
@@ -181,7 +181,7 @@ class Task:
         This method must be implemented by subclasses from Task. main() can
         be implemented with any arguments decided upon by the subclass.
         """
-        raise NotImplementedError('_main() must be implemented')
+        raise NotImplementedError("_main() must be implemented")
 
     def _wait_on_dependent_futures(self):
         # Gather all of the futures into that main() depends on.
@@ -205,18 +205,16 @@ class Task:
         # when wait() was called. With this approach, it avoids the
         # concurrency bug by removing any association with concurrent.futures
         # implementation of waiters.
-        logger.debug(
-            '%s about to wait for the following futures %s', self, futures
-        )
+        logger.debug("%s about to wait for the following futures %s", self, futures)
         for future in futures:
             try:
-                logger.debug('%s about to wait for %s', self, future)
+                logger.debug("%s about to wait for %s", self, future)
                 future.result()
             except Exception:
                 # result() can also produce exceptions. We want to ignore
                 # these to be deferred to error handling down the road.
                 pass
-        logger.debug('%s done waiting for dependent futures', self)
+        logger.debug("%s done waiting for dependent futures", self)
 
     def _get_all_main_kwargs(self):
         # Copy over all of the kwargs that we know is available.
@@ -260,7 +258,7 @@ class SubmissionTask(Task):
             self._transfer_coordinator.set_status_to_queued()
 
             # Before submitting any tasks, run all of the on_queued callbacks
-            on_queued_callbacks = get_callbacks(transfer_future, 'queued')
+            on_queued_callbacks = get_callbacks(transfer_future, "queued")
             for on_queued_callback in on_queued_callbacks:
                 on_queued_callback()
 
@@ -304,7 +302,7 @@ class SubmissionTask(Task):
         :param kwargs: Any additional keyword arguments you want to be passed
             in
         """
-        raise NotImplementedError('_submit() must be implemented')
+        raise NotImplementedError("_submit() must be implemented")
 
     def _wait_for_all_submitted_futures_to_complete(self):
         # We want to wait for all futures that were submitted to
@@ -348,10 +346,8 @@ class CreateMultipartUploadTask(Task):
         :returns: The upload id of the multipart upload
         """
         # Create the multipart upload.
-        response = client.create_multipart_upload(
-            Bucket=bucket, Key=key, **extra_args
-        )
-        upload_id = response['UploadId']
+        response = client.create_multipart_upload(Bucket=bucket, Key=key, **extra_args)
+        upload_id = response["UploadId"]
 
         # Add a cleanup if the multipart upload fails at any point.
         self._transfer_coordinator.add_failure_cleanup(
@@ -385,6 +381,6 @@ class CompleteMultipartUploadTask(Task):
             Bucket=bucket,
             Key=key,
             UploadId=upload_id,
-            MultipartUpload={'Parts': parts},
+            MultipartUpload={"Parts": parts},
             **extra_args,
         )

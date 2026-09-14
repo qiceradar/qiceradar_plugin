@@ -31,7 +31,7 @@ def _find_superblock_offset(fh):
     offsets = [0, 512]
     exp = 2  # next power: 2**2 * 512 = 2048
     while offsets[-1] < 2**20:  # search up to 1 MB
-        offsets.append(512 * (2 ** exp))
+        offsets.append(512 * (2**exp))
         exp += 1
 
     for offset in offsets:
@@ -40,9 +40,7 @@ def _find_superblock_offset(fh):
         if sig == FORMAT_SIGNATURE:
             return offset
 
-    raise InvalidHDF5File(
-        "HDF5 superblock signature not found at any valid offset"
-    )
+    raise InvalidHDF5File("HDF5 superblock signature not found at any valid offset")
 
 
 class SuperBlock(object):
@@ -350,11 +348,10 @@ class FractalHeap(object):
         self._huge_objects = {}
         if header["btree_address_huge_objects"] is not None:
             from .btree import BTreeV2HugeObjects
+
             btree = BTreeV2HugeObjects(fh, header["btree_address_huge_objects"])
             for record in btree.iter_records():
-                self._huge_objects[record["id"]] = (
-                    record["address"], record["length"]
-                )
+                self._huge_objects[record["id"]] = (record["address"], record["length"])
 
     def _read_direct_block(self, fh, offset, block_size):
         """
@@ -415,7 +412,7 @@ class FractalHeap(object):
                 # Data is stored directly in the heap ID.
                 # Bits 0-3 of the first byte encode the length minus one.
                 length = (firstbyte & 0x0F) + 1
-                return heapid[data_offset:data_offset + length]
+                return heapid[data_offset : data_offset + length]
             case _:
                 raise NotImplementedError
 

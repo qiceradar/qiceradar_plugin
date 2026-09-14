@@ -58,10 +58,10 @@ def get_botocore_plugins():
     if context is not None:
         plugins = context.plugins
         if plugins is None:
-            context.plugins = os.environ.get('BOTOCORE_EXPERIMENTAL__PLUGINS')
+            context.plugins = os.environ.get("BOTOCORE_EXPERIMENTAL__PLUGINS")
         else:
             return plugins
-    return os.environ.get('BOTOCORE_EXPERIMENTAL__PLUGINS')
+    return os.environ.get("BOTOCORE_EXPERIMENTAL__PLUGINS")
 
 
 def load_client_plugins(client, plugins):
@@ -80,6 +80,4 @@ def load_client_plugins(client, plugins):
                 plugin_name,
             )
         except Exception as e:
-            log.debug(
-                "Error raised during the loading of %s: %s", plugin_name, e
-            )
+            log.debug("Error raised during the loading of %s: %s", plugin_name, e)

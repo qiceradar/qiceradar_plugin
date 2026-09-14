@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class BaseHistoryHandler:
     def emit(self, event_type, payload, source):
-        raise NotImplementedError('emit()')
+        raise NotImplementedError("emit()")
 
 
 class HistoryRecorder:
@@ -35,7 +35,7 @@ class HistoryRecorder:
     def add_handler(self, handler):
         self._handlers.append(handler)
 
-    def record(self, event_type, payload, source='BOTOCORE'):
+    def record(self, event_type, payload, source="BOTOCORE"):
         if self._enabled and self._handlers:
             for handler in self._handlers:
                 try:
@@ -43,9 +43,7 @@ class HistoryRecorder:
                 except Exception:
                     # Never let the process die because we had a failure in
                     # a record collection handler.
-                    logger.debug(
-                        "Exception raised in %s.", handler, exc_info=True
-                    )
+                    logger.debug("Exception raised in %s.", handler, exc_info=True)
 
 
 def get_global_history_recorder():

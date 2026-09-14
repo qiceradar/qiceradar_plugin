@@ -1,14 +1,20 @@
 from enum import IntEnum
 
 from segpy.datatypes import DataSampleFormat
-from segpy.field_types import IntFieldMeta, IntEnumFieldMeta, Int32, Int16, NNInt32, NNInt16
+from segpy.field_types import (
+    IntFieldMeta,
+    IntEnumFieldMeta,
+    Int32,
+    Int16,
+    NNInt32,
+    NNInt16,
+)
 from segpy.header import field, Header
 import segpy.trace_header
 from segpy import revisions
 
 
-class DataSampleFormatField(metaclass=IntEnumFieldMeta,
-                            enum=DataSampleFormat):
+class DataSampleFormatField(metaclass=IntEnumFieldMeta, enum=DataSampleFormat):
     pass
 
 
@@ -26,6 +32,7 @@ class TraceSorting(IntEnum):
     9 = Common conversion point.
     Highly recommended for all types of data.
     """
+
     OTHER = -1
     UNKNOWN = 0
     AS_RECORDED = 1
@@ -39,8 +46,7 @@ class TraceSorting(IntEnum):
     COMMON_CONVERSION_POINT = 9
 
 
-class TraceSortingField(metaclass=IntEnumFieldMeta,
-                        enum=TraceSorting):
+class TraceSortingField(metaclass=IntEnumFieldMeta, enum=TraceSorting):
     pass
 
 
@@ -49,13 +55,13 @@ class CorrelatedDataTraces(IntEnum):
     1 = no,
     2 = yes
     """
+
     UNKNOWN = 0
     NO = 1
     YES = 2
 
 
-class CorrelatedDataTracesField(metaclass=IntEnumFieldMeta,
-                                enum=CorrelatedDataTraces):
+class CorrelatedDataTracesField(metaclass=IntEnumFieldMeta, enum=CorrelatedDataTraces):
     pass
 
 
@@ -64,13 +70,13 @@ class BinaryGainRecovered(IntEnum):
     1 = no,
     2 = yes
     """
+
     UNKNOWN = 0
     YES = 1
     NO = 2
 
 
-class BinaryGainRecoveredField(metaclass=IntEnumFieldMeta,
-                               enum=BinaryGainRecovered):
+class BinaryGainRecoveredField(metaclass=IntEnumFieldMeta, enum=BinaryGainRecovered):
     pass
 
 
@@ -81,6 +87,7 @@ class AmplitudeRecoveryMethod(IntEnum):
     3 = AGC,
     4 = other
     """
+
     UNKNOWN = 0
     NONE = 1
     SPHERICAL_DIVERGENCE = 2
@@ -88,8 +95,9 @@ class AmplitudeRecoveryMethod(IntEnum):
     OTHER = 4
 
 
-class AmplitudeRecoveryMethodField(metaclass=IntEnumFieldMeta,
-                                   enum=AmplitudeRecoveryMethod):
+class AmplitudeRecoveryMethodField(
+    metaclass=IntEnumFieldMeta, enum=AmplitudeRecoveryMethod
+):
     pass
 
 
@@ -100,13 +108,13 @@ class MeasurementSystem(IntEnum):
     1 = Meters,
     2 = Feet
     """
+
     UNKNOWN = 0
     METERS = 1
     FEET = 2
 
 
-class MeasurementSystemField(metaclass=IntEnumFieldMeta,
-                             enum=MeasurementSystem):
+class MeasurementSystemField(metaclass=IntEnumFieldMeta, enum=MeasurementSystem):
     pass
 
 
@@ -115,13 +123,15 @@ class ImpulseSignalPolarity(IntEnum):
     1 = Increase in pressure or upward geophone case movement gives negative number on tape,
     2 = Increase in pressure or upward geophone case movement gives positive number on tape.
     """
+
     UNKNOWN = 0
     INCREASE_GIVES_NEGATIVE_ON_TAPE = 1
     INCREASE_GIVES_POSITIVE_ON_TAPE = 2
 
 
-class ImpulseSignalPolarityField(metaclass=IntEnumFieldMeta,
-                                 enum=ImpulseSignalPolarity):
+class ImpulseSignalPolarityField(
+    metaclass=IntEnumFieldMeta, enum=ImpulseSignalPolarity
+):
     pass
 
 
@@ -136,6 +146,7 @@ class VibratoryPolarityCode(IntEnum):
     7 = 247.5° to 292.5°,
     8 = 292.5° to 337.5°.
     """
+
     UNKNOWN = 0
     FROM_337_5_TO_22_5 = 1
     FROM_22_5_TO_67_5 = 2
@@ -147,8 +158,9 @@ class VibratoryPolarityCode(IntEnum):
     FROM_292_5_TO_337_5 = 8
 
 
-class VibratoryPolarityCodeField(metaclass=IntEnumFieldMeta,
-                                 enum=VibratoryPolarityCode):
+class VibratoryPolarityCodeField(
+    metaclass=IntEnumFieldMeta, enum=VibratoryPolarityCode
+):
     pass
 
 
@@ -162,189 +174,225 @@ class FixedLengthTraceFlag(IntEnum):
     mandatory for all versions of SEG Y, although a value of zero indicates
     “traditional” SEG Y conforming to the 1975 standard.
     """
+
     VARIABLE_LENGTH = 0
     FIXED_LENGTH = 1
 
 
-class FixedLengthTraceFlagField(metaclass=IntEnumFieldMeta,
-                                enum=FixedLengthTraceFlag):
+class FixedLengthTraceFlagField(metaclass=IntEnumFieldMeta, enum=FixedLengthTraceFlag):
     pass
 
 
-class NumExtendedTextualHeadersField(metaclass=IntFieldMeta,
-                                     seg_y_type='int16',
-                                     min_value=-1):
+class NumExtendedTextualHeadersField(
+    metaclass=IntFieldMeta, seg_y_type="int16", min_value=-1
+):
     pass
 
 
-class FormatRevisionNumField(metaclass=IntEnumFieldMeta,
-                             enum=revisions.SegYRevision):
+class FormatRevisionNumField(metaclass=IntEnumFieldMeta, enum=revisions.SegYRevision):
     pass
 
 
 class BinaryReelHeader(Header):
-
     START_OFFSET_IN_BYTES = 3201
     LENGTH_IN_BYTES = 400
 
     job_id_num = field(
-        Int32, offset=3201, default=0, documentation=
-        "Job identification number")
+        Int32, offset=3201, default=0, documentation="Job identification number"
+    )
 
     line_num = field(
-        NNInt32, offset=3205, default=0, documentation=
-        "Line number. For 3-D poststack data, this will typically contain the in-line number."
+        NNInt32,
+        offset=3205,
+        default=0,
+        documentation="Line number. For 3-D poststack data, this will typically contain the in-line number.",
     )
 
-    reel_num = field(
-        Int32, offset=3209, default=0, documentation=
-        "Reel number."
-    )
+    reel_num = field(Int32, offset=3209, default=0, documentation="Reel number.")
 
     data_traces_per_ensemble = field(
-        NNInt16, offset=3213, default=0, documentation=
-        "Number of data traces per ensemble. Mandatory for prestack data."
+        NNInt16,
+        offset=3213,
+        default=0,
+        documentation="Number of data traces per ensemble. Mandatory for prestack data.",
     )
 
     auxiliary_traces_per_ensemble = field(
-        NNInt16, offset=3215, default=0, documentation=
-        "Number of auxiliary traces per ensemble. Mandatory for prestack data."
+        NNInt16,
+        offset=3215,
+        default=0,
+        documentation="Number of auxiliary traces per ensemble. Mandatory for prestack data.",
     )
 
     sample_interval = field(
-        NNInt16, offset=3217, default=0, documentation=
-        "Sample interval in microseconds (μs). Mandatory for all data types."
+        NNInt16,
+        offset=3217,
+        default=0,
+        documentation="Sample interval in microseconds (μs). Mandatory for all data types.",
     )
 
     original_field_sample_interval = field(
-        NNInt16, offset=3219, default=0, documentation=
-        "Sample interval in microseconds (μs) of original field recording."
+        NNInt16,
+        offset=3219,
+        default=0,
+        documentation="Sample interval in microseconds (μs) of original field recording.",
     )
 
     num_samples = field(
-        NNInt16, offset=3221, default=0, documentation=
-        """Number of samples per data trace. Mandatory for all types of data.
+        NNInt16,
+        offset=3221,
+        default=0,
+        documentation="""Number of samples per data trace. Mandatory for all types of data.
         Note: The sample interval and number of samples in the Binary File Header should be for the primary set of
-        seismic data traces in the file."""
+        seismic data traces in the file.""",
     )
 
     original_field_num_samples = field(
-        NNInt16, offset=3223, default=0, documentation=
-        "Number of samples per data trace for original field recording."
+        NNInt16,
+        offset=3223,
+        default=0,
+        documentation="Number of samples per data trace for original field recording.",
     )
 
     data_sample_format = field(
-        DataSampleFormatField, offset=3225, default=5,
-        documentation=DataSampleFormat.__doc__
+        DataSampleFormatField,
+        offset=3225,
+        default=5,
+        documentation=DataSampleFormat.__doc__,
     )
 
     ensemble_fold = field(
-        NNInt16, offset=3227, default=0, documentation=
-        """Ensemble fold. The expected number of data traces per trace ensemble (e.g. the CMP fold).
-        Highly recommended for all types of data."""
+        NNInt16,
+        offset=3227,
+        default=0,
+        documentation="""Ensemble fold. The expected number of data traces per trace ensemble (e.g. the CMP fold).
+        Highly recommended for all types of data.""",
     )
 
     trace_sorting = field(
-        TraceSortingField, offset=3229, default=0,
-        documentation=TraceSorting.__doc__)
+        TraceSortingField, offset=3229, default=0, documentation=TraceSorting.__doc__
+    )
 
     vertical_sum_code = field(
-        NNInt16, offset=3231, default=0, documentation=
-        """Vertical sum code:
+        NNInt16,
+        offset=3231,
+        default=0,
+        documentation="""Vertical sum code:
         1 = no sum,
         2 = two sum,
         ...,
-        N=M-1 sum (M=2to32,767)."""
+        N=M-1 sum (M=2to32,767).""",
     )
 
     sweep_frequency_at_start = field(
-        NNInt16, offset=3233, default=0, documentation=
-        "Sweep frequency at start (Hz)."
+        NNInt16, offset=3233, default=0, documentation="Sweep frequency at start (Hz)."
     )
 
     sweep_frequency_at_end = field(
-        NNInt16, offset=3235, default=0, documentation=
-        "Sweep frequency at end (Hz)."
+        NNInt16, offset=3235, default=0, documentation="Sweep frequency at end (Hz)."
     )
 
     sweep_length = field(
-        NNInt16, offset=3237, default=0, documentation=
-        "Sweep length in milliseconds."
+        NNInt16, offset=3237, default=0, documentation="Sweep length in milliseconds."
     )
 
     sweep_type = field(
-        segpy.trace_header.SweepTypeField, offset=3239, default=0,
-        documentation=segpy.trace_header.SweepType.__doc__
+        segpy.trace_header.SweepTypeField,
+        offset=3239,
+        default=0,
+        documentation=segpy.trace_header.SweepType.__doc__,
     )
 
     sweep_trace_number = field(
-        Int16, offset=3241, default=0, documentation=
-        "Trace number of sweep channel."
+        Int16, offset=3241, default=0, documentation="Trace number of sweep channel."
     )
 
     sweep_trace_taper_length_at_start = field(
-        NNInt16, offset=3243, default=0, documentation=
-        "Sweep trace taper length at start in milliseconds."
+        NNInt16,
+        offset=3243,
+        default=0,
+        documentation="Sweep trace taper length at start in milliseconds.",
     )
 
     sweep_trace_taper_length_at_end = field(
-        NNInt16, offset=3245, default=0, documentation=
-        "Sweep trace taper length at end in milliseconds."
+        NNInt16,
+        offset=3245,
+        default=0,
+        documentation="Sweep trace taper length at end in milliseconds.",
     )
 
     taper_type = field(
-        segpy.trace_header.TaperTypeField, offset=3247, default=0,
-        documentation=segpy.trace_header.TaperType.__doc__
+        segpy.trace_header.TaperTypeField,
+        offset=3247,
+        default=0,
+        documentation=segpy.trace_header.TaperType.__doc__,
     )
 
     correlated_data_traces = field(
-        CorrelatedDataTracesField, offset=3249, default=0,
-        documentation=CorrelatedDataTraces.__doc__
+        CorrelatedDataTracesField,
+        offset=3249,
+        default=0,
+        documentation=CorrelatedDataTraces.__doc__,
     )
 
     binary_gain_recovered = field(
-        BinaryGainRecoveredField, offset=3251, default=0,
-        documentation=BinaryGainRecovered.__doc__
+        BinaryGainRecoveredField,
+        offset=3251,
+        default=0,
+        documentation=BinaryGainRecovered.__doc__,
     )
 
     amplitude_recovery_method = field(
-        AmplitudeRecoveryMethodField, offset=3253, default=0,
-        documentation=AmplitudeRecoveryMethod.__doc__
+        AmplitudeRecoveryMethodField,
+        offset=3253,
+        default=0,
+        documentation=AmplitudeRecoveryMethod.__doc__,
     )
 
     measurement_system = field(
-        MeasurementSystemField, offset=3255, default=0,
-        documentation=MeasurementSystem.__doc__
+        MeasurementSystemField,
+        offset=3255,
+        default=0,
+        documentation=MeasurementSystem.__doc__,
     )
 
     impulse_signal_polarity = field(
-        ImpulseSignalPolarityField, offset=3257, default=0,
-        documentation=ImpulseSignalPolarity.__doc__
+        ImpulseSignalPolarityField,
+        offset=3257,
+        default=0,
+        documentation=ImpulseSignalPolarity.__doc__,
     )
 
     vibratory_polarity_code = field(
         VibratoryPolarityCodeField,
-        offset=3259, default=0,
-        documentation=VibratoryPolarityCode.__doc__
+        offset=3259,
+        default=0,
+        documentation=VibratoryPolarityCode.__doc__,
     )
 
     format_revision_num = field(
-        FormatRevisionNumField, offset=3501, default=0x100, documentation=
-        """SEG Y Format Revision Number. This is a 16-bit unsigned value with a Q-
+        FormatRevisionNumField,
+        offset=3501,
+        default=0x100,
+        documentation="""SEG Y Format Revision Number. This is a 16-bit unsigned value with a Q-
         point between the first and second bytes. Thus for SEG Y Revision 1.0,
         as defined in this document, this will be recorded as 010016. This
         field is mandatory for all versions of SEG Y, although a value of zero
-        indicates “traditional” SEG Y conforming to the 1975 standard."""
+        indicates “traditional” SEG Y conforming to the 1975 standard.""",
     )
 
     fixed_length_trace_flag = field(
-        FixedLengthTraceFlagField, offset=3503, default=0,
-        documentation=FixedLengthTraceFlag.__doc__
+        FixedLengthTraceFlagField,
+        offset=3503,
+        default=0,
+        documentation=FixedLengthTraceFlag.__doc__,
     )
 
     num_extended_textual_headers = field(
-        NumExtendedTextualHeadersField, offset=3505, default=0, documentation=
-        """Number of 3200-byte, Extended Textual File Header records following the
+        NumExtendedTextualHeadersField,
+        offset=3505,
+        default=0,
+        documentation="""Number of 3200-byte, Extended Textual File Header records following the
         Binary Header. A value of zero indicates there are no Extended Textual
         File Header records (i.e. this file has no Extended Textual File
         Header(s)). A value of -1 indicates that there are a variable number of
@@ -357,5 +405,5 @@ class BinaryReelHeader(Header):
         Binary Header is written and it is not mandatory that a positive value
         be recorded here. This field is mandatory for all versions of SEG Y,
         although a value of zero indicates “traditional” SEG Y conforming to
-        the 1975 standard."""
+        the 1975 standard.""",
     )

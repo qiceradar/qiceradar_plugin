@@ -33,26 +33,26 @@ class WaiterResourceDocumenter(NestedDocumenter):
         waiters = self._resource.meta.resource_model.waiters
         add_resource_type_overview(
             section=section,
-            resource_type='Waiters',
+            resource_type="Waiters",
             description=(
-                'Waiters provide an interface to wait for a resource'
-                ' to reach a specific state.'
+                "Waiters provide an interface to wait for a resource"
+                " to reach a specific state."
             ),
-            intro_link='waiters_intro',
+            intro_link="waiters_intro",
         )
         waiter_list = []
-        self.member_map['waiters'] = waiter_list
+        self.member_map["waiters"] = waiter_list
         for waiter in waiters:
             waiter_list.append(waiter.name)
             # Create a new DocumentStructure for each waiter and add contents.
-            waiter_doc = DocumentStructure(waiter.name, target='html')
-            breadcrumb_section = waiter_doc.add_new_section('breadcrumb')
-            breadcrumb_section.style.ref(self._resource_class_name, 'index')
-            breadcrumb_section.write(f' / Waiter / {waiter.name}')
+            waiter_doc = DocumentStructure(waiter.name, target="html")
+            breadcrumb_section = waiter_doc.add_new_section("breadcrumb")
+            breadcrumb_section.style.ref(self._resource_class_name, "index")
+            breadcrumb_section.write(f" / Waiter / {waiter.name}")
             waiter_doc.add_title_section(waiter.name)
             waiter_section = waiter_doc.add_new_section(
                 waiter.name,
-                context={'qualifier': f'{self.class_name}.'},
+                context={"qualifier": f"{self.class_name}."},
             )
             document_resource_waiter(
                 section=waiter_section,
@@ -66,8 +66,8 @@ class WaiterResourceDocumenter(NestedDocumenter):
             # Path: <root>/reference/services/<service>/<resource_name>/<waiter_name>.rst
             waiters_dir_path = os.path.join(
                 self._root_docs_path,
-                f'{self._service_name}',
-                f'{self._resource_sub_path}',
+                f"{self._service_name}",
+                f"{self._resource_sub_path}",
             )
             waiter_doc.write_to_file(waiters_dir_path, waiter.name)
 
@@ -81,21 +81,19 @@ def document_resource_waiter(
     service_waiter_model,
     include_signature=True,
 ):
-    waiter_model = service_waiter_model.get_waiter(
-        resource_waiter_model.waiter_name
-    )
+    waiter_model = service_waiter_model.get_waiter(resource_waiter_model.waiter_name)
     operation_model = service_model.operation_model(waiter_model.operation)
 
     ignore_params = get_resource_ignore_params(resource_waiter_model.params)
     service_module_name = get_service_module_name(service_model)
     description = (
-        'Waits until this {} is {}. This method calls '
-        ':py:meth:`{}.Waiter.{}.wait` which polls '
-        ':py:meth:`{}.Client.{}` every {} seconds until '
-        'a successful state is reached. An error is raised '
-        'after {} failed checks.'.format(
+        "Waits until this {} is {}. This method calls "
+        ":py:meth:`{}.Waiter.{}.wait` which polls "
+        ":py:meth:`{}.Client.{}` every {} seconds until "
+        "a successful state is reached. An error is raised "
+        "after {} failed checks.".format(
             resource_name,
-            ' '.join(resource_waiter_model.name.split('_')[2:]),
+            " ".join(resource_waiter_model.name.split("_")[2:]),
             service_module_name,
             xform_name(resource_waiter_model.waiter_name),
             service_module_name,
@@ -104,9 +102,7 @@ def document_resource_waiter(
             waiter_model.max_attempts,
         )
     )
-    example_prefix = (
-        f'{xform_name(resource_name)}.{resource_waiter_model.name}'
-    )
+    example_prefix = f"{xform_name(resource_name)}.{resource_waiter_model.name}"
     full_waiter_name = (
         f"{section.context.get('qualifier', '')}{resource_waiter_model.name}"
     )
@@ -120,11 +116,11 @@ def document_resource_waiter(
         exclude_input=ignore_params,
         include_signature=include_signature,
     )
-    if 'return' in section.available_sections:
+    if "return" in section.available_sections:
         # Waiters do not return anything so we should remove
         # any sections that may document the underlying return
         # value of the client method.
-        return_section = section.get_section('return')
+        return_section = section.get_section("return")
         return_section.clear_text()
         return_section.remove_all_sections()
-        return_section.write(':returns: None')
+        return_section.write(":returns: None")

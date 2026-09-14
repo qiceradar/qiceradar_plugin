@@ -24,7 +24,7 @@ from .extension import OnLoadFailureCallbackT
 
 LOG = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class EnabledExtensionManager(ExtensionManager[T]):
@@ -66,10 +66,10 @@ class EnabledExtensionManager(ExtensionManager[T]):
         invoke_args: tuple[Any, ...] | None = None,
         invoke_kwds: dict[str, Any] | None = None,
         propagate_map_exceptions: bool = False,
-        on_load_failure_callback: 'OnLoadFailureCallbackT[T] | None' = None,
+        on_load_failure_callback: "OnLoadFailureCallbackT[T] | None" = None,
         verify_requirements: bool | None = None,
         *,
-        conflict_resolver: 'ConflictResolverT[T]' = ignore_conflicts,
+        conflict_resolver: "ConflictResolverT[T]" = ignore_conflicts,
     ):
         invoke_args = () if invoke_args is None else invoke_args
         invoke_kwds = {} if invoke_kwds is None else invoke_kwds
@@ -94,10 +94,8 @@ class EnabledExtensionManager(ExtensionManager[T]):
         invoke_args: tuple[Any, ...],
         invoke_kwds: dict[str, Any],
     ) -> Extension[T] | None:
-        ext = super()._load_one_plugin(
-            ep, invoke_on_load, invoke_args, invoke_kwds
-        )
+        ext = super()._load_one_plugin(ep, invoke_on_load, invoke_args, invoke_kwds)
         if ext and not self.check_func(ext):
-            LOG.debug('ignoring extension %r', ep.name)
+            LOG.debug("ignoring extension %r", ep.name)
             return None
         return ext

@@ -54,21 +54,21 @@ def build_identifiers(identifiers, parent, params=None, raw_response=None):
         source = identifier.source
         target = identifier.target
 
-        if source == 'response':
+        if source == "response":
             value = jmespath.search(identifier.path, raw_response)
-        elif source == 'requestParameter':
+        elif source == "requestParameter":
             value = jmespath.search(identifier.path, params)
-        elif source == 'identifier':
+        elif source == "identifier":
             value = getattr(parent, xform_name(identifier.name))
-        elif source == 'data':
+        elif source == "data":
             # If this is a data member then it may incur a load
             # action before returning the value.
             value = get_data_member(parent, identifier.path)
-        elif source == 'input':
+        elif source == "input":
             # This value is set by the user, so ignore it here
             continue
         else:
-            raise NotImplementedError(f'Unsupported source type: {source}')
+            raise NotImplementedError(f"Unsupported source type: {source}")
 
         results.append((xform_name(target), value))
 
@@ -101,24 +101,24 @@ def build_empty_response(search_path, operation_name, service_model):
         # a path of ``foo.bar[0].baz``, we first find the shape for ``foo``,
         # then the shape for ``bar`` (ignoring the indexing), and finally
         # the shape for ``baz``.
-        for item in search_path.split('.'):
-            item = item.strip('[0123456789]$')
+        for item in search_path.split("."):
+            item = item.strip("[0123456789]$")
 
-            if shape.type_name == 'structure':
+            if shape.type_name == "structure":
                 shape = shape.members[item]
-            elif shape.type_name == 'list':
+            elif shape.type_name == "list":
                 shape = shape.member
             else:
                 raise NotImplementedError(
-                    f'Search path hits shape type {shape.type_name} from {item}'
+                    f"Search path hits shape type {shape.type_name} from {item}"
                 )
 
     # Anything not handled here is set to None
-    if shape.type_name == 'structure':
+    if shape.type_name == "structure":
         response = {}
-    elif shape.type_name == 'list':
+    elif shape.type_name == "list":
         response = []
-    elif shape.type_name == 'map':
+    elif shape.type_name == "map":
         response = {}
 
     return response
@@ -149,7 +149,7 @@ class RawHandler:
         :param response: Low-level operation response.
         """
         # TODO: Remove the '$' check after JMESPath supports it
-        if self.search_path and self.search_path != '$':
+        if self.search_path and self.search_path != "$":
             response = jmespath.search(self.search_path, response)
 
         return response
@@ -279,9 +279,7 @@ class ResourceHandler:
 
         return response
 
-    def handle_response_item(
-        self, resource_cls, parent, identifiers, resource_data
-    ):
+    def handle_response_item(self, resource_cls, parent, identifiers, resource_data):
         """
         Handles the creation of a single response item by setting
         parameters and creating the appropriate resource instance.
@@ -298,7 +296,7 @@ class ResourceHandler:
         :return: New resource instance.
         """
         kwargs = {
-            'client': parent.meta.client,
+            "client": parent.meta.client,
         }
 
         for name, value in identifiers.items():

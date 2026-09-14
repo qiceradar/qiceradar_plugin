@@ -26,7 +26,7 @@ import sys
 from typing import TypeAlias
 from typing import TypedDict
 
-log = logging.getLogger('stevedore._cache')
+log = logging.getLogger("stevedore._cache")
 
 
 def _get_cache_dir() -> str:
@@ -35,23 +35,21 @@ def _get_cache_dir() -> str:
     Does not ensure that the cache directory exists.
     """
     # Linux, Unix, AIX, etc.
-    if os.name == 'posix' and sys.platform != 'darwin':
+    if os.name == "posix" and sys.platform != "darwin":
         # use ~/.cache if empty OR not set
-        base_path = os.environ.get('XDG_CACHE_HOME') or os.path.expanduser(
-            '~/.cache'
-        )
-        return os.path.join(base_path, 'python-entrypoints')
+        base_path = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
+        return os.path.join(base_path, "python-entrypoints")
 
     # Mac OS
-    elif sys.platform == 'darwin':
-        return os.path.expanduser('~/Library/Caches/Python Entry Points')
+    elif sys.platform == "darwin":
+        return os.path.expanduser("~/Library/Caches/Python Entry Points")
 
     # Windows (hopefully)
     else:
-        base_path = os.environ.get('LOCALAPPDATA') or os.path.expanduser(
-            '~\\AppData\\Local'
+        base_path = os.environ.get("LOCALAPPDATA") or os.path.expanduser(
+            "~\\AppData\\Local"
         )
-        return os.path.join(base_path, 'Python Entry Points')
+        return os.path.join(base_path, "Python Entry Points")
 
 
 def _get_mtime(name: str) -> float:
@@ -65,7 +63,7 @@ def _get_mtime(name: str) -> float:
 
 
 def _ftobytes(f: float) -> bytes:
-    return struct.Struct('f').pack(f)
+    return struct.Struct("f").pack(f)
 
 
 _PathHashEntryT: TypeAlias = list[tuple[str, float]]
@@ -79,21 +77,21 @@ def _hash_settings_for_path(path: tuple[str, ...]) -> _PathHashSettingsT:
 
     # Tie the cache to the python interpreter, in case it is part of a
     # virtualenv.
-    h.update(sys.executable.encode('utf-8'))
-    h.update(sys.prefix.encode('utf-8'))
+    h.update(sys.executable.encode("utf-8"))
+    h.update(sys.prefix.encode("utf-8"))
 
     for entry in path:
         mtime = _get_mtime(entry)
-        h.update(entry.encode('utf-8'))
+        h.update(entry.encode("utf-8"))
         h.update(_ftobytes(mtime))
         paths.append((entry, mtime))
 
         for ep_file in itertools.chain(
-            glob.iglob(os.path.join(entry, '*.dist-info', 'entry_points.txt')),
-            glob.iglob(os.path.join(entry, '*.egg-info', 'entry_points.txt')),
+            glob.iglob(os.path.join(entry, "*.dist-info", "entry_points.txt")),
+            glob.iglob(os.path.join(entry, "*.egg-info", "entry_points.txt")),
         ):
             mtime = _get_mtime(ep_file)
-            h.update(ep_file.encode('utf-8'))
+            h.update(ep_file.encode("utf-8"))
             h.update(_ftobytes(mtime))
             paths.append((ep_file, mtime))
 
@@ -101,12 +99,12 @@ def _hash_settings_for_path(path: tuple[str, ...]) -> _PathHashSettingsT:
 
 
 _CacheEntry = TypedDict(
-    '_CacheEntry',
+    "_CacheEntry",
     {
-        'groups': dict[str, list[tuple[str, str, str]]],
-        'sys.executable': str,
-        'sys.prefix': str,
-        'path_values': _PathHashEntryT,
+        "groups": dict[str, list[tuple[str, str, str]]],
+        "sys.executable": str,
+        "sys.prefix": str,
+        "path_values": _PathHashEntryT,
     },
 )
 
@@ -129,10 +127,10 @@ def _build_cacheable_data() -> _CacheEntry:
             groups[group].append(item)
 
     return {
-        'groups': groups,
-        'sys.executable': sys.executable,
-        'sys.prefix': sys.prefix,
-        'path_values': [],
+        "groups": groups,
+        "sys.executable": sys.executable,
+        "sys.prefix": sys.prefix,
+        "path_values": [],
     }
 
 
@@ -149,8 +147,8 @@ class Cache:
         # case when executed from ansible)
         if any(
             [
-                os.path.isfile(os.path.join(self._dir, '.disable')),
-                sys.executable[0:4] == '/tmp',  # noqa: S108,
+                os.path.isfile(os.path.join(self._dir, ".disable")),
+                sys.executable[0:4] == "/tmp",  # noqa: S108,
             ]
         ):
             self._disable_caching = True
@@ -164,17 +162,17 @@ class Cache:
         digest, path_values = _hash_settings_for_path(internal_key)
         filename = os.path.join(self._dir, digest)
         try:
-            log.debug('reading %s', filename)
+            log.debug("reading %s", filename)
             with open(filename) as f:
                 data: _CacheEntry = json.load(f)
         except (OSError, json.JSONDecodeError):
             data = _build_cacheable_data()
-            data['path_values'] = path_values
+            data["path_values"] = path_values
             if not self._disable_caching:
                 try:
-                    log.debug('writing to %s', filename)
+                    log.debug("writing to %s", filename)
                     os.makedirs(self._dir, exist_ok=True)
-                    with open(filename, 'w') as f:
+                    with open(filename, "w") as f:
                         json.dump(data, f)
                 except OSError:
                     # Could not create cache dir or write file.
@@ -188,7 +186,7 @@ class Cache:
     ) -> list[importlib.metadata.EntryPoint]:
         result = []
         data = self._get_data_for_path(path)
-        group_data = data.get('groups', {}).get(group, [])
+        group_data = data.get("groups", {}).get(group, [])
         for vals in group_data:
             result.append(importlib.metadata.EntryPoint(*vals))
         return result
@@ -208,7 +206,7 @@ class Cache:
         for name, ep in self.get_group_named(group, path=path).items():
             if name == name:
                 return ep
-        raise ValueError(f'No entrypoint {group!r} in group {name!r}')
+        raise ValueError(f"No entrypoint {group!r} in group {name!r}")
 
 
 _c = Cache()

@@ -21,14 +21,14 @@ class TestNamed(utils.TestCase):
     def test_named(self):
         em: named.NamedExtensionManager[Any]
         em = named.NamedExtensionManager(
-            'stevedore.test.extension',
-            names=['t1'],
+            "stevedore.test.extension",
+            names=["t1"],
             invoke_on_load=True,
-            invoke_args=('a',),
-            invoke_kwds={'b': 'B'},
+            invoke_args=("a",),
+            invoke_kwds={"b": "B"},
         )
         actual = em.names()
-        self.assertEqual(actual, ['t1'])
+        self.assertEqual(actual, ["t1"])
 
     def test_enabled_before_load(self):
         # Set up the constructor for the FauxExtension to cause an
@@ -36,18 +36,18 @@ class TestNamed(utils.TestCase):
         # which should only happen if it is loaded before the name of the
         # extension is compared against the names that should be loaded by
         # the manager.
-        init_name = 'stevedore.tests.test_extension.FauxExtension.__init__'
+        init_name = "stevedore.tests.test_extension.FauxExtension.__init__"
         with mock.patch(init_name) as m:
             m.side_effect = AssertionError
             em: named.NamedExtensionManager[Any]
             em = named.NamedExtensionManager(
-                'stevedore.test.extension',
+                "stevedore.test.extension",
                 # Look for an extension that does not exist so the
                 # __init__ we mocked should never be invoked.
-                names=['no-such-extension'],
+                names=["no-such-extension"],
                 invoke_on_load=True,
-                invoke_args=('a',),
-                invoke_kwds={'b': 'B'},
+                invoke_args=("a",),
+                invoke_kwds={"b": "B"},
             )
             actual = em.names()
         self.assertEqual(actual, [])
@@ -58,37 +58,37 @@ class TestNamed(utils.TestCase):
         # fail
         em: named.NamedExtensionManager[Any]
         em = named.NamedExtensionManager(
-            'stevedore.test.extension', names=['t1', 't2'], name_order=True
+            "stevedore.test.extension", names=["t1", "t2"], name_order=True
         )
         actual = em.names()
-        self.assertEqual(actual, ['t1', 't2'])
+        self.assertEqual(actual, ["t1", "t2"])
 
         em = named.NamedExtensionManager(
-            'stevedore.test.extension', names=['t2', 't1'], name_order=True
+            "stevedore.test.extension", names=["t2", "t1"], name_order=True
         )
         actual = em.names()
-        self.assertEqual(actual, ['t2', 't1'])
+        self.assertEqual(actual, ["t2", "t1"])
 
     def test_load_fail_ignored_when_sorted(self):
         em: named.NamedExtensionManager[Any]
         em = named.NamedExtensionManager(
-            'stevedore.test.extension',
-            names=['e1', 't2', 'e2', 't1'],
+            "stevedore.test.extension",
+            names=["e1", "t2", "e2", "t1"],
             name_order=True,
             invoke_on_load=True,
-            invoke_args=('a',),
-            invoke_kwds={'b': 'B'},
+            invoke_args=("a",),
+            invoke_kwds={"b": "B"},
         )
         actual = em.names()
-        self.assertEqual(['t2', 't1'], actual)
+        self.assertEqual(["t2", "t1"], actual)
 
         em = named.NamedExtensionManager(
-            'stevedore.test.extension',
-            names=['e1', 't1'],
+            "stevedore.test.extension",
+            names=["e1", "t1"],
             name_order=False,
             invoke_on_load=True,
-            invoke_args=('a',),
-            invoke_kwds={'b': 'B'},
+            invoke_args=("a",),
+            invoke_kwds={"b": "B"},
         )
         actual = em.names()
-        self.assertEqual(['t1'], actual)
+        self.assertEqual(["t1"], actual)

@@ -46,32 +46,32 @@ def document_model_driven_resource_method(
     # If this action returns a resource modify the return example to
     # appropriately reflect that.
     if resource_action_model.resource:
-        if 'return' in section.available_sections:
-            section.delete_section('return')
+        if "return" in section.available_sections:
+            section.delete_section("return")
         resource_type = resource_action_model.resource.type
 
-        new_return_section = section.add_new_section('return')
+        new_return_section = section.add_new_section("return")
         return_resource_type = (
-            f'{operation_model.service_model.service_name}.{resource_type}'
+            f"{operation_model.service_model.service_name}.{resource_type}"
         )
 
-        return_type = f':py:class:`{return_resource_type}`'
-        return_description = f'{resource_type} resource'
+        return_type = f":py:class:`{return_resource_type}`"
+        return_description = f"{resource_type} resource"
 
         if _method_returns_resource_list(resource_action_model.resource):
-            return_type = f'list({return_type})'
-            return_description = f'A list of {resource_type} resources'
+            return_type = f"list({return_type})"
+            return_description = f"A list of {resource_type} resources"
 
         new_return_section.style.new_line()
-        new_return_section.write(f':rtype: {return_type}')
+        new_return_section.write(f":rtype: {return_type}")
         new_return_section.style.new_line()
-        new_return_section.write(f':returns: {return_description}')
+        new_return_section.write(f":returns: {return_description}")
         new_return_section.style.new_line()
 
 
 def _method_returns_resource_list(resource):
     for identifier in resource.identifiers:
-        if identifier.path and '[]' in identifier.path:
+        if identifier.path and "[]" in identifier.path:
             return True
 
     return False

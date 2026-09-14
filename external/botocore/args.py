@@ -40,26 +40,26 @@ logger = logging.getLogger(__name__)
 
 
 VALID_REGIONAL_ENDPOINTS_CONFIG = [
-    'legacy',
-    'regional',
+    "legacy",
+    "regional",
 ]
 LEGACY_GLOBAL_STS_REGIONS = [
-    'ap-northeast-1',
-    'ap-south-1',
-    'ap-southeast-1',
-    'ap-southeast-2',
-    'aws-global',
-    'ca-central-1',
-    'eu-central-1',
-    'eu-north-1',
-    'eu-west-1',
-    'eu-west-2',
-    'eu-west-3',
-    'sa-east-1',
-    'us-east-1',
-    'us-east-2',
-    'us-west-1',
-    'us-west-2',
+    "ap-northeast-1",
+    "ap-south-1",
+    "ap-southeast-1",
+    "ap-southeast-2",
+    "aws-global",
+    "ca-central-1",
+    "eu-central-1",
+    "eu-north-1",
+    "eu-west-1",
+    "eu-west-2",
+    "eu-west-3",
+    "sa-east-1",
+    "us-east-1",
+    "us-east-2",
+    "us-west-1",
+    "us-west-2",
 ]
 # Maximum allowed length of the ``user_agent_appid`` config field. Longer
 # values result in a warning-level log message.
@@ -76,9 +76,9 @@ VALID_RESPONSE_CHECKSUM_VALIDATION_CONFIG = (
 
 
 VALID_ACCOUNT_ID_ENDPOINT_MODE_CONFIG = (
-    'preferred',
-    'disabled',
-    'required',
+    "preferred",
+    "disabled",
+    "required",
 )
 
 
@@ -128,42 +128,42 @@ class ClientArgsCreator:
             scoped_config,
         )
 
-        service_name = final_args['service_name']  # noqa
-        parameter_validation = final_args['parameter_validation']
-        endpoint_config = final_args['endpoint_config']
-        protocol = final_args['protocol']
-        config_kwargs = final_args['config_kwargs']
-        s3_config = final_args['s3_config']
-        partition = endpoint_config['metadata'].get('partition', None)
-        socket_options = final_args['socket_options']
-        configured_endpoint_url = final_args['configured_endpoint_url']
-        signing_region = endpoint_config['signing_region']
-        endpoint_region_name = endpoint_config['region_name']
-        account_id_endpoint_mode = config_kwargs['account_id_endpoint_mode']
+        service_name = final_args["service_name"]  # noqa
+        parameter_validation = final_args["parameter_validation"]
+        endpoint_config = final_args["endpoint_config"]
+        protocol = final_args["protocol"]
+        config_kwargs = final_args["config_kwargs"]
+        s3_config = final_args["s3_config"]
+        partition = endpoint_config["metadata"].get("partition", None)
+        socket_options = final_args["socket_options"]
+        configured_endpoint_url = final_args["configured_endpoint_url"]
+        signing_region = endpoint_config["signing_region"]
+        endpoint_region_name = endpoint_config["region_name"]
+        account_id_endpoint_mode = config_kwargs["account_id_endpoint_mode"]
         s3_disable_express_session_auth = config_kwargs[
-            's3_disable_express_session_auth'
+            "s3_disable_express_session_auth"
         ]
-        auth_scheme_preference = config_kwargs['auth_scheme_preference']
+        auth_scheme_preference = config_kwargs["auth_scheme_preference"]
 
         event_emitter = copy.copy(self._event_emitter)
         signer = RequestSigner(
             service_model.service_id,
             signing_region,
-            endpoint_config['signing_name'],
-            endpoint_config['signature_version'],
+            endpoint_config["signing_name"],
+            endpoint_config["signature_version"],
             credentials,
             event_emitter,
             auth_token,
         )
 
-        config_kwargs['s3'] = s3_config
+        config_kwargs["s3"] = s3_config
         new_config = Config(**config_kwargs)
         endpoint_creator = EndpointCreator(event_emitter)
 
         endpoint = endpoint_creator.create_endpoint(
             service_model,
             region_name=endpoint_region_name,
-            endpoint_url=endpoint_config['endpoint_url'],
+            endpoint_url=endpoint_config["endpoint_url"],
             verify=verify,
             response_parser_factory=self._response_parser_factory,
             max_pool_connections=new_config.max_pool_connections,
@@ -175,9 +175,9 @@ class ClientArgsCreator:
         )
 
         # Emit event to allow service-specific or customer customization of serializer kwargs
-        event_name = f'creating-serializer.{service_name}'
+        event_name = f"creating-serializer.{service_name}"
         serializer_kwargs = {
-            'timestamp_precision': botocore.serialize.TIMESTAMP_PRECISION_DEFAULT
+            "timestamp_precision": botocore.serialize.TIMESTAMP_PRECISION_DEFAULT
         }
         event_emitter.emit(
             event_name,
@@ -189,7 +189,7 @@ class ClientArgsCreator:
         serializer = botocore.serialize.create_serializer(
             protocol,
             parameter_validation,
-            timestamp_precision=serializer_kwargs['timestamp_precision'],
+            timestamp_precision=serializer_kwargs["timestamp_precision"],
         )
         response_parser = botocore.parsers.create_parser(protocol)
 
@@ -212,25 +212,23 @@ class ClientArgsCreator:
         )
 
         # Copy the session's user agent factory and adds client configuration.
-        client_ua_creator = self._session_ua_creator.with_client_config(
-            new_config
-        )
+        client_ua_creator = self._session_ua_creator.with_client_config(new_config)
         supplied_ua = client_config.user_agent if client_config else None
         new_config._supplied_user_agent = supplied_ua
 
         return {
-            'serializer': serializer,
-            'endpoint': endpoint,
-            'response_parser': response_parser,
-            'event_emitter': event_emitter,
-            'request_signer': signer,
-            'service_model': service_model,
-            'loader': self._loader,
-            'client_config': new_config,
-            'partition': partition,
-            'exceptions_factory': self._exceptions_factory,
-            'endpoint_ruleset_resolver': ruleset_resolver,
-            'user_agent_creator': client_ua_creator,
+            "serializer": serializer,
+            "endpoint": endpoint,
+            "response_parser": response_parser,
+            "event_emitter": event_emitter,
+            "request_signer": signer,
+            "service_model": service_model,
+            "loader": self._loader,
+            "client_config": new_config,
+            "partition": partition,
+            "exceptions_factory": self._exceptions_factory,
+            "endpoint_ruleset_resolver": ruleset_resolver,
+            "user_agent_creator": client_ua_creator,
         }
 
     def compute_client_args(
@@ -249,7 +247,7 @@ class ClientArgsCreator:
         if client_config and not client_config.parameter_validation:
             parameter_validation = False
         elif scoped_config:
-            raw_value = scoped_config.get('parameter_validation')
+            raw_value = scoped_config.get("parameter_validation")
             if raw_value is not None:
                 parameter_validation = ensure_boolean(raw_value)
 
@@ -260,7 +258,7 @@ class ClientArgsCreator:
             endpoint_url=endpoint_url,
         )
         if configured_endpoint_url is not None:
-            register_feature_id('ENDPOINT_OVERRIDE')
+            register_feature_id("ENDPOINT_OVERRIDE")
 
         endpoint_config = self._compute_endpoint_config(
             service_name=service_name,
@@ -270,7 +268,7 @@ class ClientArgsCreator:
             endpoint_bridge=endpoint_bridge,
             s3_config=s3_config,
         )
-        endpoint_variant_tags = endpoint_config['metadata'].get('tags', [])
+        endpoint_variant_tags = endpoint_config["metadata"].get("tags", [])
 
         # Some third-party libraries expect the final user-agent string in
         # ``client.meta.config.user_agent``. To maintain backwards
@@ -285,13 +283,13 @@ class ClientArgsCreator:
         # on the final values. We do not want the user to be able
         # to try to modify an existing client with a client config.
         config_kwargs = dict(
-            region_name=endpoint_config['region_name'],
-            signature_version=endpoint_config['signature_version'],
+            region_name=endpoint_config["region_name"],
+            signature_version=endpoint_config["signature_version"],
             user_agent=preliminary_ua_string,
         )
-        if 'dualstack' in endpoint_variant_tags:
+        if "dualstack" in endpoint_variant_tags:
             config_kwargs.update(use_dualstack_endpoint=True)
-        if 'fips' in endpoint_variant_tags:
+        if "fips" in endpoint_variant_tags:
             config_kwargs.update(use_fips_endpoint=True)
         if client_config is not None:
             config_kwargs.update(
@@ -309,13 +307,9 @@ class ClientArgsCreator:
                 request_min_compression_size_bytes=(
                     client_config.request_min_compression_size_bytes
                 ),
-                disable_request_compression=(
-                    client_config.disable_request_compression
-                ),
+                disable_request_compression=(client_config.disable_request_compression),
                 client_context_params=client_config.client_context_params,
-                sigv4a_signing_region_set=(
-                    client_config.sigv4a_signing_region_set
-                ),
+                sigv4a_signing_region_set=(client_config.sigv4a_signing_region_set),
                 request_checksum_calculation=(
                     client_config.request_checksum_calculation
                 ),
@@ -325,7 +319,7 @@ class ClientArgsCreator:
                 account_id_endpoint_mode=client_config.account_id_endpoint_mode,
                 auth_scheme_preference=client_config.auth_scheme_preference,
                 s3_disable_express_session_auth=(
-                    client_config.s3.get('disable_s3_express_session_auth')
+                    client_config.s3.get("disable_s3_express_session_auth")
                     if client_config.s3 is not None
                     else None
                 ),
@@ -338,29 +332,27 @@ class ClientArgsCreator:
         self._compute_checksum_config(config_kwargs)
         self._compute_account_id_endpoint_mode_config(config_kwargs)
         self._compute_inject_host_prefix(client_config, config_kwargs)
-        self._compute_auth_scheme_preference_config(
-            client_config, config_kwargs
-        )
+        self._compute_auth_scheme_preference_config(client_config, config_kwargs)
         self._compute_signature_version_config(client_config, config_kwargs)
         self._compute_s3_disable_express_session_auth(config_kwargs)
         s3_config = self.compute_s3_config(client_config)
 
         is_s3_service = self._is_s3_service(service_name)
 
-        if is_s3_service and 'dualstack' in endpoint_variant_tags:
+        if is_s3_service and "dualstack" in endpoint_variant_tags:
             if s3_config is None:
                 s3_config = {}
-            s3_config['use_dualstack_endpoint'] = True
+            s3_config["use_dualstack_endpoint"] = True
 
         return {
-            'service_name': service_name,
-            'parameter_validation': parameter_validation,
-            'configured_endpoint_url': configured_endpoint_url,
-            'endpoint_config': endpoint_config,
-            'protocol': protocol,
-            'config_kwargs': config_kwargs,
-            's3_config': s3_config,
-            'socket_options': self._compute_socket_options(
+            "service_name": service_name,
+            "parameter_validation": parameter_validation,
+            "configured_endpoint_url": configured_endpoint_url,
+            "endpoint_config": endpoint_config,
+            "protocol": protocol,
+            "config_kwargs": config_kwargs,
+            "s3_config": s3_config,
+            "socket_options": self._compute_socket_options(
                 scoped_config, client_config
             ),
         }
@@ -368,21 +360,16 @@ class ClientArgsCreator:
     def _compute_inject_host_prefix(self, client_config, config_kwargs):
         # In the cases that a Config object was not provided, or the private value
         # remained UNSET, we should resolve the value from the config store.
-        if (
-            client_config is None
-            or client_config._inject_host_prefix == 'UNSET'
-        ):
+        if client_config is None or client_config._inject_host_prefix == "UNSET":
             configured_disable_host_prefix_injection = (
-                self._config_store.get_config_variable(
-                    'disable_host_prefix_injection'
-                )
+                self._config_store.get_config_variable("disable_host_prefix_injection")
             )
             if configured_disable_host_prefix_injection is not None:
                 config_kwargs[
-                    'inject_host_prefix'
+                    "inject_host_prefix"
                 ] = not configured_disable_host_prefix_injection
             else:
-                config_kwargs['inject_host_prefix'] = True
+                config_kwargs["inject_host_prefix"] = True
 
     def _compute_configured_endpoint_url(self, client_config, endpoint_url):
         if endpoint_url is not None:
@@ -392,21 +379,16 @@ class ClientArgsCreator:
             logger.debug("Ignoring configured endpoint URLs.")
             return endpoint_url
 
-        return self._config_store.get_config_variable('endpoint_url')
+        return self._config_store.get_config_variable("endpoint_url")
 
     def _ignore_configured_endpoint_urls(self, client_config):
-        if (
-            client_config
-            and client_config.ignore_configured_endpoint_urls is not None
-        ):
+        if client_config and client_config.ignore_configured_endpoint_urls is not None:
             return client_config.ignore_configured_endpoint_urls
 
-        return self._config_store.get_config_variable(
-            'ignore_configured_endpoint_urls'
-        )
+        return self._config_store.get_config_variable("ignore_configured_endpoint_urls")
 
     def compute_s3_config(self, client_config):
-        s3_configuration = self._config_store.get_config_variable('s3')
+        s3_configuration = self._config_store.get_config_variable("s3")
 
         # Next specific client config values takes precedence over
         # specific values in the scoped config.
@@ -432,7 +414,7 @@ class ClientArgsCreator:
         S3 Control, the folder name is 's3control' but the endpoint prefix is
         's3-control'.
         """
-        return service_name in ['s3', 's3-control']
+        return service_name in ["s3", "s3-control"]
 
     def _compute_endpoint_config(
         self,
@@ -444,49 +426,47 @@ class ClientArgsCreator:
         s3_config,
     ):
         resolve_endpoint_kwargs = {
-            'service_name': service_name,
-            'region_name': region_name,
-            'endpoint_url': endpoint_url,
-            'is_secure': is_secure,
-            'endpoint_bridge': endpoint_bridge,
+            "service_name": service_name,
+            "region_name": region_name,
+            "endpoint_url": endpoint_url,
+            "is_secure": is_secure,
+            "endpoint_bridge": endpoint_bridge,
         }
-        if service_name == 's3':
+        if service_name == "s3":
             return self._compute_s3_endpoint_config(
                 s3_config=s3_config, **resolve_endpoint_kwargs
             )
-        if service_name == 'sts':
+        if service_name == "sts":
             return self._compute_sts_endpoint_config(**resolve_endpoint_kwargs)
         return self._resolve_endpoint(**resolve_endpoint_kwargs)
 
-    def _compute_s3_endpoint_config(
-        self, s3_config, **resolve_endpoint_kwargs
-    ):
+    def _compute_s3_endpoint_config(self, s3_config, **resolve_endpoint_kwargs):
         force_s3_global = self._should_force_s3_global(
-            resolve_endpoint_kwargs['region_name'], s3_config
+            resolve_endpoint_kwargs["region_name"], s3_config
         )
         if force_s3_global:
-            resolve_endpoint_kwargs['region_name'] = None
+            resolve_endpoint_kwargs["region_name"] = None
         endpoint_config = self._resolve_endpoint(**resolve_endpoint_kwargs)
         self._set_region_if_custom_s3_endpoint(
-            endpoint_config, resolve_endpoint_kwargs['endpoint_bridge']
+            endpoint_config, resolve_endpoint_kwargs["endpoint_bridge"]
         )
         # For backwards compatibility reasons, we want to make sure the
         # client.meta.region_name will remain us-east-1 if we forced the
         # endpoint to be the global region. Specifically, if this value
         # changes to aws-global, it breaks logic where a user is checking
         # for us-east-1 as the global endpoint such as in creating buckets.
-        if force_s3_global and endpoint_config['region_name'] == 'aws-global':
-            endpoint_config['region_name'] = 'us-east-1'
+        if force_s3_global and endpoint_config["region_name"] == "aws-global":
+            endpoint_config["region_name"] = "us-east-1"
         return endpoint_config
 
     def _should_force_s3_global(self, region_name, s3_config):
-        s3_regional_config = 'legacy'
-        if s3_config and 'us_east_1_regional_endpoint' in s3_config:
-            s3_regional_config = s3_config['us_east_1_regional_endpoint']
+        s3_regional_config = "legacy"
+        if s3_config and "us_east_1_regional_endpoint" in s3_config:
+            s3_regional_config = s3_config["us_east_1_regional_endpoint"]
             self._validate_s3_regional_config(s3_regional_config)
 
-        is_global_region = region_name in ('us-east-1', None)
-        return s3_regional_config == 'legacy' and is_global_region
+        is_global_region = region_name in ("us-east-1", None)
+        return s3_regional_config == "legacy" and is_global_region
 
     def _validate_s3_regional_config(self, config_val):
         if config_val not in VALID_REGIONAL_ENDPOINTS_CONFIG:
@@ -496,75 +476,70 @@ class ClientArgsCreator:
 
     def _validate_s3_disable_express_session_auth(self, config_val):
         string_bool = isinstance(config_val, str) and config_val.lower() in [
-            'true',
-            'false',
+            "true",
+            "false",
         ]
         if not isinstance(config_val, bool) and not string_bool:
             raise botocore.exceptions.InvalidConfigError(
                 error_msg=(
                     f'Invalid value "{config_val}" for '
-                    's3_disable_express_session_auth. Value must be a boolean'
+                    "s3_disable_express_session_auth. Value must be a boolean"
                 )
             )
 
-    def _set_region_if_custom_s3_endpoint(
-        self, endpoint_config, endpoint_bridge
-    ):
+    def _set_region_if_custom_s3_endpoint(self, endpoint_config, endpoint_bridge):
         # If a user is providing a custom URL, the endpoint resolver will
         # refuse to infer a signing region. If we want to default to s3v4,
         # we have to account for this.
         if (
-            endpoint_config['signing_region'] is None
-            and endpoint_config['region_name'] is None
+            endpoint_config["signing_region"] is None
+            and endpoint_config["region_name"] is None
         ):
-            endpoint = endpoint_bridge.resolve('s3')
-            endpoint_config['signing_region'] = endpoint['signing_region']
-            endpoint_config['region_name'] = endpoint['region_name']
+            endpoint = endpoint_bridge.resolve("s3")
+            endpoint_config["signing_region"] = endpoint["signing_region"]
+            endpoint_config["region_name"] = endpoint["region_name"]
 
     def _compute_sts_endpoint_config(self, **resolve_endpoint_kwargs):
         endpoint_config = self._resolve_endpoint(**resolve_endpoint_kwargs)
         if self._should_set_global_sts_endpoint(
-            resolve_endpoint_kwargs['region_name'],
-            resolve_endpoint_kwargs['endpoint_url'],
+            resolve_endpoint_kwargs["region_name"],
+            resolve_endpoint_kwargs["endpoint_url"],
             endpoint_config,
         ):
             self._set_global_sts_endpoint(
-                endpoint_config, resolve_endpoint_kwargs['is_secure']
+                endpoint_config, resolve_endpoint_kwargs["is_secure"]
             )
         return endpoint_config
 
     def _should_set_global_sts_endpoint(
         self, region_name, endpoint_url, endpoint_config
     ):
-        has_variant_tags = endpoint_config and endpoint_config.get(
-            'metadata', {}
-        ).get('tags')
+        has_variant_tags = endpoint_config and endpoint_config.get("metadata", {}).get(
+            "tags"
+        )
         if endpoint_url or has_variant_tags:
             return False
         return (
-            self._get_sts_regional_endpoints_config() == 'legacy'
+            self._get_sts_regional_endpoints_config() == "legacy"
             and region_name in LEGACY_GLOBAL_STS_REGIONS
         )
 
     def _get_sts_regional_endpoints_config(self):
         sts_regional_endpoints_config = self._config_store.get_config_variable(
-            'sts_regional_endpoints'
+            "sts_regional_endpoints"
         )
         if not sts_regional_endpoints_config:
-            sts_regional_endpoints_config = 'regional'
-        if (
-            sts_regional_endpoints_config
-            not in VALID_REGIONAL_ENDPOINTS_CONFIG
-        ):
+            sts_regional_endpoints_config = "regional"
+        if sts_regional_endpoints_config not in VALID_REGIONAL_ENDPOINTS_CONFIG:
             raise botocore.exceptions.InvalidSTSRegionalEndpointsConfigError(
                 sts_regional_endpoints_config=sts_regional_endpoints_config
             )
         return sts_regional_endpoints_config
 
     def _set_global_sts_endpoint(self, endpoint_config, is_secure):
-        scheme = 'https' if is_secure else 'http'
-        endpoint_config['endpoint_url'] = f'{scheme}://sts.amazonaws.com'
-        endpoint_config['signing_region'] = 'us-east-1'
+        scheme = "https" if is_secure else "http"
+        endpoint_config["endpoint_url"] = f"{scheme}://sts.amazonaws.com"
+        endpoint_config["signing_region"] = "us-east-1"
 
     def _resolve_endpoint(
         self,
@@ -585,9 +560,7 @@ class ClientArgsCreator:
         socket_options = [(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)]
         client_keepalive = client_config and client_config.tcp_keepalive
         if client_keepalive is None:
-            client_keepalive = self._config_store.get_config_variable(
-                'tcp_keepalive'
-            )
+            client_keepalive = self._config_store.get_config_variable("tcp_keepalive")
 
         if client_keepalive:
             socket_options.append((socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1))
@@ -607,88 +580,86 @@ class ClientArgsCreator:
         # configuration for "max attempts" is the 'total_max_attempts' key.
         # An explicitly provided max_attempts in the client config
         # overrides everything.
-        retries = config_kwargs.get('retries')
+        retries = config_kwargs.get("retries")
         if retries is not None:
-            if 'total_max_attempts' in retries:
-                retries.pop('max_attempts', None)
+            if "total_max_attempts" in retries:
+                retries.pop("max_attempts", None)
                 return
-            if 'max_attempts' in retries:
-                value = retries.pop('max_attempts')
+            if "max_attempts" in retries:
+                value = retries.pop("max_attempts")
                 # client config max_attempts means total retries so we
                 # have to add one for 'total_max_attempts' to account
                 # for the initial request.
-                retries['total_max_attempts'] = value + 1
+                retries["total_max_attempts"] = value + 1
                 return
         # Otherwise we'll check the config store which checks env vars,
         # config files, etc.  There is no default value for max_attempts
         # so if this returns None and we don't set a default value here.
-        max_attempts = self._config_store.get_config_variable('max_attempts')
+        max_attempts = self._config_store.get_config_variable("max_attempts")
         if max_attempts is not None:
             if retries is None:
                 retries = {}
-                config_kwargs['retries'] = retries
-            retries['total_max_attempts'] = max_attempts
+                config_kwargs["retries"] = retries
+            retries["total_max_attempts"] = max_attempts
 
     def _compute_retry_mode(self, config_kwargs):
-        retries = config_kwargs.get('retries')
+        retries = config_kwargs.get("retries")
         if retries is None:
             retries = {}
-            config_kwargs['retries'] = retries
-        elif 'mode' in retries:
+            config_kwargs["retries"] = retries
+        elif "mode" in retries:
             # If there's a retry mode explicitly set in the client config
             # that overrides everything.
             return
-        retry_mode = self._config_store.get_config_variable('retry_mode')
+        retry_mode = self._config_store.get_config_variable("retry_mode")
         if retry_mode is None:
-            retry_mode = 'legacy'
-        retries['mode'] = retry_mode
+            retry_mode = "legacy"
+        retries["mode"] = retry_mode
 
     def _compute_connect_timeout(self, config_kwargs):
         # Checking if connect_timeout is set on the client config.
         # If it is not, we check the config_store in case a
         # non legacy default mode has been configured.
-        connect_timeout = config_kwargs.get('connect_timeout')
+        connect_timeout = config_kwargs.get("connect_timeout")
         if connect_timeout is not None:
             return
-        connect_timeout = self._config_store.get_config_variable(
-            'connect_timeout'
-        )
+        connect_timeout = self._config_store.get_config_variable("connect_timeout")
         if connect_timeout:
-            config_kwargs['connect_timeout'] = connect_timeout
+            config_kwargs["connect_timeout"] = connect_timeout
 
     def _compute_request_compression_config(self, config_kwargs):
-        min_size = config_kwargs.get('request_min_compression_size_bytes')
-        disabled = config_kwargs.get('disable_request_compression')
+        min_size = config_kwargs.get("request_min_compression_size_bytes")
+        disabled = config_kwargs.get("disable_request_compression")
         if min_size is None:
             min_size = self._config_store.get_config_variable(
-                'request_min_compression_size_bytes'
+                "request_min_compression_size_bytes"
             )
         # conversion func is skipped so input validation must be done here
         # regardless if the value is coming from the config store or the
         # config object
         min_size = self._validate_min_compression_size(min_size)
-        config_kwargs['request_min_compression_size_bytes'] = min_size
+        config_kwargs["request_min_compression_size_bytes"] = min_size
 
         if disabled is None:
             disabled = self._config_store.get_config_variable(
-                'disable_request_compression'
+                "disable_request_compression"
             )
         else:
             # if the user provided a value we must check if it's a boolean
             disabled = ensure_boolean(disabled)
-        config_kwargs['disable_request_compression'] = disabled
+        config_kwargs["disable_request_compression"] = disabled
 
     def _compute_s3_disable_express_session_auth(self, config_kwargs):
-        disable_express = config_kwargs.get('s3_disable_express_session_auth')
+        disable_express = config_kwargs.get("s3_disable_express_session_auth")
         if disable_express is None:
             disable_express = self._config_store.get_config_variable(
-                's3_disable_express_session_auth'
+                "s3_disable_express_session_auth"
             )
 
         # Raise an error if the value does not represent a boolean.
         if disable_express is not None:
             self._validate_s3_disable_express_session_auth(disable_express)
-        config_kwargs['s3_disable_express_session_auth'] = ensure_boolean(
+        config_kwargs["s3_disable_express_session_auth"] = ensure_boolean(
             disable_express
         )
 
@@ -696,21 +667,20 @@ class ClientArgsCreator:
         min_allowed_min_size = 1
         max_allowed_min_size = 1048576
         error_msg_base = (
-            f'Invalid value "{min_size}" for '
-            'request_min_compression_size_bytes.'
+            f'Invalid value "{min_size}" for request_min_compression_size_bytes.'
         )
         try:
             min_size = int(min_size)
         except (ValueError, TypeError):
             msg = (
-                f'{error_msg_base} Value must be an integer. '
-                f'Received {type(min_size)} instead.'
+                f"{error_msg_base} Value must be an integer. "
+                f"Received {type(min_size)} instead."
             )
             raise botocore.exceptions.InvalidConfigError(error_msg=msg)
         if not min_allowed_min_size <= min_size <= max_allowed_min_size:
             msg = (
-                f'{error_msg_base} Value must be between '
-                f'{min_allowed_min_size} and {max_allowed_min_size}.'
+                f"{error_msg_base} Value must be between "
+                f"{min_allowed_min_size} and {max_allowed_min_size}."
             )
             raise botocore.exceptions.InvalidConfigError(error_msg=msg)
 
@@ -720,7 +690,7 @@ class ClientArgsCreator:
         if isinstance(val, bool):
             return val
         else:
-            return val.lower() == 'true'
+            return val.lower() == "true"
 
     def _build_endpoint_resolver(
         self,
@@ -752,7 +722,7 @@ class ClientArgsCreator:
         service_name_raw = service_model.endpoint_prefix
         # Maintain complex logic for s3 and sts endpoints for backwards
         # compatibility.
-        if service_name_raw in ['s3', 'sts'] or region_name is None:
+        if service_name_raw in ["s3", "sts"] or region_name is None:
             eprv2_region_name = endpoint_region_name
         else:
             eprv2_region_name = region_name
@@ -777,14 +747,12 @@ class ClientArgsCreator:
         if self._is_s3_service(service_name_raw):
             client_context.update(s3_config_raw)
             if s3_disable_express_session_auth is not None:
-                client_context['disable_s3_express_session_auth'] = (
+                client_context["disable_s3_express_session_auth"] = (
                     s3_disable_express_session_auth
                 )
 
         sig_version = (
-            client_config.signature_version
-            if client_config is not None
-            else None
+            client_config.signature_version if client_config is not None else None
         )
         return EndpointRulesetResolver(
             endpoint_ruleset_data=endpoints_ruleset_data,
@@ -828,14 +796,14 @@ class ClientArgsCreator:
         # exception or silently ignores the config setting. The
         # AWS_S3_FORCE_PATH_STYLE parameter is adjusted both here and for each
         # operation so that the ruleset behavior is backwards compatible.
-        if s3_config.get('use_accelerate_endpoint', False):
+        if s3_config.get("use_accelerate_endpoint", False):
             force_path_style = False
         elif client_endpoint_url is not None and not is_s3_accelerate_url(
             client_endpoint_url
         ):
-            force_path_style = s3_config.get('addressing_style') != 'virtual'
+            force_path_style = s3_config.get("addressing_style") != "virtual"
         else:
-            force_path_style = s3_config.get('addressing_style') == 'path'
+            force_path_style = s3_config.get("addressing_style") == "path"
 
         return {
             EPRBuiltins.AWS_REGION: region_name,
@@ -845,7 +813,7 @@ class ClientArgsCreator:
                 # use legacy resolver's _resolve_endpoint_variant_config_var()
                 # or default to False if it returns None
                 and endpoint_bridge._resolve_endpoint_variant_config_var(
-                    'use_fips_endpoint'
+                    "use_fips_endpoint"
                 )
                 or False
             ),
@@ -854,9 +822,7 @@ class ClientArgsCreator:
                 given_endpoint is None
                 # use legacy resolver's _resolve_use_dualstack_endpoint() and
                 # or default to False if it returns None
-                and endpoint_bridge._resolve_use_dualstack_endpoint(
-                    service_name
-                )
+                and endpoint_bridge._resolve_use_dualstack_endpoint(service_name)
                 or False
             ),
             EPRBuiltins.AWS_STS_USE_GLOBAL_ENDPOINT: (
@@ -870,56 +836,50 @@ class ClientArgsCreator:
                 self._should_force_s3_global(region_name, s3_config)
             ),
             EPRBuiltins.AWS_S3_ACCELERATE: s3_config.get(
-                'use_accelerate_endpoint', False
+                "use_accelerate_endpoint", False
             ),
             EPRBuiltins.AWS_S3_FORCE_PATH_STYLE: force_path_style,
-            EPRBuiltins.AWS_S3_USE_ARN_REGION: s3_config.get(
-                'use_arn_region', True
-            ),
+            EPRBuiltins.AWS_S3_USE_ARN_REGION: s3_config.get("use_arn_region", True),
             EPRBuiltins.AWS_S3CONTROL_USE_ARN_REGION: s3_config.get(
-                'use_arn_region', False
+                "use_arn_region", False
             ),
             EPRBuiltins.AWS_S3_DISABLE_MRAP: s3_config.get(
-                's3_disable_multiregion_access_points', False
+                "s3_disable_multiregion_access_points", False
             ),
             EPRBuiltins.AWS_S3_DISABLE_EXPRESS_SESSION_AUTH: (
                 s3_disable_express_session_auth
             ),
             EPRBuiltins.SDK_ENDPOINT: given_endpoint,
-            EPRBuiltins.ACCOUNT_ID: credentials.get_deferred_property(
-                'account_id'
-            )
+            EPRBuiltins.ACCOUNT_ID: credentials.get_deferred_property("account_id")
             if credentials
             else None,
             EPRBuiltins.ACCOUNT_ID_ENDPOINT_MODE: account_id_endpoint_mode,
         }
 
     def _compute_user_agent_appid_config(self, config_kwargs):
-        user_agent_appid = config_kwargs.get('user_agent_appid')
+        user_agent_appid = config_kwargs.get("user_agent_appid")
         if user_agent_appid is None:
             user_agent_appid = self._config_store.get_config_variable(
-                'user_agent_appid'
+                "user_agent_appid"
             )
         if (
             user_agent_appid is not None
             and len(user_agent_appid) > USERAGENT_APPID_MAXLEN
         ):
             logger.warning(
-                'The configured value for user_agent_appid exceeds the '
-                'maximum length of %d characters.',
+                "The configured value for user_agent_appid exceeds the "
+                "maximum length of %d characters.",
                 USERAGENT_APPID_MAXLEN,
             )
-        config_kwargs['user_agent_appid'] = user_agent_appid
+        config_kwargs["user_agent_appid"] = user_agent_appid
 
     def _compute_sigv4a_signing_region_set_config(self, config_kwargs):
-        sigv4a_signing_region_set = config_kwargs.get(
-            'sigv4a_signing_region_set'
-        )
+        sigv4a_signing_region_set = config_kwargs.get("sigv4a_signing_region_set")
         if sigv4a_signing_region_set is None:
             sigv4a_signing_region_set = self._config_store.get_config_variable(
-                'sigv4a_signing_region_set'
+                "sigv4a_signing_region_set"
             )
-        config_kwargs['sigv4a_signing_region_set'] = sigv4a_signing_region_set
+        config_kwargs["sigv4a_signing_region_set"] = sigv4a_signing_region_set
 
     def _compute_checksum_config(self, config_kwargs):
         self._handle_checksum_config(
@@ -958,24 +918,20 @@ class ClientArgsCreator:
     def _register_checksum_config_feature_ids(self, value, config_key):
         checksum_config_feature_id = None
         if config_key == "request_checksum_calculation":
-            checksum_config_feature_id = (
-                f"FLEXIBLE_CHECKSUMS_REQ_{value.upper()}"
-            )
+            checksum_config_feature_id = f"FLEXIBLE_CHECKSUMS_REQ_{value.upper()}"
         elif config_key == "response_checksum_validation":
-            checksum_config_feature_id = (
-                f"FLEXIBLE_CHECKSUMS_RES_{value.upper()}"
-            )
+            checksum_config_feature_id = f"FLEXIBLE_CHECKSUMS_RES_{value.upper()}"
         if checksum_config_feature_id is not None:
             register_feature_id(checksum_config_feature_id)
 
     def _compute_account_id_endpoint_mode_config(self, config_kwargs):
-        config_key = 'account_id_endpoint_mode'
+        config_key = "account_id_endpoint_mode"
 
         # Disable account id based endpoint routing for unsigned requests
         # since there are no credentials to resolve.
-        signature_version = config_kwargs.get('signature_version')
+        signature_version = config_kwargs.get("signature_version")
         if signature_version is botocore.UNSIGNED:
-            config_kwargs[config_key] = 'disabled'
+            config_kwargs[config_key] = "disabled"
             return
 
         account_id_endpoint_mode = config_kwargs.get(config_key)
@@ -987,10 +943,7 @@ class ClientArgsCreator:
         if isinstance(account_id_endpoint_mode, str):
             account_id_endpoint_mode = account_id_endpoint_mode.lower()
 
-        if (
-            account_id_endpoint_mode
-            not in VALID_ACCOUNT_ID_ENDPOINT_MODE_CONFIG
-        ):
+        if account_id_endpoint_mode not in VALID_ACCOUNT_ID_ENDPOINT_MODE_CONFIG:
             raise botocore.exceptions.InvalidConfigError(
                 error_msg=f"The configured value '{account_id_endpoint_mode}' for '{config_key}' is "
                 f"invalid. Valid values are: {VALID_ACCOUNT_ID_ENDPOINT_MODE_CONFIG}."
@@ -998,10 +951,8 @@ class ClientArgsCreator:
 
         config_kwargs[config_key] = account_id_endpoint_mode
 
-    def _compute_auth_scheme_preference_config(
-        self, client_config, config_kwargs
-    ):
-        config_key = 'auth_scheme_preference'
+    def _compute_auth_scheme_preference_config(self, client_config, config_kwargs):
+        config_key = "auth_scheme_preference"
         set_in_config_object = False
 
         if client_config and client_config.auth_scheme_preference:
@@ -1022,9 +973,9 @@ class ClientArgsCreator:
                 )
             )
 
-        value = ','.join(
-            item.replace(' ', '').replace('\t', '')
-            for item in value.split(',')
+        value = ",".join(
+            item.replace(" ", "").replace("\t", "")
+            for item in value.split(",")
             if item.strip()
         )
 
@@ -1037,7 +988,7 @@ class ClientArgsCreator:
         if client_config and client_config.signature_version:
             value = client_config.signature_version
             if isinstance(value, str):
-                config_kwargs['signature_version'] = ClientConfigString(value)
+                config_kwargs["signature_version"] = ClientConfigString(value)
 
 
 class ConfigObjectWrapper:

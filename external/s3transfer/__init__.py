@@ -145,8 +145,8 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
 import s3transfer.compat
 from s3transfer.exceptions import RetriesExceededError, S3UploadFailedError
 
-__author__ = 'Amazon Web Services'
-__version__ = '0.16.1'
+__author__ = "Amazon Web Services"
+__version__ = "0.16.1"
 
 
 logger = logging.getLogger(__name__)
@@ -157,19 +157,19 @@ SHUTDOWN_SENTINEL = object()
 
 
 def random_file_extension(num_digits=8):
-    return ''.join(random.choice(string.hexdigits) for _ in range(num_digits))
+    return "".join(random.choice(string.hexdigits) for _ in range(num_digits))
 
 
 def disable_upload_callbacks(request, operation_name, **kwargs):
-    if operation_name in ['PutObject', 'UploadPart'] and hasattr(
-        request.body, 'disable_callback'
+    if operation_name in ["PutObject", "UploadPart"] and hasattr(
+        request.body, "disable_callback"
     ):
         request.body.disable_callback()
 
 
 def enable_upload_callbacks(request, operation_name, **kwargs):
-    if operation_name in ['PutObject', 'UploadPart'] and hasattr(
-        request.body, 'enable_callback'
+    if operation_name in ["PutObject", "UploadPart"] and hasattr(
+        request.body, "enable_callback"
     ):
         request.body.enable_callback()
 
@@ -263,11 +263,9 @@ class ReadFileChunk:
         :return: A new instance of ``ReadFileChunk``
 
         """
-        f = open(filename, 'rb')
+        f = open(filename, "rb")
         file_size = os.fstat(f.fileno()).st_size
-        return cls(
-            f, start_byte, chunk_size, file_size, callback, enable_callback
-        )
+        return cls(f, start_byte, chunk_size, file_size, callback, enable_callback)
 
     def _calculate_file_size(
         self, fileobj, requested_size, start_byte, actual_file_size
@@ -371,10 +369,10 @@ class MultipartUploader:
     # These are the extra_args that need to be forwarded onto
     # subsequent upload_parts.
     UPLOAD_PART_ARGS = [
-        'SSECustomerKey',
-        'SSECustomerAlgorithm',
-        'SSECustomerKeyMD5',
-        'RequestPayer',
+        "SSECustomerKey",
+        "SSECustomerAlgorithm",
+        "SSECustomerKeyMD5",
+        "RequestPayer",
     ]
 
     def __init__(
@@ -402,15 +400,14 @@ class MultipartUploader:
         response = self._client.create_multipart_upload(
             Bucket=bucket, Key=key, **extra_args
         )
-        upload_id = response['UploadId']
+        upload_id = response["UploadId"]
         try:
             parts = self._upload_parts(
                 upload_id, filename, bucket, key, callback, extra_args
             )
         except Exception as e:
             logger.debug(
-                "Exception raised while uploading parts, "
-                "aborting multipart upload.",
+                "Exception raised while uploading parts, aborting multipart upload.",
                 exc_info=True,
             )
             self._client.abort_multipart_upload(
@@ -418,25 +415,21 @@ class MultipartUploader:
             )
             raise S3UploadFailedError(
                 "Failed to upload {} to {}: {}".format(
-                    filename, '/'.join([bucket, key]), e
+                    filename, "/".join([bucket, key]), e
                 )
             )
         self._client.complete_multipart_upload(
             Bucket=bucket,
             Key=key,
             UploadId=upload_id,
-            MultipartUpload={'Parts': parts},
+            MultipartUpload={"Parts": parts},
         )
 
-    def _upload_parts(
-        self, upload_id, filename, bucket, key, callback, extra_args
-    ):
+    def _upload_parts(self, upload_id, filename, bucket, key, callback, extra_args):
         upload_parts_extra_args = self._extra_upload_part_args(extra_args)
         parts = []
         part_size = self._config.multipart_chunksize
-        num_parts = int(
-            math.ceil(self._os.get_file_size(filename) / float(part_size))
-        )
+        num_parts = int(math.ceil(self._os.get_file_size(filename) / float(part_size)))
         max_workers = self._config.max_concurrency
         with self._executor_cls(max_workers=max_workers) as executor:
             upload_partial = functools.partial(
@@ -476,8 +469,8 @@ class MultipartUploader:
                 Body=body,
                 **extra_args,
             )
-            etag = response['ETag']
-            return {'ETag': etag, 'PartNumber': part_number}
+            etag = response["ETag"]
+            return {"ETag": etag, "PartNumber": part_number}
 
 
 class ShutdownQueue(queue.Queue):
@@ -544,9 +537,7 @@ class MultipartDownloader:
             )
             parts_future = controller.submit(download_parts_handler)
 
-            io_writes_handler = functools.partial(
-                self._perform_io_writes, filename
-            )
+            io_writes_handler = functools.partial(self._perform_io_writes, filename)
             io_future = controller.submit(io_writes_handler)
             results = concurrent.futures.wait(
                 [parts_future, io_future],
@@ -559,9 +550,7 @@ class MultipartDownloader:
         for future in finished:
             future.result()
 
-    def _download_file_as_future(
-        self, bucket, key, filename, object_size, callback
-    ):
+    def _download_file_as_future(self, bucket, key, filename, object_size, callback):
         part_size = self._config.multipart_chunksize
         num_parts = int(math.ceil(object_size / float(part_size)))
         max_workers = self._config.max_concurrency
@@ -583,19 +572,17 @@ class MultipartDownloader:
     def _calculate_range_param(self, part_size, part_index, num_parts):
         start_range = part_index * part_size
         if part_index == num_parts - 1:
-            end_range = ''
+            end_range = ""
         else:
             end_range = start_range + part_size - 1
-        range_param = f'bytes={start_range}-{end_range}'
+        range_param = f"bytes={start_range}-{end_range}"
         return range_param
 
     def _download_range(
         self, bucket, key, filename, part_size, num_parts, callback, part_index
     ):
         try:
-            range_param = self._calculate_range_param(
-                part_size, part_index, num_parts
-            )
+            range_param = self._calculate_range_param(part_size, part_index, num_parts)
 
             max_attempts = self._config.num_download_attempts
             last_exception = None
@@ -605,14 +592,10 @@ class MultipartDownloader:
                     response = self._client.get_object(
                         Bucket=bucket, Key=key, Range=range_param
                     )
-                    streaming_body = StreamReaderProgress(
-                        response['Body'], callback
-                    )
+                    streaming_body = StreamReaderProgress(response["Body"], callback)
                     buffer_size = 1024 * 16
                     current_index = part_size * part_index
-                    for chunk in iter(
-                        lambda: streaming_body.read(buffer_size), b''
-                    ):
+                    for chunk in iter(lambda: streaming_body.read(buffer_size), b""):
                         self._ioqueue.put((current_index, chunk))
                         current_index += len(chunk)
                     return
@@ -638,7 +621,7 @@ class MultipartDownloader:
             logger.debug("EXITING _download_range for part: %s", part_index)
 
     def _perform_io_writes(self, filename):
-        with self._os.open(filename, 'wb') as f:
+        with self._os.open(filename, "wb") as f:
             while True:
                 task = self._ioqueue.get()
                 if task is SHUTDOWN_SENTINEL:
@@ -680,41 +663,41 @@ class TransferConfig:
 
 class S3Transfer:
     ALLOWED_DOWNLOAD_ARGS = [
-        'VersionId',
-        'SSECustomerAlgorithm',
-        'SSECustomerKey',
-        'SSECustomerKeyMD5',
-        'RequestPayer',
+        "VersionId",
+        "SSECustomerAlgorithm",
+        "SSECustomerKey",
+        "SSECustomerKeyMD5",
+        "RequestPayer",
     ]
 
     ALLOWED_UPLOAD_ARGS = [
-        'ACL',
-        'CacheControl',
-        'ContentDisposition',
-        'ContentEncoding',
-        'ContentLanguage',
-        'ContentType',
-        'Expires',
-        'GrantFullControl',
-        'GrantRead',
-        'GrantReadACP',
-        'GrantWriteACL',
-        'Metadata',
-        'RequestPayer',
-        'ServerSideEncryption',
-        'StorageClass',
-        'SSECustomerAlgorithm',
-        'SSECustomerKey',
-        'SSECustomerKeyMD5',
-        'SSEKMSKeyId',
-        'SSEKMSEncryptionContext',
-        'Tagging',
+        "ACL",
+        "CacheControl",
+        "ContentDisposition",
+        "ContentEncoding",
+        "ContentLanguage",
+        "ContentType",
+        "Expires",
+        "GrantFullControl",
+        "GrantRead",
+        "GrantReadACP",
+        "GrantWriteACL",
+        "Metadata",
+        "RequestPayer",
+        "ServerSideEncryption",
+        "StorageClass",
+        "SSECustomerAlgorithm",
+        "SSECustomerKey",
+        "SSECustomerKeyMD5",
+        "SSEKMSKeyId",
+        "SSEKMSEncryptionContext",
+        "Tagging",
     ]
 
     def __init__(self, client, config=None, osutil=None):
         self._client = client
         self._client.meta.events.register(
-            'before-call.s3.*', self._update_checksum_context
+            "before-call.s3.*", self._update_checksum_context
         )
         if config is None:
             config = TransferConfig()
@@ -730,9 +713,7 @@ class S3Transfer:
             # Force request checksum algorithm in the header if specified.
             checksum_context["request_algorithm"]["in"] = "header"
 
-    def upload_file(
-        self, filename, bucket, key, callback=None, extra_args=None
-    ):
+    def upload_file(self, filename, bucket, key, callback=None, extra_args=None):
         """Upload a file to an S3 object.
 
         Variants have also been injected into S3 client, Bucket and Object.
@@ -743,19 +724,16 @@ class S3Transfer:
         self._validate_all_known_args(extra_args, self.ALLOWED_UPLOAD_ARGS)
         events = self._client.meta.events
         events.register_first(
-            'request-created.s3',
+            "request-created.s3",
             disable_upload_callbacks,
-            unique_id='s3upload-callback-disable',
+            unique_id="s3upload-callback-disable",
         )
         events.register_last(
-            'request-created.s3',
+            "request-created.s3",
             enable_upload_callbacks,
-            unique_id='s3upload-callback-enable',
+            unique_id="s3upload-callback-enable",
         )
-        if (
-            self._osutil.get_file_size(filename)
-            >= self._config.multipart_threshold
-        ):
+        if self._osutil.get_file_size(filename) >= self._config.multipart_threshold:
             self._multipart_upload(filename, bucket, key, callback, extra_args)
         else:
             self._put_object(filename, bucket, key, callback, extra_args)
@@ -770,13 +748,9 @@ class S3Transfer:
             self._osutil.get_file_size(filename),
             callback=callback,
         ) as body:
-            self._client.put_object(
-                Bucket=bucket, Key=key, Body=body, **extra_args
-            )
+            self._client.put_object(Bucket=bucket, Key=key, Body=body, **extra_args)
 
-    def download_file(
-        self, bucket, key, filename, extra_args=None, callback=None
-    ):
+    def download_file(self, bucket, key, filename, extra_args=None, callback=None):
         """Download an S3 object to a file.
 
         Variants have also been injected into S3 client, Bucket and Object.
@@ -805,9 +779,7 @@ class S3Transfer:
         else:
             self._osutil.rename_file(temp_filename, filename)
 
-    def _download_file(
-        self, bucket, key, filename, object_size, extra_args, callback
-    ):
+    def _download_file(self, bucket, key, filename, object_size, extra_args, callback):
         if object_size >= self._config.multipart_threshold:
             self._ranged_download(
                 bucket, key, filename, object_size, extra_args, callback
@@ -826,9 +798,7 @@ class S3Transfer:
     def _ranged_download(
         self, bucket, key, filename, object_size, extra_args, callback
     ):
-        downloader = MultipartDownloader(
-            self._client, self._config, self._osutil
-        )
+        downloader = MultipartDownloader(self._client, self._config, self._osutil)
         downloader.download_file(
             bucket, key, filename, object_size, extra_args, callback
         )
@@ -839,9 +809,7 @@ class S3Transfer:
         last_exception = None
         for i in range(max_attempts):
             try:
-                return self._do_get_object(
-                    bucket, key, filename, extra_args, callback
-                )
+                return self._do_get_object(bucket, key, filename, extra_args, callback)
             except (
                 socket.timeout,
                 OSError,
@@ -864,17 +832,15 @@ class S3Transfer:
         raise RetriesExceededError(last_exception)
 
     def _do_get_object(self, bucket, key, filename, extra_args, callback):
-        response = self._client.get_object(
-            Bucket=bucket, Key=key, **extra_args
-        )
-        streaming_body = StreamReaderProgress(response['Body'], callback)
-        with self._osutil.open(filename, 'wb') as f:
-            for chunk in iter(lambda: streaming_body.read(8192), b''):
+        response = self._client.get_object(Bucket=bucket, Key=key, **extra_args)
+        streaming_body = StreamReaderProgress(response["Body"], callback)
+        with self._osutil.open(filename, "wb") as f:
+            for chunk in iter(lambda: streaming_body.read(8192), b""):
                 f.write(chunk)
 
     def _object_size(self, bucket, key, extra_args):
         return self._client.head_object(Bucket=bucket, Key=key, **extra_args)[
-            'ContentLength'
+            "ContentLength"
         ]
 
     def _multipart_upload(self, filename, bucket, key, callback, extra_args):

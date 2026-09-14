@@ -24,21 +24,21 @@ from stevedore.tests import utils
 
 
 test_extension = extension.Extension(
-    'test_extension',
+    "test_extension",
     None,  # type: ignore
     None,  # type: ignore
     None,
 )
 test_extension2 = extension.Extension(
-    'another_one',
+    "another_one",
     None,  # type: ignore
     None,  # type: ignore
     None,
 )
 
-mock_entry_point = Mock(module_name='test.extension', attrs=['obj'])
+mock_entry_point = Mock(module_name="test.extension", attrs=["obj"])
 a_driver = extension.Extension(
-    'test_driver',
+    "test_driver",
     mock_entry_point,
     sentinel.driver_plugin,
     sentinel.driver_obj,
@@ -55,14 +55,12 @@ class TestTestManager(utils.TestCase):
     def test_instance_should_have_default_namespace(self):
         em: extension.ExtensionManager[Any]
         em = extension.ExtensionManager.make_test_instance([])
-        self.assertEqual(em.namespace, 'TESTING')
+        self.assertEqual(em.namespace, "TESTING")
 
     def test_instance_should_use_supplied_namespace(self):
-        namespace = 'testing.1.2.3'
+        namespace = "testing.1.2.3"
         em: extension.ExtensionManager[Any]
-        em = extension.ExtensionManager.make_test_instance(
-            [], namespace=namespace
-        )
+        em = extension.ExtensionManager.make_test_instance([], namespace=namespace)
         self.assertEqual(namespace, em.namespace)
 
     def test_extension_name_should_be_listed(self):
@@ -100,22 +98,22 @@ class TestTestManager(utils.TestCase):
             [test_extension2, test_extension]
         )
         results = em.map(mapped)
-        self.assertEqual(sorted(results), ['another_one', 'test_extension'])
+        self.assertEqual(sorted(results), ["another_one", "test_extension"])
 
     def test_manager_should_eat_exceptions(self):
         em = extension.ExtensionManager.make_test_instance([test_extension])
 
-        func = Mock(side_effect=RuntimeError('hard coded error'))
+        func = Mock(side_effect=RuntimeError("hard coded error"))
 
-        results = em.map(func, 1, 2, a='A', b='B')
+        results = em.map(func, 1, 2, a="A", b="B")
         self.assertEqual(results, [])
 
     def test_manager_should_propagate_exceptions(self):
         em = extension.ExtensionManager.make_test_instance(
             [test_extension], propagate_map_exceptions=True
         )
-        func = Mock(side_effect=RuntimeError('hard coded error'))
-        self.assertRaises(RuntimeError, em.map, func, 1, 2, a='A', b='B')
+        func = Mock(side_effect=RuntimeError("hard coded error"))
+        self.assertRaises(RuntimeError, em.map, func, 1, 2, a="A", b="B")
 
     # NamedExtensionManager
     def test_named_manager_should_use_supplied_extensions(self):
@@ -126,20 +124,18 @@ class TestTestManager(utils.TestCase):
     def test_named_manager_should_have_default_namespace(self):
         em: named.NamedExtensionManager[Any]
         em = named.NamedExtensionManager.make_test_instance([])
-        self.assertEqual(em.namespace, 'TESTING')
+        self.assertEqual(em.namespace, "TESTING")
 
     def test_named_manager_should_use_supplied_namespace(self):
-        namespace = 'testing.1.2.3'
+        namespace = "testing.1.2.3"
         em: named.NamedExtensionManager[Any]
-        em = named.NamedExtensionManager.make_test_instance(
-            [], namespace=namespace
-        )
+        em = named.NamedExtensionManager.make_test_instance([], namespace=namespace)
         self.assertEqual(namespace, em.namespace)
 
     def test_named_manager_should_populate_names(self):
         extensions = [test_extension, test_extension2]
         em = named.NamedExtensionManager.make_test_instance(extensions)
-        self.assertEqual(em.names(), ['test_extension', 'another_one'])
+        self.assertEqual(em.names(), ["test_extension", "another_one"])
 
     # HookManager
     def test_hook_manager_should_use_supplied_extensions(self):
@@ -155,30 +151,28 @@ class TestTestManager(utils.TestCase):
 
     def test_hook_manager_should_have_default_namespace(self):
         em = hook.HookManager.make_test_instance([test_extension])
-        self.assertEqual(em.namespace, 'TESTING')
+        self.assertEqual(em.namespace, "TESTING")
 
     def test_hook_manager_should_use_supplied_namespace(self):
-        namespace = 'testing.1.2.3'
-        em = hook.HookManager.make_test_instance(
-            [test_extension], namespace=namespace
-        )
+        namespace = "testing.1.2.3"
+        em = hook.HookManager.make_test_instance([test_extension], namespace=namespace)
         self.assertEqual(namespace, em.namespace)
 
     def test_hook_manager_should_return_named_extensions(self):
         hook1 = extension.Extension(
-            'captain',
+            "captain",
             None,  # type: ignore
             None,  # type: ignore
             None,
         )
         hook2 = extension.Extension(
-            'captain',
+            "captain",
             None,  # type: ignore
             None,  # type: ignore
             None,
         )
         em = hook.HookManager.make_test_instance([hook1, hook2])
-        self.assertEqual([hook1, hook2], em['captain'])
+        self.assertEqual([hook1, hook2], em["captain"])
 
     # DriverManager
     def test_driver_manager_should_use_supplied_extension(self):
@@ -187,26 +181,24 @@ class TestTestManager(utils.TestCase):
 
     def test_driver_manager_should_have_default_namespace(self):
         em = driver.DriverManager.make_test_instance(a_driver)
-        self.assertEqual(em.namespace, 'TESTING')
+        self.assertEqual(em.namespace, "TESTING")
 
     def test_driver_manager_should_use_supplied_namespace(self):
-        namespace = 'testing.1.2.3'
-        em = driver.DriverManager.make_test_instance(
-            a_driver, namespace=namespace
-        )
+        namespace = "testing.1.2.3"
+        em = driver.DriverManager.make_test_instance(a_driver, namespace=namespace)
         self.assertEqual(namespace, em.namespace)
 
     def test_instance_should_use_driver_name(self):
         em = driver.DriverManager.make_test_instance(a_driver)
-        self.assertEqual(['test_driver'], em.names())
+        self.assertEqual(["test_driver"], em.names())
 
     def test_instance_call(self):
         def invoke(ext, /, *args, **kwds):
             return ext.name, args, kwds
 
         em = driver.DriverManager.make_test_instance(a_driver)
-        result = em(invoke, 'a', b='C')
-        self.assertEqual(result, ('test_driver', ('a',), {'b': 'C'}))
+        result = em(invoke, "a", b="C")
+        self.assertEqual(result, ("test_driver", ("a",), {"b": "C"}))
 
     def test_instance_driver_property(self):
         em = driver.DriverManager.make_test_instance(a_driver)
@@ -229,8 +221,8 @@ class TestTestManager(utils.TestCase):
             [test_extension, test_extension2]
         )
         filter_func = Mock(return_value=False)
-        args = ('A',)
-        kw = {'big': 'Cheese'}
+        args = ("A",)
+        kw = {"big": "Cheese"}
         em.map(filter_func, None, *args, **kw)  # type: ignore
         filter_func.assert_any_call(test_extension, *args, **kw)
         filter_func.assert_any_call(test_extension2, *args, **kw)
@@ -238,17 +230,13 @@ class TestTestManager(utils.TestCase):
     # NameDispatchExtensionManager
     def test_name_dispatch_instance_should_use_supplied_extensions(self):
         extensions = [test_extension, test_extension2]
-        em = dispatch.NameDispatchExtensionManager.make_test_instance(
-            extensions
-        )
+        em = dispatch.NameDispatchExtensionManager.make_test_instance(extensions)
 
         self.assertEqual(extensions, em.extensions)
 
     def test_name_dispatch_instance_should_build_extension_name_map(self):
         extensions = [test_extension, test_extension2]
-        em = dispatch.NameDispatchExtensionManager.make_test_instance(
-            extensions
-        )
+        em = dispatch.NameDispatchExtensionManager.make_test_instance(extensions)
         self.assertEqual(test_extension, em.by_name[test_extension.name])
         self.assertEqual(test_extension2, em.by_name[test_extension2.name])
 
@@ -257,7 +245,7 @@ class TestTestManager(utils.TestCase):
             [test_extension, test_extension2]
         )
         func = Mock()
-        args = ('A',)
-        kw = {'BIGGER': 'Cheese'}
-        em.map(['test_extension'], func, *args, **kw)
+        args = ("A",)
+        kw = {"BIGGER": "Cheese"}
+        em.map(["test_extension"], func, *args, **kw)
         func.assert_called_once_with(test_extension, *args, **kw)

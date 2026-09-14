@@ -18,7 +18,8 @@ import sys
 
 from botocore.compat import six
 
-if sys.platform.startswith('win'):
+if sys.platform.startswith("win"):
+
     def rename_file(current_filename, new_filename):
         try:
             os.remove(new_filename)
@@ -55,11 +56,11 @@ def seekable(fileobj):
     """
     # If the fileobj has a seekable attr, try calling the seekable()
     # method on it.
-    if hasattr(fileobj, 'seekable'):
+    if hasattr(fileobj, "seekable"):
         return fileobj.seekable()
     # If there is no seekable attr, check if the object can be seeked
     # or telled. If it can, try to seek to the current position.
-    elif hasattr(fileobj, 'seek') and hasattr(fileobj, 'tell'):
+    elif hasattr(fileobj, "seek") and hasattr(fileobj, "tell"):
         try:
             fileobj.seek(0, 1)
             return True
@@ -77,14 +78,14 @@ def readable(fileobj):
 
     :returns: True, if readable. False otherwise.
     """
-    if hasattr(fileobj, 'readable'):
+    if hasattr(fileobj, "readable"):
         return fileobj.readable()
 
-    return hasattr(fileobj, 'read')
+    return hasattr(fileobj, "read")
 
 
 def fallocate(fileobj, size):
-    if hasattr(os, 'posix_fallocate'):
+    if hasattr(os, "posix_fallocate"):
         os.posix_fallocate(fileobj.fileno(), 0, size)
     else:
         fileobj.truncate(size)

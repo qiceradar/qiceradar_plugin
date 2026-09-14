@@ -29,7 +29,7 @@ def build_retry_config(
     # retry model has no chance of getting mutated when the service specific
     # configuration or client retry config is merged in.
     final_retry_config = {
-        '__default__': copy.deepcopy(retry_model.get('__default__', {}))
+        "__default__": copy.deepcopy(retry_model.get("__default__", {}))
     }
     resolve_references(final_retry_config, definitions)
     # The merge the service specific config on top.
@@ -40,7 +40,7 @@ def build_retry_config(
 
 
 def _merge_client_retry_config(retry_config, client_retry_config):
-    max_retry_attempts_override = client_retry_config.get('max_attempts')
+    max_retry_attempts_override = client_retry_config.get("max_attempts")
     if max_retry_attempts_override is not None:
         # In the retry config, the max_attempts refers to the maximum number
         # of requests in general will be made. However, for the client's
@@ -53,9 +53,7 @@ def _merge_client_retry_config(retry_config, client_retry_config):
         # configuration in the retry model via the client, we will need to
         # revisit this logic to make sure max_attempts gets applied
         # per operation.
-        retry_config['__default__']['max_attempts'] = (
-            max_retry_attempts_override + 1
-        )
+        retry_config["__default__"]["max_attempts"] = max_retry_attempts_override + 1
 
 
 def resolve_references(config, definitions):
@@ -71,7 +69,7 @@ def resolve_references(config, definitions):
     """
     for key, value in config.items():
         if isinstance(value, dict):
-            if len(value) == 1 and list(value.keys())[0] == '$ref':
+            if len(value) == 1 and list(value.keys())[0] == "$ref":
                 # Then we need to resolve this reference.
                 config[key] = definitions[list(value.values())[0]]
             else:

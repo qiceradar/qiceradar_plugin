@@ -111,14 +111,14 @@ from botocore.exceptions import DataNotFoundError, UnknownServiceError
 from botocore.utils import deep_merge
 
 _JSON_OPEN_METHODS = {
-    '.json': open,
+    ".json": open,
 }
 
 
 if HAS_GZIP:
     from gzip import open as gzip_open
 
-    _JSON_OPEN_METHODS['.json.gz'] = gzip_open
+    _JSON_OPEN_METHODS[".json.gz"] = gzip_open
 
 
 logger = logging.getLogger(__name__)
@@ -175,8 +175,8 @@ class JSONFileLoader:
 
         # By default the file will be opened with locale encoding on Python 3.
         # We specify "utf8" here to ensure the correct behavior.
-        with open_method(full_path, 'rb') as fp:
-            payload = fp.read().decode('utf-8')
+        with open_method(full_path, "rb") as fp:
+            payload = fp.read().decode("utf-8")
 
         logger.debug("Loading JSON file: %s", full_path)
         return json.loads(payload, object_pairs_hook=OrderedDict)
@@ -234,12 +234,10 @@ class Loader:
 
     FILE_LOADER_CLASS = JSONFileLoader
     # The included models in botocore/data/ that we ship with botocore.
-    BUILTIN_DATA_PATH = os.path.join(BOTOCORE_ROOT, 'data')
+    BUILTIN_DATA_PATH = os.path.join(BOTOCORE_ROOT, "data")
     # For convenience we automatically add ~/.aws/models to the data path.
-    CUSTOMER_DATA_PATH = os.path.join(
-        os.path.expanduser('~'), '.aws', 'models'
-    )
-    BUILTIN_EXTRAS_TYPES = ['sdk']
+    CUSTOMER_DATA_PATH = os.path.join(os.path.expanduser("~"), ".aws", "models")
+    BUILTIN_EXTRAS_TYPES = ["sdk"]
 
     def __init__(
         self,
@@ -258,9 +256,7 @@ class Loader:
         else:
             self._search_paths = []
         if include_default_search_paths:
-            self._search_paths.extend(
-                [self.CUSTOMER_DATA_PATH, self.BUILTIN_DATA_PATH]
-            )
+            self._search_paths.extend([self.CUSTOMER_DATA_PATH, self.BUILTIN_DATA_PATH])
 
         self._extras_types = []
         if include_default_extras:
@@ -311,9 +307,7 @@ class Loader:
                 full_dirname = os.path.join(possible_path, service_name)
                 api_versions = os.listdir(full_dirname)
                 for api_version in api_versions:
-                    full_load_path = os.path.join(
-                        full_dirname, api_version, type_name
-                    )
+                    full_load_path = os.path.join(full_dirname, api_version, type_name)
                     if self.file_loader.exists(full_load_path):
                         services.add(service_name)
                         break
@@ -408,12 +402,10 @@ class Loader:
         if service_name not in known_services:
             raise UnknownServiceError(
                 service_name=service_name,
-                known_service_names=', '.join(known_services),
+                known_service_names=", ".join(known_services),
             )
         if api_version is None:
-            api_version = self.determine_latest_version(
-                service_name, type_name
-            )
+            api_version = self.determine_latest_version(service_name, type_name)
         full_path = os.path.join(service_name, api_version, type_name)
         model = self.load_data(full_path)
 
@@ -426,7 +418,7 @@ class Loader:
     def _find_extras(self, service_name, type_name, api_version):
         """Creates an iterator over all the extras data."""
         for extras_type in self.extras_types:
-            extras_name = f'{type_name}.{extras_type}-extras'
+            extras_name = f"{type_name}.{extras_type}-extras"
             full_path = os.path.join(service_name, api_version, extras_name)
 
             try:
@@ -521,5 +513,5 @@ class ExtrasProcessor:
 
     def _process(self, model, extra_model):
         """Process a single extras model into a service model."""
-        if 'merge' in extra_model:
-            deep_merge(model, extra_model['merge'])
+        if "merge" in extra_model:
+            deep_merge(model, extra_model["merge"])

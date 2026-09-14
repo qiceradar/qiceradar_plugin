@@ -23,16 +23,14 @@ class BaseDocumenter:
         self._service_name = self._service_model.service_name
         self._service_docs_name = self._client.__class__.__name__
         self.member_map = OrderedDict()
-        self.represents_service_resource = (
-            self._service_name == self._resource_name
-        )
+        self.represents_service_resource = self._service_name == self._resource_name
         self._resource_class_name = self._resource_name
         if self._resource_name == self._service_name:
-            self._resource_class_name = 'ServiceResource'
+            self._resource_class_name = "ServiceResource"
 
     @property
     def class_name(self):
-        return f'{self._service_docs_name}.{self._resource_name}'
+        return f"{self._service_docs_name}.{self._resource_name}"
 
 
 class NestedDocumenter(BaseDocumenter):
@@ -41,11 +39,11 @@ class NestedDocumenter(BaseDocumenter):
         self._root_docs_path = root_docs_path
         self._resource_sub_path = self._resource_name.lower()
         if self._resource_name == self._service_name:
-            self._resource_sub_path = 'service-resource'
+            self._resource_sub_path = "service-resource"
 
     @property
     def class_name(self):
         resource_class_name = self._resource_name
         if self._resource_name == self._service_name:
-            resource_class_name = 'ServiceResource'
-        return f'{self._service_docs_name}.{resource_class_name}'
+            resource_class_name = "ServiceResource"
+        return f"{self._service_docs_name}.{resource_class_name}"

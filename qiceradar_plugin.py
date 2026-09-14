@@ -978,11 +978,9 @@ class QIceRadarPlugin(QtCore.QObject):
         dcd.configure.connect(self.handle_configure_signal)
 
         dcd.download_confirmed.connect(
-            lambda gg=db_granule.granule_name,
-            url=db_granule.url,
-            fp=dest_filepath,
-            fs=db_granule.filesize,
-            dm=db_granule.download_method: self.start_download(gg, url, fp, fs, dm)
+            lambda gg=db_granule.granule_name, url=db_granule.url, fp=dest_filepath, fs=db_granule.filesize, dm=db_granule.download_method: (
+                self.start_download(gg, url, fp, fs, dm)
+            )
         )
         dcd.run()
 

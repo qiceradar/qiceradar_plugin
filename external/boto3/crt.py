@@ -43,15 +43,15 @@ CRT_S3_CLIENT = None
 BOTOCORE_CRT_SERIALIZER = None
 
 CLIENT_CREATION_LOCK = threading.Lock()
-PROCESS_LOCK_NAME = 'boto3'
+PROCESS_LOCK_NAME = "boto3"
 
 
 _ALLOWED_CRT_TRANSFER_CONFIG_OPTIONS = {
-    'multipart_threshold',
-    'max_concurrency',
-    'max_request_concurrency',
-    'multipart_chunksize',
-    'preferred_transfer_client',
+    "multipart_threshold",
+    "max_concurrency",
+    "max_request_concurrency",
+    "multipart_chunksize",
+    "preferred_transfer_client",
 }
 
 
@@ -62,22 +62,20 @@ def _create_crt_client(session, config, region_name, cred_provider):
     system resource exhaustion.
     """
     create_crt_client_kwargs = {
-        'region': region_name,
-        'use_ssl': True,
-        'crt_credentials_provider': cred_provider,
+        "region": region_name,
+        "use_ssl": True,
+        "crt_credentials_provider": cred_provider,
     }
     return create_s3_crt_client(**create_crt_client_kwargs)
 
 
 def _create_crt_request_serializer(session, region_name):
     return BotocoreCRTRequestSerializer(
-        session, {'region_name': region_name, 'endpoint_url': None}
+        session, {"region_name": region_name, "endpoint_url": None}
     )
 
 
-def _create_crt_s3_client(
-    session, config, region_name, credentials, lock, **kwargs
-):
+def _create_crt_s3_client(session, config, region_name, credentials, lock, **kwargs):
     """Create boto3 wrapper class to manage crt lock reference and S3 client."""
     cred_wrapper = BotocoreCRTCredentialsWrapper(credentials)
     cred_provider = cred_wrapper.to_crt_credentials_provider()
@@ -102,9 +100,7 @@ def _initialize_crt_transfer_primatives(client, config):
     credentials = client._get_credentials()
 
     serializer = _create_crt_request_serializer(session, region_name)
-    s3_client = _create_crt_s3_client(
-        session, config, region_name, credentials, lock
-    )
+    s3_client = _create_crt_s3_client(session, config, region_name, credentials, lock)
     return serializer, s3_client
 
 
@@ -114,9 +110,7 @@ def get_crt_s3_client(client, config):
 
     with CLIENT_CREATION_LOCK:
         if CRT_S3_CLIENT is None:
-            serializer, s3_client = _initialize_crt_transfer_primatives(
-                client, config
-            )
+            serializer, s3_client = _initialize_crt_transfer_primatives(client, config)
             BOTOCORE_CRT_SERIALIZER = serializer
             CRT_S3_CLIENT = s3_client
 
@@ -202,16 +196,16 @@ def create_crt_transfer_manager(client, config):
     crt_s3_client = get_crt_s3_client(client, config)
     if is_crt_compatible_request(client, crt_s3_client):
         crt_transfer_manager_kwargs = {
-            'crt_s3_client': crt_s3_client.crt_client,
-            'crt_request_serializer': BOTOCORE_CRT_SERIALIZER,
+            "crt_s3_client": crt_s3_client.crt_client,
+            "crt_request_serializer": BOTOCORE_CRT_SERIALIZER,
         }
         if TRANSFER_CONFIG_SUPPORTS_CRT:
             _validate_crt_transfer_config(config)
-            crt_transfer_manager_kwargs['config'] = config
+            crt_transfer_manager_kwargs["config"] = config
         if not TRANSFER_CONFIG_SUPPORTS_CRT and config:
             logger.warning(
-                'Using TransferConfig with CRT client requires '
-                's3transfer >= 0.16.0, configured values will be ignored.'
+                "Using TransferConfig with CRT client requires "
+                "s3transfer >= 0.16.0, configured values will be ignored."
             )
         return CRTTransferManager(**crt_transfer_manager_kwargs)
     return None

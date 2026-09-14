@@ -17,131 +17,131 @@ import os
 import re
 from logging import NullHandler
 
-__version__ = '1.42.97'
+__version__ = "1.42.97"
 
 
 # Configure default logger to do nothing
-log = logging.getLogger('botocore')
+log = logging.getLogger("botocore")
 log.addHandler(NullHandler())
 
 _INITIALIZERS = []
 
-_first_cap_regex = re.compile('(.)([A-Z][a-z]+)')
-_end_cap_regex = re.compile('([a-z0-9])([A-Z])')
+_first_cap_regex = re.compile("(.)([A-Z][a-z]+)")
+_end_cap_regex = re.compile("([a-z0-9])([A-Z])")
 # The regex below handles the special case where some acronym
 # name is pluralized, e.g GatewayARNs, ListWebACLs, SomeCNAMEs.
-_special_case_transform = re.compile('[A-Z]{2,}s$')
+_special_case_transform = re.compile("[A-Z]{2,}s$")
 # Prepopulate the cache with special cases that don't match
 # our regular transformation.
 _xform_cache = {
-    ('CreateCachediSCSIVolume', '_'): 'create_cached_iscsi_volume',
-    ('CreateCachediSCSIVolume', '-'): 'create-cached-iscsi-volume',
-    ('DescribeCachediSCSIVolumes', '_'): 'describe_cached_iscsi_volumes',
-    ('DescribeCachediSCSIVolumes', '-'): 'describe-cached-iscsi-volumes',
-    ('DescribeStorediSCSIVolumes', '_'): 'describe_stored_iscsi_volumes',
-    ('DescribeStorediSCSIVolumes', '-'): 'describe-stored-iscsi-volumes',
-    ('CreateStorediSCSIVolume', '_'): 'create_stored_iscsi_volume',
-    ('CreateStorediSCSIVolume', '-'): 'create-stored-iscsi-volume',
-    ('ListHITsForQualificationType', '_'): 'list_hits_for_qualification_type',
-    ('ListHITsForQualificationType', '-'): 'list-hits-for-qualification-type',
-    ('ExecutePartiQLStatement', '_'): 'execute_partiql_statement',
-    ('ExecutePartiQLStatement', '-'): 'execute-partiql-statement',
-    ('ExecutePartiQLTransaction', '_'): 'execute_partiql_transaction',
-    ('ExecutePartiQLTransaction', '-'): 'execute-partiql-transaction',
-    ('ExecutePartiQLBatch', '_'): 'execute_partiql_batch',
-    ('ExecutePartiQLBatch', '-'): 'execute-partiql-batch',
+    ("CreateCachediSCSIVolume", "_"): "create_cached_iscsi_volume",
+    ("CreateCachediSCSIVolume", "-"): "create-cached-iscsi-volume",
+    ("DescribeCachediSCSIVolumes", "_"): "describe_cached_iscsi_volumes",
+    ("DescribeCachediSCSIVolumes", "-"): "describe-cached-iscsi-volumes",
+    ("DescribeStorediSCSIVolumes", "_"): "describe_stored_iscsi_volumes",
+    ("DescribeStorediSCSIVolumes", "-"): "describe-stored-iscsi-volumes",
+    ("CreateStorediSCSIVolume", "_"): "create_stored_iscsi_volume",
+    ("CreateStorediSCSIVolume", "-"): "create-stored-iscsi-volume",
+    ("ListHITsForQualificationType", "_"): "list_hits_for_qualification_type",
+    ("ListHITsForQualificationType", "-"): "list-hits-for-qualification-type",
+    ("ExecutePartiQLStatement", "_"): "execute_partiql_statement",
+    ("ExecutePartiQLStatement", "-"): "execute-partiql-statement",
+    ("ExecutePartiQLTransaction", "_"): "execute_partiql_transaction",
+    ("ExecutePartiQLTransaction", "-"): "execute-partiql-transaction",
+    ("ExecutePartiQLBatch", "_"): "execute_partiql_batch",
+    ("ExecutePartiQLBatch", "-"): "execute-partiql-batch",
     (
-        'AssociateWhatsAppBusinessAccount',
-        '_',
-    ): 'associate_whatsapp_business_account',
+        "AssociateWhatsAppBusinessAccount",
+        "_",
+    ): "associate_whatsapp_business_account",
     (
-        'AssociateWhatsAppBusinessAccount',
-        '-',
-    ): 'associate-whatsapp-business-account',
-    ('CreateWhatsAppMessageTemplate', '_'): 'create_whatsapp_message_template',
-    ('CreateWhatsAppMessageTemplate', '-'): 'create-whatsapp-message-template',
+        "AssociateWhatsAppBusinessAccount",
+        "-",
+    ): "associate-whatsapp-business-account",
+    ("CreateWhatsAppMessageTemplate", "_"): "create_whatsapp_message_template",
+    ("CreateWhatsAppMessageTemplate", "-"): "create-whatsapp-message-template",
     (
-        'CreateWhatsAppMessageTemplateFromLibrary',
-        '_',
-    ): 'create_whatsapp_message_template_from_library',
+        "CreateWhatsAppMessageTemplateFromLibrary",
+        "_",
+    ): "create_whatsapp_message_template_from_library",
     (
-        'CreateWhatsAppMessageTemplateFromLibrary',
-        '-',
-    ): 'create-whatsapp-message-template-from-library',
+        "CreateWhatsAppMessageTemplateFromLibrary",
+        "-",
+    ): "create-whatsapp-message-template-from-library",
     (
-        'CreateWhatsAppMessageTemplateMedia',
-        '_',
-    ): 'create_whatsapp_message_template_media',
+        "CreateWhatsAppMessageTemplateMedia",
+        "_",
+    ): "create_whatsapp_message_template_media",
     (
-        'CreateWhatsAppMessageTemplateMedia',
-        '-',
-    ): 'create-whatsapp-message-template-media',
-    ('DeleteWhatsAppMessageMedia', '_'): 'delete_whatsapp_message_media',
-    ('DeleteWhatsAppMessageMedia', '-'): 'delete-whatsapp-message-media',
-    ('DeleteWhatsAppMessageTemplate', '_'): 'delete_whatsapp_message_template',
-    ('DeleteWhatsAppMessageTemplate', '-'): 'delete-whatsapp-message-template',
+        "CreateWhatsAppMessageTemplateMedia",
+        "-",
+    ): "create-whatsapp-message-template-media",
+    ("DeleteWhatsAppMessageMedia", "_"): "delete_whatsapp_message_media",
+    ("DeleteWhatsAppMessageMedia", "-"): "delete-whatsapp-message-media",
+    ("DeleteWhatsAppMessageTemplate", "_"): "delete_whatsapp_message_template",
+    ("DeleteWhatsAppMessageTemplate", "-"): "delete-whatsapp-message-template",
     (
-        'DisassociateWhatsAppBusinessAccount',
-        '_',
-    ): 'disassociate_whatsapp_business_account',
+        "DisassociateWhatsAppBusinessAccount",
+        "_",
+    ): "disassociate_whatsapp_business_account",
     (
-        'DisassociateWhatsAppBusinessAccount',
-        '-',
-    ): 'disassociate-whatsapp-business-account',
+        "DisassociateWhatsAppBusinessAccount",
+        "-",
+    ): "disassociate-whatsapp-business-account",
     (
-        'GetLinkedWhatsAppBusinessAccount',
-        '_',
-    ): 'get_linked_whatsapp_business_account',
+        "GetLinkedWhatsAppBusinessAccount",
+        "_",
+    ): "get_linked_whatsapp_business_account",
     (
-        'GetLinkedWhatsAppBusinessAccount',
-        '-',
-    ): 'get-linked-whatsapp-business-account',
+        "GetLinkedWhatsAppBusinessAccount",
+        "-",
+    ): "get-linked-whatsapp-business-account",
     (
-        'GetLinkedWhatsAppBusinessAccountPhoneNumber',
-        '_',
-    ): 'get_linked_whatsapp_business_account_phone_number',
+        "GetLinkedWhatsAppBusinessAccountPhoneNumber",
+        "_",
+    ): "get_linked_whatsapp_business_account_phone_number",
     (
-        'GetLinkedWhatsAppBusinessAccountPhoneNumber',
-        '-',
-    ): 'get-linked-whatsapp-business-account-phone-number',
-    ('GetOTelEnrichment', '_'): 'get_otel_enrichment',
-    ('GetOTelEnrichment', '-'): 'get-otel-enrichment',
-    ('GetWhatsAppMessageMedia', '_'): 'get_whatsapp_message_media',
-    ('GetWhatsAppMessageMedia', '-'): 'get-whatsapp-message-media',
-    ('GetWhatsAppMessageTemplate', '_'): 'get_whatsapp_message_template',
-    ('GetWhatsAppMessageTemplate', '-'): 'get-whatsapp-message-template',
+        "GetLinkedWhatsAppBusinessAccountPhoneNumber",
+        "-",
+    ): "get-linked-whatsapp-business-account-phone-number",
+    ("GetOTelEnrichment", "_"): "get_otel_enrichment",
+    ("GetOTelEnrichment", "-"): "get-otel-enrichment",
+    ("GetWhatsAppMessageMedia", "_"): "get_whatsapp_message_media",
+    ("GetWhatsAppMessageMedia", "-"): "get-whatsapp-message-media",
+    ("GetWhatsAppMessageTemplate", "_"): "get_whatsapp_message_template",
+    ("GetWhatsAppMessageTemplate", "-"): "get-whatsapp-message-template",
     (
-        'ListLinkedWhatsAppBusinessAccounts',
-        '_',
-    ): 'list_linked_whatsapp_business_accounts',
+        "ListLinkedWhatsAppBusinessAccounts",
+        "_",
+    ): "list_linked_whatsapp_business_accounts",
     (
-        'ListLinkedWhatsAppBusinessAccounts',
-        '-',
-    ): 'list-linked-whatsapp-business-accounts',
-    ('ListWhatsAppMessageTemplates', '_'): 'list_whatsapp_message_templates',
-    ('ListWhatsAppMessageTemplates', '-'): 'list-whatsapp-message-templates',
-    ('ListWhatsAppTemplateLibrary', '_'): 'list_whatsapp_template_library',
-    ('ListWhatsAppTemplateLibrary', '-'): 'list-whatsapp-template-library',
-    ('PostWhatsAppMessageMedia', '_'): 'post_whatsapp_message_media',
-    ('PostWhatsAppMessageMedia', '-'): 'post-whatsapp-message-media',
+        "ListLinkedWhatsAppBusinessAccounts",
+        "-",
+    ): "list-linked-whatsapp-business-accounts",
+    ("ListWhatsAppMessageTemplates", "_"): "list_whatsapp_message_templates",
+    ("ListWhatsAppMessageTemplates", "-"): "list-whatsapp-message-templates",
+    ("ListWhatsAppTemplateLibrary", "_"): "list_whatsapp_template_library",
+    ("ListWhatsAppTemplateLibrary", "-"): "list-whatsapp-template-library",
+    ("PostWhatsAppMessageMedia", "_"): "post_whatsapp_message_media",
+    ("PostWhatsAppMessageMedia", "-"): "post-whatsapp-message-media",
     (
-        'PutWhatsAppBusinessAccountEventDestinations',
-        '_',
-    ): 'put_whatsapp_business_account_event_destinations',
+        "PutWhatsAppBusinessAccountEventDestinations",
+        "_",
+    ): "put_whatsapp_business_account_event_destinations",
     (
-        'PutWhatsAppBusinessAccountEventDestinations',
-        '-',
-    ): 'put-whatsapp-business-account-event-destinations',
-    ('SendWhatsAppMessage', '_'): 'send_whatsapp_message',
-    ('SendWhatsAppMessage', '-'): 'send-whatsapp-message',
-    ('StartOTelEnrichment', '_'): 'start_otel_enrichment',
-    ('StartOTelEnrichment', '-'): 'start-otel-enrichment',
-    ('StopOTelEnrichment', '_'): 'stop_otel_enrichment',
-    ('StopOTelEnrichment', '-'): 'stop-otel-enrichment',
-    ('UpdateWhatsAppMessageTemplate', '_'): 'update_whatsapp_message_template',
-    ('UpdateWhatsAppMessageTemplate', '-'): 'update-whatsapp-message-template',
+        "PutWhatsAppBusinessAccountEventDestinations",
+        "-",
+    ): "put-whatsapp-business-account-event-destinations",
+    ("SendWhatsAppMessage", "_"): "send_whatsapp_message",
+    ("SendWhatsAppMessage", "-"): "send-whatsapp-message",
+    ("StartOTelEnrichment", "_"): "start_otel_enrichment",
+    ("StartOTelEnrichment", "-"): "start-otel-enrichment",
+    ("StopOTelEnrichment", "_"): "stop_otel_enrichment",
+    ("StopOTelEnrichment", "-"): "stop-otel-enrichment",
+    ("UpdateWhatsAppMessageTemplate", "_"): "update_whatsapp_message_template",
+    ("UpdateWhatsAppMessageTemplate", "-"): "update-whatsapp-message-template",
 }
-ScalarTypes = ('string', 'integer', 'boolean', 'timestamp', 'float', 'double')
+ScalarTypes = ("string", "integer", "boolean", "timestamp", "float", "double")
 
 BOTOCORE_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -158,7 +158,7 @@ class UNSIGNED:
 UNSIGNED = UNSIGNED()
 
 
-def xform_name(name, sep='_', _xform_cache=_xform_cache):
+def xform_name(name, sep="_", _xform_cache=_xform_cache):
     """Convert camel case to a "pythonic" name.
 
     If the name contains the ``sep`` character, then it is
@@ -176,8 +176,8 @@ def xform_name(name, sep='_', _xform_cache=_xform_cache):
             matched = is_special.group()
             # Replace something like ARNs, ACLs with _arns, _acls.
             name = f"{name[: -len(matched)]}{sep}{matched.lower()}"
-        s1 = _first_cap_regex.sub(r'\1' + sep + r'\2', name)
-        transformed = _end_cap_regex.sub(r'\1' + sep + r'\2', s1).lower()
+        s1 = _first_cap_regex.sub(r"\1" + sep + r"\2", name)
+        transformed = _end_cap_regex.sub(r"\1" + sep + r"\2", s1).lower()
         _xform_cache[key] = transformed
     return _xform_cache[key]
 

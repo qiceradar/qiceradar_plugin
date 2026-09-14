@@ -8,16 +8,16 @@ import fractions
 
 from contextlib import contextmanager
 from enum import Enum
-from itertools import (islice, cycle, tee, chain, repeat, groupby)
+from itertools import islice, cycle, tee, chain, repeat, groupby
 
 from segpy.reversed_sequence_view import ReversedSequenceView
 from segpy.sorted_frozen_set import SortedFrozenSet
 
-UNKNOWN_FILENAME = '<unknown>'
+UNKNOWN_FILENAME = "<unknown>"
 
-NATIVE_ENDIANNESS = '<' if sys.byteorder == 'little' else '>'
+NATIVE_ENDIANNESS = "<" if sys.byteorder == "little" else ">"
 
-EMPTY_BYTE_STRING = b''
+EMPTY_BYTE_STRING = b""
 
 UNSET = object()
 
@@ -95,7 +95,9 @@ def complementary_intervals(intervals, start=None, stop=None):
         Note the some of the returned slices may be 'empty' (having zero length).
     """
     if len(intervals) < 1:
-        raise ValueError("intervals must contain at least one interval (slice or range) object")
+        raise ValueError(
+            "intervals must contain at least one interval (slice or range) object"
+        )
 
     return _complementary_intervals(intervals, start, stop)
 
@@ -278,17 +280,21 @@ def now_millis():
 def round_up(integer, multiple):
     """Round up to the nearest multiple"""
     if multiple <= 0:
-        raise ValueError("Can not round up to non-positive multiple {}".format(multiple))
-    return integer if integer % multiple == 0 else integer + multiple - integer % multiple
+        raise ValueError(
+            "Can not round up to non-positive multiple {}".format(multiple)
+        )
+    return (
+        integer if integer % multiple == 0 else integer + multiple - integer % multiple
+    )
 
 
 def underscores_to_camelcase(s):
     """Convert text_in_this_style to TextInThisStyle."""
-    return ''.join(w.capitalize() for w in s.split('_'))
+    return "".join(w.capitalize() for w in s.split("_"))
 
 
 def first_sentence(s):
-    sentence, stop, _ = s.partition('.')
+    sentence, stop, _ = s.partition(".")
     return sentence + stop
 
 
@@ -305,7 +311,7 @@ def almost_equal(x, y, epsilon=sys.float_info.epsilon):
 
 
 def is_magic_name(name):
-    return len(name) > 4 and name.startswith('__') and name.endswith('__')
+    return len(name) > 4 and name.startswith("__") and name.endswith("__")
 
 
 def super_class(cls):
@@ -346,8 +352,7 @@ def is_sorted(iterable, key=None, reverse=False, distinct=False):
 
 
 def single_item_range(item):
-    """Construct a range object which generates a single value.
-    """
+    """Construct a range object which generates a single value."""
     return range(item, item + 1)
 
 
@@ -462,17 +467,19 @@ def hash_for_file(fh, *args):
         A string containing the hexadecimal digest.
     """
     # TODO: Use decorator to reset file pointer
-    block_size=512*128
+    block_size = 512 * 128
     sha1 = hashlib.sha1()
     fh.seek(0)
     for chunk in iter(lambda: fh.read(block_size), EMPTY_BYTE_STRING):
         sha1.update(chunk)
     length = fh.tell()
-    length_as_bytes = length.to_bytes((length.bit_length() // 8) + 1, byteorder='little')
+    length_as_bytes = length.to_bytes(
+        (length.bit_length() // 8) + 1, byteorder="little"
+    )
     sha1.update(length_as_bytes)
     fh.seek(0)
     for arg in args:
-        encoded_arg = repr(arg).encode('utf8')
+        encoded_arg = repr(arg).encode("utf8")
         sha1.update(encoded_arg)
     digest = sha1.hexdigest()
     return digest

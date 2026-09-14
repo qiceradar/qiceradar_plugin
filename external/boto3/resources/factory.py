@@ -62,9 +62,7 @@ class ResourceFactory:
         :rtype: Subclass of :py:class:`~boto3.resources.base.ServiceResource`
         :return: The service or resource class.
         """
-        logger.debug(
-            'Loading %s:%s', service_context.service_name, resource_name
-        )
+        logger.debug("Loading %s:%s", service_context.service_name, resource_name)
 
         # Using the loaded JSON create a ResourceModel object.
         resource_model = ResourceModel(
@@ -77,17 +75,13 @@ class ResourceFactory:
         # that needed to be accounted for.
         shape = None
         if resource_model.shape:
-            shape = service_context.service_model.shape_for(
-                resource_model.shape
-            )
+            shape = service_context.service_model.shape_for(resource_model.shape)
         resource_model.load_rename_map(shape)
 
         # Set some basic info
-        meta = ResourceMeta(
-            service_context.service_name, resource_model=resource_model
-        )
+        meta = ResourceMeta(service_context.service_name, resource_model=resource_model)
         attrs = {
-            'meta': meta,
+            "meta": meta,
         }
 
         # Create and load all of attributes of the resource class based
@@ -144,13 +138,13 @@ class ResourceFactory:
         # Create the name based on the requested service and resource
         cls_name = resource_name
         if service_context.service_name == resource_name:
-            cls_name = 'ServiceResource'
+            cls_name = "ServiceResource"
         cls_name = f"{service_context.service_name}.{cls_name}"
 
         base_classes = [ServiceResource]
         if self._emitter is not None:
             self._emitter.emit(
-                f'creating-resource-class.{cls_name}',
+                f"creating-resource-class.{cls_name}",
                 class_attributes=attrs,
                 base_classes=base_classes,
                 service_context=service_context,
@@ -165,26 +159,22 @@ class ResourceFactory:
         """
         for identifier in resource_model.identifiers:
             meta.identifiers.append(identifier.name)
-            attrs[identifier.name] = self._create_identifier(
-                identifier, resource_name
-            )
+            attrs[identifier.name] = self._create_identifier(identifier, resource_name)
 
-    def _load_actions(
-        self, attrs, resource_name, resource_model, service_context
-    ):
+    def _load_actions(self, attrs, resource_name, resource_model, service_context):
         """
         Actions on the resource become methods, with the ``load`` method
         being a special case which sets internal data for attributes, and
         ``reload`` is an alias for ``load``.
         """
         if resource_model.load:
-            attrs['load'] = self._create_action(
+            attrs["load"] = self._create_action(
                 action_model=resource_model.load,
                 resource_name=resource_name,
                 service_context=service_context,
                 is_load=True,
             )
-            attrs['reload'] = attrs['load']
+            attrs["reload"] = attrs["load"]
 
         for action in resource_model.actions:
             attrs[action.name] = self._create_action(
@@ -208,9 +198,7 @@ class ResourceFactory:
         shape = service_context.service_model.shape_for(resource_model.shape)
 
         identifiers = {
-            i.member_name: i
-            for i in resource_model.identifiers
-            if i.member_name
+            i.member_name: i for i in resource_model.identifiers if i.member_name
         }
         attributes = resource_model.get_attributes(shape)
         for name, (orig_name, member) in attributes.items():
@@ -277,9 +265,7 @@ class ResourceFactory:
                 service_context=service_context,
             )
 
-        self._create_available_subresources_command(
-            attrs, resource_model.subresources
-        )
+        self._create_available_subresources_command(attrs, resource_model.subresources)
 
     def _create_available_subresources_command(self, attrs, subresources):
         _subresources = [subresource.name for subresource in subresources]
@@ -296,11 +282,9 @@ class ResourceFactory:
             """
             return _subresources
 
-        attrs['get_available_subresources'] = get_available_subresources
+        attrs["get_available_subresources"] = get_available_subresources
 
-    def _load_waiters(
-        self, attrs, resource_name, resource_model, service_context
-    ):
+    def _load_waiters(self, attrs, resource_name, resource_model, service_context):
         """
         Load resource waiters from the model. Each waiter allows you to
         wait until a resource reaches a specific state by polling the state
@@ -377,11 +361,11 @@ class ResourceFactory:
         # calls the load before returning the value.
         def property_loader(self):
             if self.meta.data is None:
-                if hasattr(self, 'load'):
+                if hasattr(self, "load"):
                     self.load()
                 else:
                     raise ResourceLoadException(
-                        f'{self.__class__.__name__} has no load method'
+                        f"{self.__class__.__name__} has no load method"
                     )
 
             return self.meta.data.get(name)
@@ -471,7 +455,7 @@ class ResourceFactory:
         # This is important when building the resource below since
         # it requires the data to be loaded.
         needs_data = any(
-            i.source == 'data' for i in reference_model.resource.identifiers
+            i.source == "data" for i in reference_model.resource.identifiers
         )
 
         def get_reference(self):
@@ -482,7 +466,7 @@ class ResourceFactory:
             # our data is loaded (if possible) and pass that data into
             # the handler as if it were a response. This allows references
             # to have their data loaded properly.
-            if needs_data and self.meta.data is None and hasattr(self, 'load'):
+            if needs_data and self.meta.data is None and hasattr(self, "load"):
                 self.load()
             return handler(self, {}, self.meta.data)
 
@@ -525,9 +509,9 @@ class ResourceFactory:
                 for identifier, value in build_identifiers(identifiers, self):
                     positional_args.append(value)
 
-            return partial(
-                resource_cls, *positional_args, client=self.meta.client
-            )(*args, **kwargs)
+            return partial(resource_cls, *positional_args, client=self.meta.client)(
+                *args, **kwargs
+            )
 
         create_resource.__name__ = str(name)
         create_resource.__doc__ = docstring.SubResourceDocstring(
@@ -580,7 +564,7 @@ class ResourceFactory:
             def do_action(self, *args, **kwargs):
                 response = action(self, *args, **kwargs)
 
-                if hasattr(self, 'load'):
+                if hasattr(self, "load"):
                     # Clear cached data. It will be reloaded the next
                     # time that an attribute is accessed.
                     # TODO: Make this configurable in the future?
